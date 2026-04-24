@@ -193,6 +193,8 @@ class Suggester:
         for modified in diff.get("modified_files", []):
             if "test" in modified.lower():
                 continue
+            if not self._is_testable_source_file(modified):
+                continue
             test_candidate = self._test_candidate_for_file(modified, structure)
             focus_files = [modified]
             if test_candidate in structure.get("test_files", []):
@@ -213,6 +215,10 @@ class Suggester:
                 }
             )
         return suggestions
+
+    def _is_testable_source_file(self, path: str) -> bool:
+        lower = path.lower()
+        return lower.endswith((".py", ".js", ".ts"))
 
     def _test_candidate_for_file(self, path: str, structure: Dict[str, Any]) -> str:
         stem = path.split("/")[-1].removesuffix(".py")
@@ -244,19 +250,26 @@ class Suggester:
     def _check_large_files(self, audit: Dict[str, Any], _: Dict[str, Any], __: Dict[str, Any]) -> Dict[str, Any] | None:
         large = [issue for issue in audit.get("issues", []) if issue.get("type") == "large_file"]
         if large:
-            focus_files = [issue["file"] for issue in large[:3] if issue.get("file")]
+            code_like = [
+                issue
+                for issue in large
+                if not str(issue.get("file", "")).lower().endswith((".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"))
+            ]
+            focus_source = code_like or large
+            focus_files = [issue["file"] for issue in focus_source[:3] if issue.get("file")]
             files = ", ".join(focus_files)
             return {
                 "category": "refactoring",
                 "priority": "medium",
-                "title": f"Refactor {len(large)} oversized file(s)",
-                "reason": f"Large files hurt maintainability: {files}",
-                "action": "Split large files into smaller modules",
+                "title": f"Review {len(large)} oversized file(s)",
+                "reason": f"Large files are maintainability signals, not automatic failures: {files}",
+                "action": "Map tests and module boundaries before refactoring",
                 "focus_files": focus_files,
                 "suggested_prompt": (
-                    f"These files are too large and need refactoring: {files}. "
-                    "Analyze each one, propose a sensible split, and then "
-                    "refactor into smaller focused modules."
+                    f"These files are large and may need refactoring: {files}. "
+                    "For each one, classify whether it is code, data, or config; identify existing test coverage; "
+                    "then recommend the smallest safe action. Do not split data/config files unless there is a "
+                    "real loading, validation, or maintenance problem."
                 ),
             }
         return None

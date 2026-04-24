@@ -98,6 +98,75 @@ class ProjectAuditorTests(unittest.TestCase):
         self.assertEqual(diff["modified_count"], 1)
         self.assertIn("src/app.py", diff["modified_files"])
 
+    def test_large_files_are_maintainability_penalty_not_health_failure(self):
+        for index in range(13):
+            (self.project_root / "src" / f"large_{index}.py").write_text(
+                "\n".join(f"VALUE_{line} = {line}" for line in range(520)),
+                encoding="utf-8",
+            )
+
+        files = self.auditor.scan_directory(
+            ignore_dirs=["__pycache__"],
+            extensions=[".py", ".md", ".txt"],
+            max_size=1024 * 1024,
+        )
+        audit = self.auditor.audit_project(files)
+
+        issue_types = [issue["type"] for issue in audit["issues"]]
+        self.assertEqual(issue_types.count("large_file"), 13)
+        self.assertGreaterEqual(audit["health_score"], 70)
+        self.assertLess(audit["health_score"], 90)
+        self.assertEqual(audit["risk_summary"]["maintainability"]["level"], "medium")
+        self.assertEqual(audit["risk_summary"]["security"]["level"], "not_assessed")
+
+    def test_large_data_files_are_low_maintainability_risk(self):
+        (self.project_root / "nvidia_nim_models.json").write_text(
+            "[\n" + ",\n".join('  {"id": "model-%s"}' % line for line in range(600)) + "\n]\n",
+            encoding="utf-8",
+        )
+
+        files = self.auditor.scan_directory(
+            ignore_dirs=["__pycache__"],
+            extensions=[".py", ".md", ".txt", ".json"],
+            max_size=1024 * 1024,
+        )
+        audit = self.auditor.audit_project(files)
+
+        data_issue = next(issue for issue in audit["issues"] if issue.get("file") == "nvidia_nim_models.json")
+        self.assertEqual(data_issue["category"], "maintainability")
+        self.assertIn("validate schema", data_issue["message"])
+
+        data_risk = next(item for item in audit["risk_scores"] if item["file"] == "nvidia_nim_models.json")
+        self.assertEqual(data_risk["level"], "low")
+        self.assertIn("maintainability", data_risk["risk_categories"])
+        self.assertLessEqual(data_risk["score"], 20)
+
+    def test_related_test_files_are_reported_in_risk_coverage(self):
+        (self.project_root / "server.py").write_text(
+            "def serve():\n"
+            "    return 'ok'\n\n"
+            "if __name__ == '__main__':\n"
+            "    serve()\n",
+            encoding="utf-8",
+        )
+        (self.project_root / "tests" / "test_server_module.py").write_text(
+            "def test_server_import():\n"
+            "    assert True\n",
+            encoding="utf-8",
+        )
+
+        files = self.auditor.scan_directory(
+            ignore_dirs=["__pycache__"],
+            extensions=[".py", ".md", ".txt"],
+            max_size=1024 * 1024,
+        )
+        audit = self.auditor.audit_project(files)
+
+        server_risk = next(item for item in audit["risk_scores"] if item["file"] == "server.py")
+        self.assertEqual(server_risk["coverage"]["status"], "related")
+        self.assertEqual(server_risk["coverage"]["test_file"], "tests/test_server_module.py")
+        self.assertNotIn("no obvious paired test", server_risk["factors"])
+
 
 if __name__ == "__main__":
     unittest.main()

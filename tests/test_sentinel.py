@@ -1,5 +1,7 @@
 import json
 import io
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,7 +16,8 @@ if str(SRC) in sys.path:
     sys.path.remove(str(SRC))
 sys.path.insert(0, str(SRC))
 
-from sentinel import SentinelAgent, main  # noqa: E402
+from sentinel import SentinelAgent, _dashboard_html, _run_dashboard_action, main  # noqa: E402
+from suggester import Suggester  # noqa: E402
 from utils import DEFAULT_CONFIG  # noqa: E402
 
 
@@ -88,16 +91,39 @@ class SentinelAgentTests(unittest.TestCase):
         self.assertIn("impact", top)
         self.assertIn("effort", top)
 
+    def test_non_source_config_changes_do_not_create_test_update_suggestions(self):
+        suggester = Suggester()
+        audit = {
+            "issues": [],
+            "metrics": {"open_todos": 0},
+            "structure": {"has_tests": True, "test_files": ["tests/test_app.py"], "entry_points": ["app.py"]},
+            "understanding": {"hotspots": []},
+        }
+        diff = {"modified_files": [".env"], "summary": "~1 modified"}
+        suggestions = suggester.generate_suggestions(audit, diff, {"files": {".env": {}}})
+
+        self.assertNotIn("Update tests for .env", {suggestion["title"] for suggestion in suggestions})
+
     def test_full_report_is_generated_and_saved(self):
         self.agent = SentinelAgent(str(self.project_root), str(self.config_path))
         report_text = self.agent.get_full_report()
 
         self.assertIn("# Sentinel Report", report_text)
+        self.assertIn("- Health Score: 100%", report_text)
+        self.assertIn("- Risk Summary:", report_text)
         self.assertIn("## Knowledge Context", report_text)
 
         saved = self.agent.save_full_report()
         self.assertTrue(Path(saved["primary_path"]).exists())
         self.assertTrue(Path(saved["archive_path"]).exists())
+
+        html = self.agent.get_html_report(fast_mode=True)
+        self.assertIn("<!doctype html>", html)
+        self.assertIn("Sentinel Report", html)
+
+        html_saved = self.agent.save_html_report(fast_mode=True)
+        self.assertTrue(Path(html_saved["primary_path"]).exists())
+        self.assertTrue(Path(html_saved["archive_path"]).exists())
 
     def test_cli_scan_and_status_commands_work(self):
         output = io.StringIO()
@@ -280,6 +306,108 @@ class SentinelAgentTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("SENTINEL DOCTOR", output.getvalue())
         self.assertIn("mcp_surface", output.getvalue())
+
+    def test_cli_ask_and_html_report_commands_work(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "ask",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--question",
+                    "where is helper main",
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        answer = output.getvalue()
+        self.assertIn("SENTINEL ASK", answer)
+        self.assertIn("app.py", answer)
+
+        html_path = self.base / "report.html"
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "report",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--format",
+                    "html",
+                    "--output",
+                    str(html_path),
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(html_path.exists())
+        self.assertIn("<!doctype html>", html_path.read_text(encoding="utf-8"))
+
+    def test_dashboard_gui_and_action_runner_work(self):
+        self.agent = SentinelAgent(str(self.project_root), str(self.config_path))
+        html = _dashboard_html(("127.0.0.1", 8765), "/")
+
+        self.assertIn("Sentinel Command Center", html)
+        self.assertIn("run('ask')", html)
+        self.assertIn("run('report_html')", html)
+        self.assertIn("/api/run", html)
+
+        ask = _run_dashboard_action(
+            self.agent,
+            {
+                "action": "ask",
+                "question": "where is helper main",
+                "fast": True,
+            },
+        )
+        self.assertTrue(ask["ok"])
+        self.assertIn("SENTINEL ASK", ask["text"])
+        self.assertIn("app.py", ask["text"])
+
+        report_path = self.base / "gui-report.html"
+        report = _run_dashboard_action(
+            self.agent,
+            {
+                "action": "report_html",
+                "output_path": str(report_path),
+                "fast": True,
+            },
+        )
+        self.assertTrue(report["ok"])
+        self.assertTrue(report_path.exists())
+        self.assertIn(str(report_path), report["artifacts"])
+
+    @unittest.skipIf(shutil.which("git") is None, "git is required for analyze-url")
+    def test_cli_analyze_url_command_clones_local_git_source(self):
+        subprocess.run(["git", "init"], cwd=self.project_root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "config", "user.email", "sentinel@example.com"], cwd=self.project_root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "config", "user.name", "Sentinel Test"], cwd=self.project_root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "add", "."], cwd=self.project_root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project_root, capture_output=True, text=True, check=True)
+
+        output_dir = self.base / "url-report"
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "analyze-url",
+                    str(self.project_root),
+                    "--output-dir",
+                    str(output_dir),
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("SENTINEL URL ANALYSIS", output.getvalue())
+        self.assertTrue((output_dir / "SENTINEL_REPORT.md").exists())
+        self.assertTrue((output_dir / "SENTINEL_REPORT.html").exists())
+        self.assertTrue((output_dir / "CONTEXT.md").exists())
 
     def test_cli_memory_savings_features_and_adapters_work(self):
         output = io.StringIO()

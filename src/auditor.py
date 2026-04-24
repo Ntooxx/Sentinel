@@ -348,6 +348,7 @@ class ProjectAuditor:
         issues = self._find_issues(file_data, metrics, structure)
         understanding = self._build_project_understanding(file_data, metrics, structure, patterns, issues)
         risk_scores = self._score_file_risks(file_data, structure, issues)
+        health_score = self._calculate_health_score(issues)
 
         return {
             "timestamp": now_iso(),
@@ -358,7 +359,8 @@ class ProjectAuditor:
             "understanding": understanding,
             "issues": issues,
             "risk_scores": risk_scores,
-            "health_score": self._calculate_health_score(issues),
+            "risk_summary": self._summarize_risk_categories(issues, risk_scores),
+            "health_score": health_score,
         }
 
     def _compute_metrics(self, files: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -915,6 +917,7 @@ class ProjectAuditor:
                     {
                         "type": "todo",
                         "severity": "low",
+                        "category": "maintainability",
                         "file": filepath,
                         "message": f"Contains {info['todo_count']} TODO/FIXME markers",
                         "timestamp": now_iso(),
@@ -922,21 +925,29 @@ class ProjectAuditor:
                 )
 
             if info["line_count"] > line_threshold:
+                category = "structural"
+                detail = "consider reviewing module boundaries"
+                if self._is_data_or_config_file(filepath, info):
+                    category = "maintainability"
+                    detail = "large data/config file; validate schema before splitting"
                 issues.append(
                     {
                         "type": "large_file",
                         "severity": "medium",
+                        "category": category,
                         "file": filepath,
-                        "message": f"File is {info['line_count']} lines; consider splitting it",
+                        "message": f"File is {info['line_count']} lines; {detail}",
                         "timestamp": now_iso(),
                     }
                 )
 
             if info["size"] > size_threshold:
+                category = "maintainability" if self._is_data_or_config_file(filepath, info) else "structural"
                 issues.append(
                     {
                         "type": "large_file_size",
                         "severity": "medium",
+                        "category": category,
                         "file": filepath,
                         "message": f"File is {info['size'] // 1024}KB",
                         "timestamp": now_iso(),
@@ -956,6 +967,7 @@ class ProjectAuditor:
                     {
                         "type": "doc_code_drift",
                         "severity": "medium",
+                        "category": "maintainability",
                         "file": filepath,
                         "message": "Documentation may be stale or scaffold-like: "
                         + ", ".join(details),
@@ -968,6 +980,7 @@ class ProjectAuditor:
                 {
                     "type": "no_tests",
                     "severity": "high",
+                    "category": "test",
                     "file": None,
                     "message": "No test files detected in project",
                     "timestamp": now_iso(),
@@ -980,6 +993,7 @@ class ProjectAuditor:
                 {
                     "type": "no_readme",
                     "severity": "medium",
+                    "category": "structural",
                     "file": None,
                     "message": "No README file found",
                     "timestamp": now_iso(),
@@ -991,6 +1005,7 @@ class ProjectAuditor:
                 {
                     "type": "no_entry_point",
                     "severity": "low",
+                    "category": "runtime",
                     "file": None,
                     "message": "No clear entry point detected",
                     "timestamp": now_iso(),
@@ -998,6 +1013,14 @@ class ProjectAuditor:
             )
 
         return issues
+
+    def _is_data_or_config_file(self, filepath: str, info: Dict[str, Any]) -> bool:
+        ext = str(info.get("extension") or Path(filepath).suffix).lower()
+        name = Path(filepath).name.lower()
+        return ext in {".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"} or name in {
+            "dockerfile",
+            "makefile",
+        }
 
     def _score_file_risks(
         self,
@@ -1007,10 +1030,7 @@ class ProjectAuditor:
     ) -> List[Dict[str, Any]]:
         entry_points = set(structure.get("entry_points", []))
         test_files = set(structure.get("test_files", []))
-        tested_stems = {
-            Path(path).stem.removeprefix("test_").removesuffix("_test")
-            for path in test_files
-        }
+        test_index = self._build_test_index(test_files)
         issue_map: Dict[str, list[str]] = {}
         for issue in issues:
             if issue.get("file"):
@@ -1028,8 +1048,12 @@ class ProjectAuditor:
                 factors.append("entry point")
             line_count = int(info.get("line_count", 0))
             if line_count > 500:
-                score += 20
-                factors.append("large file")
+                if self._is_data_or_config_file(path, info):
+                    score += 8
+                    factors.append("large data/config file")
+                else:
+                    score += 20
+                    factors.append("large file")
             elif line_count > 250:
                 score += 10
                 factors.append("moderate size")
@@ -1046,7 +1070,8 @@ class ProjectAuditor:
             if info.get("has_class") or info.get("has_function"):
                 score += 6
                 factors.append("executable code")
-            if Path(path).suffix == ".py" and Path(path).stem not in tested_stems:
+            coverage = self._classify_test_coverage(path, test_index)
+            if Path(path).suffix == ".py" and coverage["status"] == "none":
                 score += 12
                 factors.append("no obvious paired test")
             if issue_map.get(path):
@@ -1067,18 +1092,129 @@ class ProjectAuditor:
                     "score": min(score, 100),
                     "level": level,
                     "factors": factors[:6],
+                    "risk_categories": self._risk_categories(path, info, factors),
+                    "coverage": coverage,
                 }
             )
 
         risks.sort(key=lambda item: item["score"], reverse=True)
         return risks[:20]
 
-    def _calculate_health_score(self, issues: List[Dict[str, Any]]) -> int:
-        penalties = self.rules.get("health_penalties", DEFAULT_AUDIT_RULES["health_penalties"])
-        score = 100
+    def _build_test_index(self, test_files: set[str]) -> Dict[str, Any]:
+        entries = []
+        for test_path in sorted(test_files):
+            stem = Path(test_path).stem.lower()
+            normalized = stem.removeprefix("test_").removesuffix("_test")
+            entries.append({"path": test_path, "stem": stem, "normalized": normalized})
+        return {"entries": entries}
+
+    def _classify_test_coverage(self, path: str, test_index: Dict[str, Any]) -> Dict[str, Any]:
+        if Path(path).suffix != ".py":
+            return {"status": "not_applicable", "test_file": None}
+
+        stem = Path(path).stem.lower()
+        for entry in test_index.get("entries", []):
+            if entry["normalized"] == stem:
+                return {"status": "paired", "test_file": entry["path"]}
+
+        for entry in test_index.get("entries", []):
+            normalized = entry["normalized"]
+            if stem and (stem in normalized.split("_") or normalized in stem):
+                return {"status": "related", "test_file": entry["path"]}
+
+        return {"status": "none", "test_file": None}
+
+    def _risk_categories(self, path: str, info: Dict[str, Any], factors: List[str]) -> List[str]:
+        categories = set()
+        if any(factor in factors for factor in {"large file", "moderate size", "many imports", "several imports"}):
+            categories.add("structural")
+        if "large data/config file" in factors:
+            categories.add("maintainability")
+        if any(factor in factors for factor in {"entry point", "runtime surface"}):
+            categories.add("runtime")
+        if "no obvious paired test" in factors:
+            categories.add("test")
+        if Path(path).suffix == ".py" and (info.get("has_class") or info.get("has_function")):
+            categories.add("runtime")
+        return sorted(categories) or ["maintainability"]
+
+    def _summarize_risk_categories(
+        self,
+        issues: List[Dict[str, Any]],
+        risk_scores: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        summary: Dict[str, Any] = {
+            "structural": {"level": "low", "signals": 0},
+            "runtime": {"level": "unknown", "signals": 0},
+            "test": {"level": "unknown", "signals": 0},
+            "security": {"level": "not_assessed", "signals": 0},
+            "maintainability": {"level": "low", "signals": 0},
+        }
+
         for issue in issues:
-            score -= int(penalties.get(issue.get("severity", "low"), 0))
-        return max(0, min(100, score))
+            category = issue.get("category") or "maintainability"
+            if category not in summary:
+                summary[category] = {"level": "low", "signals": 0}
+            summary[category]["signals"] += 1
+            if issue.get("type") in {"large_file", "large_file_size"} and category != "maintainability":
+                summary["maintainability"]["signals"] += 1
+
+        for risk in risk_scores:
+            for category in risk.get("risk_categories", []):
+                if category not in summary:
+                    summary[category] = {"level": "low", "signals": 0}
+                summary[category]["signals"] += 1
+
+        for category, data in summary.items():
+            signals = int(data.get("signals", 0))
+            if category == "security" and signals == 0:
+                continue
+            high_threshold = 20 if category == "maintainability" else 8
+            if category == "test":
+                high_threshold = 12
+            if signals >= high_threshold:
+                data["level"] = "high"
+            elif signals >= 3:
+                data["level"] = "medium"
+            elif signals >= 1:
+                data["level"] = "low"
+
+        if any(issue.get("type") == "no_tests" for issue in issues):
+            summary["test"]["level"] = "high"
+        elif summary["test"]["signals"] == 0:
+            summary["test"]["level"] = "good"
+
+        if any(issue.get("type") == "no_entry_point" for issue in issues):
+            summary["runtime"]["level"] = "medium"
+
+        return summary
+
+    def _calculate_health_score(self, issues: List[Dict[str, Any]]) -> int:
+        severity_penalties = self.rules.get("health_penalties", DEFAULT_AUDIT_RULES["health_penalties"])
+        type_penalties = self.rules.get(
+            "health_penalties_by_type",
+            DEFAULT_AUDIT_RULES["health_penalties_by_type"],
+        )
+        floors = self.rules.get("health_score_floors", DEFAULT_AUDIT_RULES["health_score_floors"])
+        score = 100.0
+        for issue in issues:
+            issue_type = issue.get("type", "")
+            if issue_type in type_penalties:
+                score -= float(type_penalties[issue_type])
+            else:
+                score -= float(severity_penalties.get(issue.get("severity", "low"), 0))
+
+        if issues:
+            blocking_categories = {"runtime", "test", "security"}
+            blocking_types = {"no_tests", "no_entry_point"}
+            has_blocking_issue = any(
+                issue.get("category") in blocking_categories or issue.get("type") in blocking_types
+                for issue in issues
+            )
+            if not has_blocking_issue:
+                score = max(score, float(floors.get("maintainability_only", 70)))
+
+        return max(0, min(100, round(score)))
 
     def create_checkpoint(self, file_data: Dict[str, Dict[str, Any]], audit: Dict[str, Any]) -> Dict[str, Any]:
         file_hashes = {path: info["hash"] for path, info in file_data.items()}

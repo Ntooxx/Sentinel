@@ -172,8 +172,11 @@ Sentinel includes:
 - Kilo file bridge output
 - Stale context detection
 - Markdown report generation
+- HTML report generation
 - Terminal reports
 - Local live dashboard
+- Repo URL analysis with report bundle output
+- Local project Q&A with Ask Sentinel
 - PR summary generation
 - Coverage hotspot analysis
 - Release-readiness checks
@@ -243,6 +246,32 @@ Open the local dashboard:
 python sentinel.py dashboard /path/to/project --port 8765 --fast
 ```
 
+This opens Sentinel's local GUI at:
+
+```text
+http://127.0.0.1:8765
+```
+
+The GUI can run scans, ask project questions, retrieve focused context, generate prompts, save HTML/Markdown reports, analyze repository URLs, run verification previews, inspect coverage/release readiness, manage task memory, refresh Kilo files, and run maintenance checks.
+
+### New GUI and Reporting Workflow
+
+Sentinel is no longer CLI-only. The local GUI is a minimal command center for the whole tool:
+
+| Feature | Why it matters |
+|---|---|
+| Local GUI | Run Sentinel workflows from a browser without memorising every CLI flag. |
+| Ask Sentinel | Ask repository questions and get ranked files, symbols, snippets, and verification hints. |
+| Repo URL analyzer | Paste a Git URL or local git source and generate a complete report bundle. |
+| HTML report | Share project health, risks, focus files, and next actions in a readable browser format. |
+| Dashboard action API | The GUI uses the same Sentinel internals as the CLI, so browser and terminal results stay aligned. |
+
+The recommended product flow is:
+
+```text
+Open GUI -> Scan -> Ask/Retrieve -> Generate HTML report -> Export prompt/context -> Verify changes
+```
+
 Watch a project continuously:
 
 ```bash
@@ -253,6 +282,24 @@ Generate a full report:
 
 ```bash
 python sentinel.py report /path/to/project
+```
+
+Generate an HTML report:
+
+```bash
+python sentinel.py report /path/to/project --format html
+```
+
+Analyze a repository URL or git source:
+
+```bash
+python sentinel.py analyze-url https://github.com/user/repo --fast
+```
+
+Ask a project question:
+
+```bash
+python sentinel.py ask /path/to/project --question "where is authentication handled?" --fast
 ```
 
 ---
@@ -448,6 +495,8 @@ Sentinel writes project memory and reports into the scanned project.
 | `context` | Emit a compact low-token context pack |
 | `prompt` | Generate a focused prompt for the next step, review, debug pass, or plan |
 | `retrieve` | Return query-specific files, symbols, snippets, imports, and call hints |
+| `ask` | Answer a project question using local Sentinel retrieval and project understanding |
+| `analyze-url` | Clone a git URL or source and write a report bundle with markdown, HTML, context, and prompt files |
 | `graph` | Build Python AST symbols, import graph, and call graph |
 | `verify` | Run or preview focused checks for changed files |
 | `memory` | Record or list task memory |

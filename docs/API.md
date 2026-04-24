@@ -36,7 +36,7 @@ Defined in `src/auditor.py`.
 - `scan_directory(...) -> dict`
   Walks the target project and returns metadata for important files.
 - `audit_project(file_data: dict) -> dict`
-  Computes metrics, structure, patterns, issues, architecture, and health score.
+  Computes metrics, structure, patterns, issues, architecture, health score, risk summary, and per-file risk scores.
 - `diff_from_last_checkpoint(current_files: dict) -> dict`
   Computes added, modified, and deleted files.
 - `create_checkpoint(file_data: dict, audit: dict) -> dict`

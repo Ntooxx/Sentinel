@@ -98,6 +98,18 @@ DEFAULT_AUDIT_RULES = {
         "medium": 8,
         "low": 3,
     },
+    "health_penalties_by_type": {
+        "large_file": 1.5,
+        "large_file_size": 1,
+        "todo": 1,
+        "doc_code_drift": 4,
+        "no_readme": 8,
+        "no_entry_point": 10,
+        "no_tests": 25,
+    },
+    "health_score_floors": {
+        "maintainability_only": 70,
+    },
     "significant_change_thresholds": {
         "new_files": 1,
         "modified_files": 1,

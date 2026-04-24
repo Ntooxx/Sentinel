@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import textwrap
 from pathlib import Path
@@ -29,6 +30,15 @@ class ReportGenerator:
 
         health = result["audit"]["health_score"]
         lines.append(f"Health: {self._health_bar(health)} {health}%")
+        risk_summary = result["audit"].get("risk_summary", {})
+        if risk_summary:
+            lines.append(
+                "Risk: "
+                f"maint={risk_summary.get('maintainability', {}).get('level', 'unknown')} | "
+                f"runtime={risk_summary.get('runtime', {}).get('level', 'unknown')} | "
+                f"tests={risk_summary.get('test', {}).get('level', 'unknown')} | "
+                f"security={risk_summary.get('security', {}).get('level', 'not_assessed')}"
+            )
         lines.append("")
 
         understanding = result["audit"].get("understanding", {})
@@ -208,6 +218,15 @@ class ReportGenerator:
         lines.append(f"- Scan: {result['scan_number']}")
         lines.append(f"- Timestamp: {result['timestamp']}")
         lines.append(f"- Health Score: {result['audit']['health_score']}%")
+        risk_summary = result["audit"].get("risk_summary", {})
+        if risk_summary:
+            lines.append(
+                "- Risk Summary: "
+                f"Maintainability {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
+                f"Runtime {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
+                f"Tests {risk_summary.get('test', {}).get('level', 'unknown')}; "
+                f"Security {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+            )
         lines.append("")
 
         understanding = result["audit"].get("understanding", {})
@@ -286,6 +305,302 @@ class ReportGenerator:
 
         return "\n".join(lines).rstrip() + "\n"
 
+    def render_html(self, result: Dict[str, Any], knowledge_context: str = "") -> str:
+        metrics = result["audit"]["metrics"]
+        diff = result["diff"]
+        issues = result["audit"]["issues"]
+        suggestions = result.get("suggestions", [])
+        understanding = result["audit"].get("understanding", {})
+        risk_scores = result["audit"].get("risk_scores", [])
+        llm = result.get("llm", {})
+        perf = result.get("performance", {})
+        risk_summary = result["audit"].get("risk_summary", {})
+        components = understanding.get("main_components", [])
+        hotspots = understanding.get("hotspots", [])
+        focus_files = llm.get("focus_files", [])
+        project_name = understanding.get("project_name") or "Sentinel Project"
+        health = int(result["audit"].get("health_score", 0) or 0)
+        health_class = "good" if health >= 80 else "warn" if health >= 55 else "bad"
+
+        def esc(value: Any) -> str:
+            return html.escape(str(value), quote=True)
+
+        def pills(values: Iterable[Any]) -> str:
+            items = [f"<span class=\"pill\">{esc(value)}</span>" for value in values if str(value)]
+            return "".join(items) or "<span class=\"muted\">None detected</span>"
+
+        def issue_rows() -> str:
+            if not issues:
+                return "<tr><td colspan=\"3\" class=\"muted\">No issues detected.</td></tr>"
+            rows = []
+            for issue in issues[:40]:
+                rows.append(
+                    "<tr>"
+                    f"<td><span class=\"badge\">{esc(issue.get('severity', 'unknown')).upper()}</span></td>"
+                    f"<td>{esc(issue.get('message', ''))}</td>"
+                    f"<td><code>{esc(issue.get('file', ''))}</code></td>"
+                    "</tr>"
+                )
+            return "".join(rows)
+
+        def suggestion_cards() -> str:
+            if not suggestions:
+                return "<p class=\"muted\">No suggestions yet.</p>"
+            cards = []
+            for index, suggestion in enumerate(suggestions[:8], start=1):
+                confidence = suggestion.get("confidence", {})
+                focus = suggestion.get("focus_files", [])
+                cards.append(
+                    "<article class=\"item\">"
+                    f"<div class=\"item-kicker\">#{index} {esc(suggestion.get('priority', 'medium')).upper()}</div>"
+                    f"<h3>{esc(suggestion.get('title', 'Untitled suggestion'))}</h3>"
+                    f"<p>{esc(suggestion.get('reason', ''))}</p>"
+                    f"<p><strong>Action:</strong> {esc(suggestion.get('action', ''))}</p>"
+                    "<div class=\"meta\">"
+                    f"<span>impact {esc(suggestion.get('impact', 'medium'))}</span>"
+                    f"<span>effort {esc(suggestion.get('effort', 'medium'))}</span>"
+                    f"<span>confidence {esc(confidence.get('level', 'unknown'))}</span>"
+                    "</div>"
+                    f"<div class=\"file-list\">{pills(focus[:5])}</div>"
+                    "</article>"
+                )
+            return "".join(cards)
+
+        def component_rows() -> str:
+            if not components:
+                return "<tr><td colspan=\"4\" class=\"muted\">No component map available.</td></tr>"
+            rows = []
+            for component in components[:12]:
+                rows.append(
+                    "<tr>"
+                    f"<td><code>{esc(component.get('path', ''))}</code></td>"
+                    f"<td>{esc(component.get('role', ''))}</td>"
+                    f"<td>{esc(component.get('file_count', 0))}</td>"
+                    f"<td>{esc(component.get('line_count', 0))}</td>"
+                    "</tr>"
+                )
+            return "".join(rows)
+
+        def risk_rows() -> str:
+            if not risk_scores:
+                return "<tr><td colspan=\"4\" class=\"muted\">No file risk scores available.</td></tr>"
+            rows = []
+            for item in risk_scores[:15]:
+                rows.append(
+                    "<tr>"
+                    f"<td><span class=\"badge\">{esc(item.get('level', 'unknown')).upper()}</span></td>"
+                    f"<td><code>{esc(item.get('file', ''))}</code></td>"
+                    f"<td>{esc(item.get('score', 0))}</td>"
+                    f"<td>{esc(', '.join(item.get('factors', [])[:4]))}</td>"
+                    "</tr>"
+                )
+            return "".join(rows)
+
+        markdown_prompt = suggestions[0].get("suggested_prompt", "") if suggestions else ""
+        timeline_hint = (
+            f"{diff.get('new_count', 0)} new, "
+            f"{diff.get('modified_count', 0)} modified, "
+            f"{diff.get('deleted_count', 0)} deleted"
+        )
+
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentinel Report - {esc(project_name)}</title>
+<style>
+:root{{color-scheme:light;--ink:#18212b;--muted:#607080;--line:#d9e1e8;--soft:#f4f7f9;--panel:#ffffff;--accent:#146c94;--accent2:#8a5a12;--good:#157347;--warn:#9a6700;--bad:#b42318}}
+*{{box-sizing:border-box}}
+body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#eef3f6;color:var(--ink);line-height:1.45}}
+main{{max-width:1180px;margin:0 auto;padding:28px}}
+header{{padding:28px 0 18px;border-bottom:1px solid var(--line)}}
+h1{{font-size:34px;line-height:1.1;margin:0 0 10px;letter-spacing:0}}
+h2{{font-size:21px;margin:0 0 14px}}
+h3{{font-size:16px;margin:4px 0 8px}}
+p{{margin:0 0 10px}}
+.muted{{color:var(--muted)}}
+.hero{{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr);gap:22px;align-items:end}}
+.summary{{font-size:16px;max-width:820px;color:#354654}}
+.stats{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}}
+.stat,.section,.item{{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}}
+.stat .label,.item-kicker{{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}}
+.stat .value{{font-size:27px;font-weight:800;margin-top:4px}}
+.good{{color:var(--good)}}.warn{{color:var(--warn)}}.bad{{color:var(--bad)}}
+.grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}}
+.suggestions{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.meta{{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;color:var(--muted);font-size:13px}}
+.meta span,.pill,.badge{{border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:var(--soft)}}
+.badge{{font-size:12px;font-weight:800;border-radius:6px}}
+.file-list{{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}}
+table{{width:100%;border-collapse:collapse;font-size:14px}}
+th,td{{text-align:left;border-bottom:1px solid var(--line);padding:9px;vertical-align:top}}
+th{{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}}
+code,pre{{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}}
+pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-radius:8px;padding:14px;max-height:420px}}
+.progress{{height:10px;background:#dbe4ea;border-radius:999px;overflow:hidden;margin-top:10px}}
+.progress span{{display:block;height:100%;background:var(--accent);width:{health}%}}
+@media(max-width:820px){{main{{padding:18px}}.hero,.grid,.suggestions{{grid-template-columns:1fr}}.stats{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+  <div>
+    <p class="muted">Sentinel report</p>
+    <h1>{esc(project_name)}</h1>
+    <p class="summary">{esc(understanding.get('summary') or understanding.get('purpose') or understanding.get('project_type') or 'Project scan and engineering guidance.')}</p>
+    <div class="file-list">{pills(understanding.get('frameworks', [])[:8])}</div>
+  </div>
+  <div class="section">
+    <div class="muted">Health score</div>
+    <div class="stat-value {health_class}" style="font-size:42px;font-weight:900">{health}%</div>
+    <div class="progress"><span></span></div>
+    <p class="muted" style="margin-top:10px">Scan #{esc(result.get('scan_number'))} at {esc(result.get('timestamp'))}</p>
+  </div>
+</header>
+
+<section class="stats">
+  <div class="stat"><div class="label">Files</div><div class="value">{esc(metrics.get('total_files', 0))}</div></div>
+  <div class="stat"><div class="label">Lines</div><div class="value">{esc(metrics.get('total_lines', 0))}</div></div>
+  <div class="stat"><div class="label">Issues</div><div class="value">{esc(len(issues))}</div></div>
+  <div class="stat"><div class="label">Token Saved</div><div class="value">{esc(llm.get('estimated_token_savings_percent', 0))}%</div></div>
+</section>
+
+<section class="grid">
+  <div class="section">
+    <h2>Project Identity</h2>
+    <p><strong>Type:</strong> {esc(understanding.get('project_type', 'unknown'))}</p>
+    <p><strong>Purpose:</strong> {esc(understanding.get('purpose', 'unknown'))}</p>
+    <p><strong>Workflow:</strong> {esc(', '.join(understanding.get('workflow_hints', [])[:6]) or 'not detected')}</p>
+    <p><strong>Recent changes:</strong> {esc(timeline_hint)}</p>
+  </div>
+  <div class="section">
+    <h2>Risk Summary</h2>
+    <p><strong>Maintainability:</strong> {esc(risk_summary.get('maintainability', {}).get('level', 'unknown'))}</p>
+    <p><strong>Runtime:</strong> {esc(risk_summary.get('runtime', {}).get('level', 'unknown'))}</p>
+    <p><strong>Tests:</strong> {esc(risk_summary.get('test', {}).get('level', 'unknown'))}</p>
+    <p><strong>Security:</strong> {esc(risk_summary.get('security', {}).get('level', 'not assessed'))}</p>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Recommended Next Actions</h2>
+  <div class="suggestions">{suggestion_cards()}</div>
+</section>
+
+<section class="grid">
+  <div class="section">
+    <h2>Focus Files</h2>
+    <div class="file-list">{pills(focus_files[:10])}</div>
+  </div>
+  <div class="section">
+    <h2>Hotspots</h2>
+    <div class="file-list">{pills([item.get('path', '') for item in hotspots[:10]])}</div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Main Components</h2>
+  <table><thead><tr><th>Path</th><th>Role</th><th>Files</th><th>Lines</th></tr></thead><tbody>{component_rows()}</tbody></table>
+</section>
+
+<section class="section">
+  <h2>Top File Risks</h2>
+  <table><thead><tr><th>Level</th><th>File</th><th>Score</th><th>Factors</th></tr></thead><tbody>{risk_rows()}</tbody></table>
+</section>
+
+<section class="section">
+  <h2>Issues</h2>
+  <table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody>{issue_rows()}</tbody></table>
+</section>
+
+<section class="section">
+  <h2>Agent Prompt</h2>
+  <pre>{esc(markdown_prompt or 'No prompt generated.')}</pre>
+</section>
+
+<section class="section">
+  <h2>Knowledge Context</h2>
+  <pre>{esc(knowledge_context.strip() or 'No knowledge context exported.')}</pre>
+</section>
+
+<footer class="muted" style="padding:24px 0">Generated by Sentinel. Duration: {esc(perf.get('duration_seconds', 0))}s.</footer>
+</main>
+</body>
+</html>
+"""
+
+    def render_ask_answer(self, answer: Dict[str, Any]) -> str:
+        retrieval = answer.get("retrieval", {})
+        scan = answer.get("scan", {})
+        understanding = scan.get("audit", {}).get("understanding", {})
+        files = retrieval.get("files", [])
+        symbols = retrieval.get("symbols", [])
+        snippets = retrieval.get("snippets", [])
+        suggestions = scan.get("suggestions", [])
+
+        lines = [
+            "SENTINEL ASK",
+            f"Question: {answer.get('question', '')}",
+            "",
+            "Short Answer:",
+            answer.get("short_answer", "Sentinel found local context, but no direct answer could be inferred."),
+            "",
+            "Project Context:",
+            f"- Project: {understanding.get('project_name', 'unknown')}",
+            f"- Type: {understanding.get('project_type', 'unknown')}",
+        ]
+        if understanding.get("purpose"):
+            lines.append(f"- Purpose: {understanding['purpose']}")
+
+        lines.extend(["", "Best Files To Inspect:"])
+        if files:
+            for item in files[:8]:
+                lines.append(
+                    f"- {item.get('path')} (score {item.get('score')}, {item.get('lines')} lines): "
+                    f"{item.get('summary', '')}"
+                )
+        else:
+            lines.append("- No file matches found.")
+
+        lines.extend(["", "Relevant Symbols:"])
+        if symbols:
+            for symbol in symbols[:10]:
+                lines.append(
+                    f"- {symbol.get('qualname')} [{symbol.get('kind')}] "
+                    f"at {symbol.get('path')}:{symbol.get('line')}"
+                )
+        else:
+            lines.append("- No symbol matches found.")
+
+        lines.extend(["", "Evidence Snippets:"])
+        if snippets:
+            for snippet in snippets[:6]:
+                lines.append(f"--- {snippet.get('path')}:{snippet.get('start_line')}")
+                lines.append(snippet.get("text", ""))
+        else:
+            lines.append("- No direct snippets matched; use the files above as the starting point.")
+
+        if suggestions:
+            top = suggestions[0]
+            lines.extend(
+                [
+                    "",
+                    "Related Next Action:",
+                    f"- [{top.get('priority')}] {top.get('title')}: {top.get('action')}",
+                ]
+            )
+
+        lines.extend(
+            [
+                "",
+                "Verification Hint:",
+                answer.get("verification_hint", "Run `project-sentinel verify . --dry-run` after making changes."),
+            ]
+        )
+        return "\n".join(lines).rstrip() + "\n"
+
     def render_overview(self, result: Dict[str, Any]) -> str:
         understanding = result["audit"].get("understanding", {})
         llm = result.get("llm", {})
@@ -298,6 +613,15 @@ class ReportGenerator:
         if understanding.get("summary"):
             lines.append(f"Summary: {understanding['summary']}")
         lines.append(f"Health: {result['audit']['health_score']}%")
+        risk_summary = result["audit"].get("risk_summary", {})
+        if risk_summary:
+            lines.append(
+                "Risk Summary: "
+                f"Maintainability {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
+                f"Runtime {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
+                f"Tests {risk_summary.get('test', {}).get('level', 'unknown')}; "
+                f"Security {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+            )
         lines.append("")
 
         if understanding.get("frameworks"):
@@ -342,9 +666,13 @@ class ReportGenerator:
         if risk_scores:
             lines.append("Top Risks:")
             for item in risk_scores[:5]:
+                coverage = item.get("coverage", {})
+                coverage_text = coverage.get("status", "unknown")
+                if coverage.get("test_file"):
+                    coverage_text += f" via {coverage['test_file']}"
                 lines.append(
                     f"- [{item.get('level')}] {item.get('file')} score={item.get('score')} "
-                    f"({', '.join(item.get('factors', [])[:3])})"
+                    f"({', '.join(item.get('factors', [])[:3])}; coverage={coverage_text})"
                 )
             lines.append("")
 

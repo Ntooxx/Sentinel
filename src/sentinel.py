@@ -5,9 +5,12 @@ import argparse
 import json
 import logging
 import os
+import re
+import shutil
 import subprocess
 import sys
 import threading
+import tempfile
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from datetime import datetime
@@ -379,6 +382,64 @@ class SentinelAgent:
             result["estimated_retrieved_tokens"],
         )
         return result
+
+    def ask(
+        self,
+        question: str,
+        *,
+        goal: str = "next",
+        limit: int = 6,
+        fast_mode: bool = True,
+        extra_ignore_paths: Optional[list[str]] = None,
+    ) -> Dict[str, Any]:
+        scan = self.scan_once(
+            print_report=False,
+            fast_mode=fast_mode,
+            include_suggestions=True,
+            create_checkpoint=False,
+            extra_ignore_paths=extra_ignore_paths,
+        )
+        retrieval = self.retrieve(
+            question,
+            goal=goal,
+            limit=limit,
+            fast_mode=fast_mode,
+            extra_ignore_paths=extra_ignore_paths,
+        )
+        short_answer = self._build_local_answer(question, retrieval, scan)
+        answer = {
+            "question": question,
+            "goal": goal,
+            "short_answer": short_answer,
+            "verification_hint": "Run `project-sentinel verify . --dry-run` to preview focused checks after edits.",
+            "retrieval": retrieval,
+            "scan": scan,
+        }
+        answer["text"] = self.reporter.render_ask_answer(answer)
+        return answer
+
+    def _build_local_answer(self, question: str, retrieval: Dict[str, Any], scan: Dict[str, Any]) -> str:
+        files = retrieval.get("files", [])
+        symbols = retrieval.get("symbols", [])
+        snippets = retrieval.get("snippets", [])
+        understanding = scan.get("audit", {}).get("understanding", {})
+        if files:
+            lead = files[0]
+            symbol_text = ""
+            if symbols:
+                first_symbol = symbols[0]
+                symbol_text = (
+                    f" The closest symbol match is `{first_symbol.get('qualname')}` "
+                    f"in `{first_symbol.get('path')}`."
+                )
+            snippet_text = " Direct matching snippets were found." if snippets else " No direct line snippet matched, so inspect the ranked files first."
+            return (
+                f"Start with `{lead.get('path')}` because it is the strongest local match for this question. "
+                f"It has score {lead.get('score')} and {lead.get('lines')} lines.{symbol_text}{snippet_text}"
+            )
+        if understanding.get("summary"):
+            return f"No exact file match was found. Project summary: {understanding['summary']}"
+        return "No exact local match was found. Try a more specific question with a feature name, file name, symbol, or error text."
 
     def build_graph_pack(self) -> Dict[str, Any]:
         return build_python_graph(self.project_dir)
@@ -762,6 +823,7 @@ class SentinelAgent:
     def run_dashboard(self, host: str = "127.0.0.1", port: int = 8765, interval: int = 10, fast_mode: bool = True) -> None:
         state: Dict[str, Any] = {"latest": None, "history": self.knowledge.get_scan_history(limit=50)}
         stop_event = threading.Event()
+        dashboard_agent = self
 
         def scan_loop() -> None:
             while not stop_event.is_set():
@@ -797,6 +859,30 @@ class SentinelAgent:
                 self.end_headers()
                 self.wfile.write(html)
 
+            def do_POST(self) -> None:  # noqa: N802
+                if self.path != "/api/run":
+                    self.send_error(404, "Not found")
+                    return
+                try:
+                    length = int(self.headers.get("Content-Length", "0") or "0")
+                    raw = self.rfile.read(length).decode("utf-8") if length else "{}"
+                    request = json.loads(raw) if raw.strip() else {}
+                    result = _run_dashboard_action(dashboard_agent, request)
+                    state["last_action"] = result
+                    payload = json.dumps(result, indent=2, default=str).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload)
+                except Exception as exc:  # pragma: no cover - dashboard resilience
+                    payload = json.dumps({"ok": False, "error": str(exc)}, indent=2).encode("utf-8")
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload)
+
         worker = threading.Thread(target=scan_loop, daemon=True)
         worker.start()
         server = ThreadingHTTPServer((host, port), Handler)
@@ -812,10 +898,29 @@ class SentinelAgent:
         knowledge_context = self.knowledge.export_context(budget="medium")
         return self.reporter.render_markdown(result, knowledge_context=knowledge_context)
 
+    def get_html_report(self, fast_mode: bool = False) -> str:
+        result = self.scan_once(print_report=False, fast_mode=fast_mode)
+        knowledge_context = self.knowledge.export_context(budget="medium")
+        return self.reporter.render_html(result, knowledge_context=knowledge_context)
+
     def save_full_report(self, destination: Optional[str] = None, fast_mode: bool = False) -> Dict[str, Any]:
         report_text = self.get_full_report(fast_mode=fast_mode)
         primary = Path(destination).resolve() if destination else self.project_report_path
         archive = self.reports_path / f"SENTINEL_REPORT_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+
+        self.reporter.save_markdown(report_text, primary)
+        self.reporter.save_markdown(report_text, archive)
+
+        return {
+            "report": report_text,
+            "primary_path": str(primary),
+            "archive_path": str(archive),
+        }
+
+    def save_html_report(self, destination: Optional[str] = None, fast_mode: bool = False) -> Dict[str, Any]:
+        report_text = self.get_html_report(fast_mode=fast_mode)
+        primary = Path(destination).resolve() if destination else self.project_dir / "SENTINEL_REPORT.html"
+        archive = self.reports_path / f"SENTINEL_REPORT_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
 
         self.reporter.save_markdown(report_text, primary)
         self.reporter.save_markdown(report_text, archive)
@@ -861,6 +966,366 @@ class SentinelAgent:
         logging.shutdown()
 
 
+def analyze_repository_url(
+    repo_source: str,
+    *,
+    output_dir: str | Path | None = None,
+    keep_clone: bool = False,
+    fast_mode: bool = True,
+    html_report: bool = True,
+    timeout: int = 300,
+) -> Dict[str, Any]:
+    """Clone a git repository source, scan it, and save a portable report bundle."""
+
+    safe_name = _safe_repo_name(repo_source)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_dir = Path(output_dir).expanduser().resolve() if output_dir else (Path.cwd() / "sentinel-url-reports" / f"{safe_name}_{timestamp}").resolve()
+    ensure_dir(report_dir)
+
+    temp_handle: tempfile.TemporaryDirectory[str] | None = None
+    if keep_clone:
+        clone_parent = report_dir / "repository"
+        ensure_dir(clone_parent)
+    else:
+        temp_handle = tempfile.TemporaryDirectory(prefix="sentinel_repo_")
+        clone_parent = Path(temp_handle.name)
+
+    clone_dir = clone_parent / safe_name
+    source = _normalize_git_source(repo_source)
+    command = ["git", "clone", "--depth", "1", source, str(clone_dir)]
+    started = perf_counter()
+    clone_result: subprocess.CompletedProcess[str] | None = None
+    agent: SentinelAgent | None = None
+    try:
+        if shutil.which("git") is None:
+            raise RuntimeError("git is required for analyze-url but was not found on PATH")
+        clone_result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        if clone_result.returncode != 0:
+            raise RuntimeError(clone_result.stderr.strip() or clone_result.stdout.strip() or "git clone failed")
+
+        agent = SentinelAgent(str(clone_dir))
+        scan = agent.scan_once(print_report=False, fast_mode=fast_mode, include_suggestions=True)
+        knowledge_context = agent.knowledge.export_context(budget="medium")
+        markdown = agent.reporter.render_markdown(scan, knowledge_context=knowledge_context)
+        markdown_path = report_dir / "SENTINEL_REPORT.md"
+        agent.reporter.save_markdown(markdown, markdown_path)
+
+        html_path: Path | None = None
+        if html_report:
+            html_text = agent.reporter.render_html(scan, knowledge_context=knowledge_context)
+            html_path = report_dir / "SENTINEL_REPORT.html"
+            agent.reporter.save_markdown(html_text, html_path)
+
+        context_pack = agent.build_context_pack(budget="small")
+        context_path = report_dir / "CONTEXT.md"
+        agent.reporter.save_markdown(agent.reporter.render_context_pack(context_pack), context_path)
+
+        prompt_pack = agent.build_prompt_pack(scan, goal="next", budget="small")
+        prompt_path = report_dir / "NEXT_PROMPT.md"
+        agent.reporter.save_markdown(agent.reporter.render_prompt_pack(prompt_pack), prompt_path)
+
+        summary = {
+            "repo_source": repo_source,
+            "clone_source": source,
+            "clone_dir": str(clone_dir) if keep_clone else None,
+            "report_dir": str(report_dir),
+            "markdown_report": str(markdown_path),
+            "html_report": str(html_path) if html_path else None,
+            "context_pack": str(context_path),
+            "prompt": str(prompt_path),
+            "duration_seconds": round(perf_counter() - started, 3),
+            "health_score": scan.get("audit", {}).get("health_score"),
+            "files_scanned": scan.get("files_scanned"),
+            "top_suggestion": (scan.get("suggestions") or [{}])[0].get("title"),
+            "kept_clone": keep_clone,
+        }
+        summary_path = report_dir / "analysis.json"
+        summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        summary["summary_path"] = str(summary_path)
+        return summary
+    finally:
+        if agent is not None:
+            agent.close()
+        if temp_handle is not None:
+            temp_handle.cleanup()
+
+
+def _safe_repo_name(repo_source: str) -> str:
+    source = repo_source.rstrip("/").replace("\\", "/")
+    tail = source.split("/")[-1] or "repository"
+    if tail.endswith(".git"):
+        tail = tail[:-4]
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "-", tail).strip("-._")
+    return safe or "repository"
+
+
+def _normalize_git_source(repo_source: str) -> str:
+    possible_path = Path(repo_source).expanduser()
+    if possible_path.exists():
+        return str(possible_path.resolve())
+    if repo_source.startswith("file://"):
+        return repo_source
+    if repo_source.startswith(("http://", "https://", "ssh://", "git@")):
+        return repo_source
+    return repo_source
+
+
+def _render_analyze_url(result: Dict[str, Any]) -> str:
+    lines = [
+        "SENTINEL URL ANALYSIS",
+        f"Source: {result.get('repo_source')}",
+        f"Report Directory: {result.get('report_dir')}",
+        f"Markdown Report: {result.get('markdown_report')}",
+    ]
+    if result.get("html_report"):
+        lines.append(f"HTML Report: {result['html_report']}")
+    lines.extend(
+        [
+            f"Context Pack: {result.get('context_pack')}",
+            f"Next Prompt: {result.get('prompt')}",
+            f"Health: {result.get('health_score')}%",
+            f"Files Scanned: {result.get('files_scanned')}",
+            f"Top Suggestion: {result.get('top_suggestion')}",
+            f"Duration: {result.get('duration_seconds')}s",
+        ]
+    )
+    if result.get("clone_dir"):
+        lines.append(f"Clone Kept At: {result['clone_dir']}")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _run_dashboard_action(agent: SentinelAgent, request: Dict[str, Any]) -> Dict[str, Any]:
+    action = str(request.get("action", "")).strip()
+    if not action:
+        raise ValueError("dashboard action is required")
+
+    fast = _request_bool(request, "fast", True)
+    goal = str(request.get("goal") or "next")
+    budget = normalize_budget_name(str(request.get("budget") or "small"), default="small")
+    limit = _request_int(request, "limit", 6)
+    top = _request_int(request, "top", 1)
+    text = ""
+    data: Any = None
+    artifacts: list[str] = []
+
+    if action == "scan":
+        data = agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True)
+        text = agent.reporter.render_terminal(data)
+    elif action == "brief":
+        data = agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True, top_suggestions=top)
+        text = agent.reporter.render_brief(data)
+    elif action == "overview":
+        data = agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True)
+        text = agent.reporter.render_overview(data)
+    elif action == "context":
+        agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True)
+        data = agent.build_context_pack(budget=budget)
+        text = agent.reporter.render_context_pack(data)
+    elif action == "prompt":
+        scan = agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True)
+        data = agent.build_prompt_pack(scan, goal=goal, budget=budget, suggestion_number=top)
+        text = agent.reporter.render_prompt_pack(data)
+    elif action == "retrieve":
+        query = str(request.get("query") or request.get("question") or "").strip()
+        if not query:
+            raise ValueError("retrieve requires a query")
+        data = agent.retrieve(query, goal=goal, limit=limit, fast_mode=fast)
+        text = data["text"]
+    elif action == "ask":
+        question = str(request.get("question") or request.get("query") or "").strip()
+        if not question:
+            raise ValueError("ask requires a question")
+        data = agent.ask(question, goal=goal, limit=limit, fast_mode=fast)
+        text = data["text"]
+    elif action == "graph":
+        data = agent.build_graph_pack()
+        text = _render_graph_pack(data)
+    elif action == "verify":
+        data = agent.verify(
+            changed_files=_request_list(request, "changed_files") or None,
+            command=str(request.get("verify_command") or "").strip() or None,
+            dry_run=_request_bool(request, "dry_run", True),
+            timeout=_request_int(request, "timeout", 120),
+        )
+        text = _render_verify_result(data)
+    elif action == "memory_list":
+        data = agent.get_memory(limit=_request_int(request, "memory_limit", 10))
+        text = _render_memory(data)
+    elif action == "memory_record":
+        data = agent.record_task_memory(
+            goal=str(request.get("memory_goal") or request.get("question") or "dashboard note"),
+            changed_files=_request_list(request, "changed_files"),
+            tests=_request_list(request, "tests"),
+            risks=_request_list(request, "risks"),
+            decisions=_request_list(request, "decisions"),
+            verifier_summary=str(request.get("verifier_summary") or ""),
+        )
+        text = _render_memory([data])
+    elif action == "savings":
+        data = agent.get_savings()
+        text = _render_savings(data)
+    elif action == "doctor":
+        data = agent.doctor()
+        text = _render_doctor(data)
+    elif action == "autofix":
+        data = agent.autofix(dry_run=not _request_bool(request, "apply", False))
+        text = _render_autofix(data)
+    elif action == "pr":
+        data = agent.pr_summary(verify=_request_bool(request, "verify", False), timeout=_request_int(request, "timeout", 120))
+        text = _render_pr_summary(data)
+    elif action == "timeline":
+        data = agent.memory_timeline(limit=_request_int(request, "memory_limit", 20))
+        text = _render_timeline(data)
+    elif action == "mcp_health":
+        data = agent.mcp_health()
+        data["bridge"] = agent.inspect_bridge_context(agent.project_dir)
+        text = _render_mcp_health(data)
+    elif action == "coverage":
+        data = agent.coverage_report()
+        text = _render_coverage(data)
+    elif action == "cleanup_reports":
+        data = agent.cleanup_reports(
+            keep=_request_int(request, "keep_reports", 5),
+            dry_run=not _request_bool(request, "apply", False),
+        )
+        text = _render_cleanup_reports(data)
+    elif action == "release_check":
+        data = agent.release_check()
+        text = _render_release_check(data)
+    elif action == "adapters":
+        data = build_adapter_docs(agent.project_dir, write=_request_bool(request, "write", False))
+        text = _render_adapters(data)
+    elif action == "report_markdown":
+        destination = str(request.get("output_path") or "").strip() or None
+        data = agent.save_full_report(destination=destination, fast_mode=fast)
+        artifacts = [data["primary_path"], data["archive_path"]]
+        text = f"Markdown report saved to {data['primary_path']}\nArchived copy saved to {data['archive_path']}\n"
+    elif action == "report_html":
+        destination = str(request.get("output_path") or "").strip() or None
+        data = agent.save_html_report(destination=destination, fast_mode=fast)
+        artifacts = [data["primary_path"], data["archive_path"]]
+        text = f"HTML report saved to {data['primary_path']}\nArchived HTML copy saved to {data['archive_path']}\n"
+    elif action == "report_both":
+        destination = str(request.get("output_path") or "").strip() or None
+        html_destination = str(Path(destination).resolve().with_suffix(".html")) if destination else None
+        markdown = agent.save_full_report(destination=destination, fast_mode=fast)
+        html_report = agent.save_html_report(destination=html_destination, fast_mode=fast)
+        data = {"markdown": markdown, "html": html_report}
+        artifacts = [
+            markdown["primary_path"],
+            markdown["archive_path"],
+            html_report["primary_path"],
+            html_report["archive_path"],
+        ]
+        text = (
+            f"Markdown report saved to {markdown['primary_path']}\n"
+            f"HTML report saved to {html_report['primary_path']}\n"
+        )
+    elif action == "analyze_url":
+        repo_url = str(request.get("repo_url") or "").strip()
+        if not repo_url:
+            raise ValueError("analyze-url requires a repository URL or git source")
+        data = analyze_repository_url(
+            repo_url,
+            output_dir=str(request.get("output_dir") or "").strip() or None,
+            keep_clone=_request_bool(request, "keep_clone", False),
+            fast_mode=fast,
+            html_report=not _request_bool(request, "no_html", False),
+            timeout=_request_int(request, "timeout", 300),
+        )
+        artifacts = [
+            path
+            for path in [
+                data.get("markdown_report"),
+                data.get("html_report"),
+                data.get("context_pack"),
+                data.get("prompt"),
+                data.get("summary_path"),
+            ]
+            if path
+        ]
+        text = _render_analyze_url(data)
+    elif action == "kilo_refresh":
+        data = refresh_kilo_bridge(
+            workspace_dir=str(request.get("workspace_dir") or agent.project_dir),
+            scan_root=str(request.get("scan_root") or "."),
+            budget=budget,
+            goal=goal,
+            fast_mode=fast,
+            write_root_files=not _request_bool(request, "no_root_context", False),
+        )
+        artifacts = [path for path in data.get("paths", {}).values() if path]
+        text = (
+            f"Kilo bridge refreshed: {data.get('paths', {}).get('root_context')}\n"
+            f"Focus files: {data.get('paths', {}).get('focus_files')}\n"
+            f"Health: {data.get('health_score')}%\n"
+        )
+    elif action == "kilo_setup":
+        data = setup_kilo_integration(
+            workspace_dir=str(request.get("workspace_dir") or agent.project_dir),
+            scan_root=str(request.get("scan_root") or "."),
+            budget=budget,
+            fast_mode=fast,
+            portable=_request_bool(request, "portable", False),
+            force=_request_bool(request, "force", False),
+        )
+        artifacts = [
+            data.get("kilo_jsonc_path"),
+            data.get("root_kilo_path"),
+            data.get("legacy_mcp_path"),
+            data.get("rule_path"),
+            data.get("agent_path"),
+        ]
+        text = _render_json_lines("KILO SETUP", data)
+    elif action == "features":
+        data = {"features": True}
+        text = _render_features()
+    else:
+        raise ValueError(f"unknown dashboard action: {action}")
+
+    return {
+        "ok": True,
+        "action": action,
+        "text": text,
+        "data": data,
+        "artifacts": artifacts,
+        "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
+    }
+
+
+def _request_bool(request: Dict[str, Any], name: str, default: bool = False) -> bool:
+    value = request.get(name, default)
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "apply", "run"}
+
+
+def _request_int(request: Dict[str, Any], name: str, default: int) -> int:
+    try:
+        return int(request.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _request_list(request: Dict[str, Any], name: str) -> list[str]:
+    value = request.get(name, [])
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return [item.strip() for item in re.split(r"[\n,]+", str(value)) if item.strip()]
+
+
+def _render_json_lines(title: str, data: Dict[str, Any]) -> str:
+    return title + "\n" + json.dumps(data, indent=2, sort_keys=True) + "\n"
+
+
 def _extract_setup_version(path: Path) -> str:
     if not path.exists():
         return ""
@@ -877,45 +1342,284 @@ def _dashboard_html(_: tuple[str, int], __: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sentinel Dashboard</title>
+<title>Sentinel GUI</title>
 <style>
-body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#101418;color:#e8edf2}
-main{max-width:1120px;margin:0 auto;padding:24px}
-h1{font-size:28px;margin:0 0 16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.card{background:#182029;border:1px solid #2b3744;border-radius:8px;padding:16px}
-.value{font-size:30px;font-weight:700}
-.muted{color:#aab7c4;font-size:13px}
-ul{padding-left:20px}
-pre{white-space:pre-wrap;overflow:auto;background:#0b0f13;padding:12px;border-radius:6px}
+:root{color-scheme:dark;--bg:#0b0f14;--panel:#131a22;--panel2:#0f151d;--line:#273442;--ink:#edf3f8;--muted:#93a4b4;--accent:#69b7ff;--accent2:#8bd7c7;--good:#67d781;--warn:#e7bb54;--bad:#ff817a}
+*{box-sizing:border-box}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.4}
+main{max-width:1380px;margin:0 auto;padding:22px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:16px}
+h1{font-size:30px;margin:0;letter-spacing:0}
+h2{font-size:16px;margin:0 0 12px}
+h3{font-size:14px;margin:0 0 8px}
+.muted,.label{color:var(--muted);font-size:13px}
+.label{text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.card,.tool,.output{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.tool{display:flex;flex-direction:column;gap:10px;min-height:160px}
+.tool p{margin:0;color:var(--muted);font-size:13px}
+.value{font-size:27px;font-weight:800;margin-top:4px}
+.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+ul{padding-left:18px;margin:0}
+li{margin:0 0 10px}
+pre{white-space:pre-wrap;overflow:auto;background:var(--panel2);border:1px solid var(--line);padding:12px;border-radius:6px;max-height:430px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill,.badge{display:inline-flex;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:3px 8px;font-size:12px;color:var(--ink)}
+.badge{border-radius:6px;font-weight:800}
+.toolbar{display:flex;gap:8px;align-items:center}
+button{background:var(--accent);color:#07111f;border:0;border-radius:6px;font-weight:800;padding:8px 10px;cursor:pointer}
+button.secondary{background:#1d2834;color:var(--ink);border:1px solid var(--line)}
+button.danger{background:#ff817a;color:#1b0c0b}
+button:disabled{opacity:.6;cursor:wait}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px;font:inherit;font-size:13px}
+textarea{min-height:76px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.switches{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 0}
+.switches label{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
+.switches input{width:auto}
+.section-title{margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.artifact{display:block;color:var(--accent2);word-break:break-all;margin:4px 0}
+.terminal{min-height:300px}
+.span2{grid-column:span 2}
+.span3{grid-column:span 3}
+@media(max-width:1100px){.layout,.cards{grid-template-columns:1fr}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.row{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){main{padding:14px}header{display:block}.grid,.row{grid-template-columns:1fr}.span2,.span3{grid-column:auto}}
 </style>
 </head>
 <body>
 <main>
-<h1>Sentinel Dashboard</h1>
+<header>
+  <div>
+    <div class="muted">Local GUI for every Sentinel workflow</div>
+    <h1>Sentinel Command Center</h1>
+  </div>
+  <div class="toolbar">
+    <span class="muted" id="updated">Loading...</span>
+    <button onclick="load()">Refresh</button>
+  </div>
+</header>
 <div class="grid" id="stats"></div>
-<section class="card" style="margin-top:12px"><h2>Suggestions</h2><ul id="suggestions"></ul></section>
+
+<section class="layout">
+  <div class="card"><h2>Project Identity</h2><div id="identity"></div></div>
+  <div class="card"><h2>Risk Summary</h2><div id="risk"></div></div>
+</section>
+
+<div class="section-title">
+  <h2>Run Sentinel</h2>
+  <span class="muted">Most actions use the shared inputs below.</span>
+</div>
+<section class="card">
+  <div class="row">
+    <label>Question or query<input id="question" placeholder="where is authentication handled?"></label>
+    <label>Repo URL or git source<input id="repoUrl" placeholder="https://github.com/user/repo"></label>
+    <label>Output path or directory<input id="outputPath" placeholder="optional report path / output directory"></label>
+    <label>Workspace / scan root<input id="workspaceDir" placeholder="optional workspace"><input id="scanRoot" style="margin-top:6px" placeholder="scan root, default ."></label>
+  </div>
+  <div class="row">
+    <label>Goal<select id="goal"><option>next</option><option>debug</option><option>review</option><option>plan</option><option>document</option><option>test</option></select></label>
+    <label>Budget<select id="budget"><option>small</option><option>tiny</option><option>medium</option><option>large</option></select></label>
+    <label>Limit<input id="limit" type="number" value="6" min="1"></label>
+    <label>Timeout<input id="timeout" type="number" value="120" min="1"></label>
+  </div>
+  <div class="row">
+    <label class="span2">Changed files / tests / risks<textarea id="changedFiles" placeholder="app.py&#10;tests/test_app.py"></textarea></label>
+    <label class="span2">Memory note<textarea id="memoryGoal" placeholder="what changed, decision, or task note"></textarea></label>
+  </div>
+  <div class="switches">
+    <label><input id="fast" type="checkbox" checked> fast scan</label>
+    <label><input id="dryRun" type="checkbox" checked> dry-run verification</label>
+    <label><input id="apply" type="checkbox"> apply maintenance actions</label>
+    <label><input id="verify" type="checkbox"> run PR verification</label>
+    <label><input id="write" type="checkbox"> write adapter files</label>
+    <label><input id="keepClone" type="checkbox"> keep URL clone</label>
+    <label><input id="force" type="checkbox"> force setup</label>
+  </div>
+</section>
+
+<section class="cards" style="margin-top:12px">
+  <div class="tool">
+    <h3>Understand</h3>
+    <p>Scan, summarize, retrieve context, and generate agent prompts.</p>
+    <div class="toolbar"><button onclick="run('scan')">Scan</button><button onclick="run('overview')">Overview</button><button onclick="run('brief')">Brief</button></div>
+    <div class="toolbar"><button onclick="run('context')">Context</button><button onclick="run('prompt')">Prompt</button><button onclick="run('graph')">Graph</button></div>
+  </div>
+  <div class="tool">
+    <h3>Ask</h3>
+    <p>Use local retrieval, symbols, snippets, and project memory.</p>
+    <div class="toolbar"><button onclick="run('ask')">Ask Sentinel</button><button onclick="run('retrieve')">Retrieve</button><button class="secondary" onclick="run('features')">Features</button></div>
+  </div>
+  <div class="tool">
+    <h3>Reports</h3>
+    <p>Generate shareable markdown and HTML reports.</p>
+    <div class="toolbar"><button onclick="run('report_html')">HTML</button><button onclick="run('report_markdown')">Markdown</button><button onclick="run('report_both')">Both</button></div>
+  </div>
+  <div class="tool">
+    <h3>Quality</h3>
+    <p>Verification, PR summary, release readiness, coverage, and health checks.</p>
+    <div class="toolbar"><button onclick="run('verify')">Verify</button><button onclick="run('pr')">PR</button><button onclick="run('coverage')">Coverage</button></div>
+    <div class="toolbar"><button onclick="run('release_check')">Release</button><button onclick="run('doctor')">Doctor</button><button onclick="run('mcp_health')">MCP</button></div>
+  </div>
+  <div class="tool">
+    <h3>Memory</h3>
+    <p>Inspect history, token savings, and record lightweight task memory.</p>
+    <div class="toolbar"><button onclick="run('timeline')">Timeline</button><button onclick="run('savings')">Savings</button><button onclick="run('memory_list')">Memory</button></div>
+    <div class="toolbar"><button onclick="run('memory_record')">Record Note</button></div>
+  </div>
+  <div class="tool">
+    <h3>Maintenance</h3>
+    <p>Plan safe fixes, clean reports, write adapters, and refresh Kilo files.</p>
+    <div class="toolbar"><button onclick="run('autofix')">Autofix</button><button onclick="run('cleanup_reports')">Cleanup</button><button onclick="run('adapters')">Adapters</button></div>
+    <div class="toolbar"><button onclick="run('kilo_refresh')">Kilo Refresh</button><button onclick="run('kilo_setup')">Kilo Setup</button></div>
+  </div>
+  <div class="tool span3">
+    <h3>Analyze A Repository URL</h3>
+    <p>Paste a git URL or local git source. Sentinel clones it, scans it, and writes a report bundle.</p>
+    <div class="toolbar"><button onclick="run('analyze_url')">Analyze URL</button></div>
+  </div>
+</section>
+
+<section class="layout">
+  <div class="output">
+    <h2>Output</h2>
+    <pre class="terminal" id="runOutput">Choose an action above.</pre>
+    <div id="artifacts"></div>
+  </div>
+  <div class="card">
+    <h2>Live Suggestions</h2>
+    <ul id="suggestions"></ul>
+    <h2 style="margin-top:16px">Agent Prompt</h2>
+    <pre id="prompt">Loading...</pre>
+  </div>
+</section>
+
+<section class="cards" style="margin-top:12px">
+  <div class="card"><h2>Focus Files</h2><div class="pills" id="focus"></div></div>
+  <div class="card"><h2>Hotspots</h2><div class="pills" id="hotspots"></div></div>
+  <div class="card"><h2>Frameworks</h2><div class="pills" id="frameworks"></div></div>
+</section>
+<section class="layout">
+  <div class="card"><h2>Top File Risks</h2><table><thead><tr><th>Level</th><th>File</th><th>Score</th></tr></thead><tbody id="fileRisks"></tbody></table></div>
+  <div class="card"><h2>Issues</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody id="issues"></tbody></table></div>
+</section>
 <section class="card" style="margin-top:12px"><h2>Health Timeline</h2><pre id="timeline">Loading...</pre></section>
 </main>
 <script>
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const pill = value => `<span class="pill">${esc(value)}</span>`;
+const levelClass = value => {
+  const n = Number(value || 0);
+  if (n >= 80) return 'good';
+  if (n >= 55) return 'warn';
+  return 'bad';
+};
+function payload(action){
+  const output = document.getElementById('outputPath').value.trim();
+  return {
+    action,
+    question: document.getElementById('question').value.trim(),
+    query: document.getElementById('question').value.trim(),
+    repo_url: document.getElementById('repoUrl').value.trim(),
+    output_path: output,
+    output_dir: output,
+    workspace_dir: document.getElementById('workspaceDir').value.trim(),
+    scan_root: document.getElementById('scanRoot').value.trim() || '.',
+    goal: document.getElementById('goal').value,
+    budget: document.getElementById('budget').value,
+    limit: Number(document.getElementById('limit').value || 6),
+    timeout: Number(document.getElementById('timeout').value || 120),
+    changed_files: document.getElementById('changedFiles').value,
+    tests: document.getElementById('changedFiles').value,
+    risks: '',
+    decisions: '',
+    memory_goal: document.getElementById('memoryGoal').value.trim(),
+    fast: document.getElementById('fast').checked,
+    dry_run: document.getElementById('dryRun').checked,
+    apply: document.getElementById('apply').checked,
+    verify: document.getElementById('verify').checked,
+    write: document.getElementById('write').checked,
+    keep_clone: document.getElementById('keepClone').checked,
+    force: document.getElementById('force').checked
+  };
+}
+async function run(action){
+  const buttons = [...document.querySelectorAll('button')];
+  buttons.forEach(button => button.disabled = true);
+  const out = document.getElementById('runOutput');
+  const artifacts = document.getElementById('artifacts');
+  out.textContent = `Running ${action}...`;
+  artifacts.innerHTML = '';
+  try{
+    const response = await fetch('/api/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload(action))
+    });
+    const result = await response.json();
+    if(!response.ok || !result.ok){
+      out.textContent = result.error || 'Action failed';
+      return;
+    }
+    out.textContent = result.text || JSON.stringify(result.data, null, 2);
+    artifacts.innerHTML = (result.artifacts || []).map(path =>
+      `<span class="artifact">${esc(path)}</span>`
+    ).join('');
+    load();
+  }catch(error){
+    out.textContent = String(error);
+  }finally{
+    buttons.forEach(button => button.disabled = false);
+  }
+}
 async function load(){
   const data = await fetch('/api/status').then(r=>r.json());
   const latest = data.latest || {};
   const audit = latest.audit || {};
   const perf = latest.performance || {};
   const metrics = audit.metrics || {};
+  const understanding = audit.understanding || {};
+  const risk = audit.risk_summary || {};
+  const llm = latest.llm || {};
+  const suggestions = latest.suggestions || [];
+  const issues = audit.issues || [];
+  const fileRisks = audit.risk_scores || [];
+  document.getElementById('updated').textContent = latest.timestamp ? `Updated ${latest.timestamp}` : 'Waiting for scan';
   document.getElementById('stats').innerHTML = [
-    ['Health', (audit.health_score ?? '-') + '%'],
+    ['Health', (audit.health_score ?? '-') + '%', levelClass(audit.health_score)],
     ['Files', metrics.total_files ?? '-'],
+    ['Lines', metrics.total_lines ?? '-'],
     ['Issues', (audit.issues || []).length],
     ['Duration', (perf.duration_seconds ?? 0) + 's'],
-    ['Budget Alerts', (perf.budget_alerts || []).length],
     ['Token Savings', ((latest.llm || {}).estimated_token_savings_percent ?? '-') + '%']
-  ].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="value">${v}</div></div>`).join('');
-  const suggestions = latest.suggestions || [];
+  ].map(([k,v,c])=>`<div class="card"><div class="label">${esc(k)}</div><div class="value ${c || ''}">${esc(v)}</div></div>`).join('');
+  document.getElementById('identity').innerHTML = `
+    <p><b>${esc(understanding.project_name || 'unknown')}</b></p>
+    <p class="muted">${esc(understanding.project_type || 'unknown project type')}</p>
+    <p>${esc(understanding.purpose || understanding.summary || 'No purpose inferred yet.')}</p>
+  `;
+  document.getElementById('risk').innerHTML = ['maintainability','runtime','test','security'].map(name => {
+    const item = risk[name] || {};
+    return `<p><b>${esc(name)}</b>: ${esc(item.level || 'unknown')} <span class="muted">${esc(item.reason || '')}</span></p>`;
+  }).join('');
   document.getElementById('suggestions').innerHTML = suggestions.slice(0,8).map(s =>
-    `<li><b>[${s.priority}] ${s.title}</b><br><span class="muted">${s.ranking_label || ''} confidence=${(s.confidence||{}).level || 'unknown'}</span></li>`
+    `<li><b>[${esc(s.priority)}] ${esc(s.title)}</b><br><span class="muted">${esc(s.action || '')}</span><br><span class="muted">${esc(s.ranking_label || '')} confidence=${esc((s.confidence||{}).level || 'unknown')}</span></li>`
   ).join('') || '<li>No suggestions yet.</li>';
+  document.getElementById('prompt').textContent = suggestions[0]?.suggested_prompt || 'No prompt generated yet.';
+  document.getElementById('focus').innerHTML = (llm.focus_files || []).slice(0,10).map(pill).join('') || '<span class="muted">No focus files yet.</span>';
+  document.getElementById('hotspots').innerHTML = (understanding.hotspots || []).slice(0,10).map(h => pill(h.path)).join('') || '<span class="muted">No hotspots yet.</span>';
+  document.getElementById('frameworks').innerHTML = (understanding.frameworks || []).slice(0,10).map(pill).join('') || '<span class="muted">No frameworks detected.</span>';
+  document.getElementById('fileRisks').innerHTML = fileRisks.slice(0,10).map(r =>
+    `<tr><td><span class="badge">${esc(r.level)}</span></td><td><code>${esc(r.file)}</code></td><td>${esc(r.score)}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="muted">No file risks yet.</td></tr>';
+  document.getElementById('issues').innerHTML = issues.slice(0,10).map(i =>
+    `<tr><td><span class="badge">${esc(i.severity)}</span></td><td>${esc(i.message)}</td><td><code>${esc(i.file || '')}</code></td></tr>`
+  ).join('') || '<tr><td colspan="3" class="muted">No issues detected.</td></tr>';
   document.getElementById('timeline').textContent = (data.history || []).map(h =>
     `${h.timestamp} health=${h.health_score}% changes=${h.change_summary}`
   ).join('\\n') || 'No scan history yet.';
@@ -1872,6 +2576,8 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "context",
         "prompt",
         "retrieve",
+        "ask",
+        "analyze-url",
         "graph",
         "verify",
         "memory",
@@ -2113,6 +2819,44 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["text", "json"],
         default="text",
         help="Output format for retrieved context",
+    )
+
+    ask_parser = subparsers.add_parser(
+        "ask",
+        parents=[common],
+        help="Answer a project question using Sentinel's local retrieval context",
+    )
+    ask_parser.add_argument("--question", "-q", required=True, help="Question to ask about the project")
+    ask_parser.add_argument(
+        "--goal",
+        choices=["next", "debug", "review", "plan", "document", "test"],
+        default="next",
+        help="Task mode used to bias retrieval",
+    )
+    ask_parser.add_argument("--fast", action="store_true", help="Use faster scanning")
+    ask_parser.add_argument("--limit", type=int, default=6, help="Maximum relevant files to include")
+    ask_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for the answer",
+    )
+
+    analyze_url_parser = subparsers.add_parser(
+        "analyze-url",
+        help="Clone a git repository URL or source, scan it, and write a report bundle",
+    )
+    analyze_url_parser.add_argument("repo_url", help="Git repository URL, file:// URL, or local git source path")
+    analyze_url_parser.add_argument("--output-dir", default=None, help="Directory where reports should be written")
+    analyze_url_parser.add_argument("--keep-clone", action="store_true", help="Keep the cloned repository inside the output directory")
+    analyze_url_parser.add_argument("--fast", action="store_true", help="Use faster scanning after cloning")
+    analyze_url_parser.add_argument("--no-html", action="store_true", help="Skip HTML report generation")
+    analyze_url_parser.add_argument("--timeout", type=int, default=300, help="Git clone timeout in seconds")
+    analyze_url_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for the URL analysis summary",
     )
 
     graph_parser = subparsers.add_parser(
@@ -2421,7 +3165,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Seconds between bridge refreshes",
     )
 
-    report_parser = subparsers.add_parser("report", parents=[common], help="Generate and save a markdown report")
+    report_parser = subparsers.add_parser("report", parents=[common], help="Generate and save a markdown or HTML report")
     report_parser.add_argument(
         "--output",
         type=str,
@@ -2433,6 +3177,13 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Use a faster scan mode while generating the report",
     )
+    report_parser.add_argument(
+        "--format",
+        choices=["markdown", "html", "both"],
+        default="markdown",
+        help="Report format to save",
+    )
+    report_parser.add_argument("--html", action="store_true", help="Shortcut for --format html")
 
     watch_parser = subparsers.add_parser("watch", parents=[common], help="Continuously monitor a project")
     watch_parser.add_argument(
@@ -2567,6 +3318,21 @@ def main(argv: Optional[list[str]] = None) -> int:
             server.serve()
             return 0
 
+        if args.command == "analyze-url":
+            result = analyze_repository_url(
+                args.repo_url,
+                output_dir=args.output_dir,
+                keep_clone=args.keep_clone,
+                fast_mode=args.fast,
+                html_report=not args.no_html,
+                timeout=args.timeout,
+            )
+            if args.format == "json":
+                print(json.dumps(result, indent=2, sort_keys=True))
+            else:
+                print(_render_analyze_url(result))
+            return 0
+
         agent = SentinelAgent(args.directory, args.config)
         if args.quiet:
             logging.getLogger().setLevel(logging.ERROR)
@@ -2579,14 +3345,46 @@ def main(argv: Optional[list[str]] = None) -> int:
             agent.monitor.interval_seconds = max(1, args.interval)
 
         if args.command == "report":
-            saved = agent.save_full_report(destination=args.output, fast_mode=args.fast)
-            print(f"Full report saved to {saved['primary_path']}")
-            print(f"Archived copy saved to {saved['archive_path']}")
+            report_format = "html" if args.html else args.format
+            if report_format == "markdown":
+                saved = agent.save_full_report(destination=args.output, fast_mode=args.fast)
+                print(f"Full report saved to {saved['primary_path']}")
+                print(f"Archived copy saved to {saved['archive_path']}")
+            elif report_format == "html":
+                saved = agent.save_html_report(destination=args.output, fast_mode=args.fast)
+                print(f"HTML report saved to {saved['primary_path']}")
+                print(f"Archived HTML copy saved to {saved['archive_path']}")
+            else:
+                markdown_output = args.output
+                html_output = None
+                if markdown_output:
+                    output_path = Path(markdown_output).resolve()
+                    html_output = str(output_path.with_suffix(".html"))
+                md_saved = agent.save_full_report(destination=markdown_output, fast_mode=args.fast)
+                html_saved = agent.save_html_report(destination=html_output, fast_mode=args.fast)
+                print(f"Full report saved to {md_saved['primary_path']}")
+                print(f"HTML report saved to {html_saved['primary_path']}")
+                print(f"Archived markdown copy saved to {md_saved['archive_path']}")
+                print(f"Archived HTML copy saved to {html_saved['archive_path']}")
             return 0
 
         if args.command == "retrieve":
             result = agent.retrieve(
                 args.query,
+                goal=args.goal,
+                limit=args.limit,
+                fast_mode=args.fast,
+                extra_ignore_paths=args.ignore_path,
+            )
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(result["text"])
+            return 0
+
+        if args.command == "ask":
+            result = agent.ask(
+                args.question,
                 goal=args.goal,
                 limit=args.limit,
                 fast_mode=args.fast,

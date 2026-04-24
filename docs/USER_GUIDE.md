@@ -87,7 +87,16 @@ python sentinel.py brief . --fast --quiet --ignore-path tools/sentinel
 
 ### Health Score
 
-The health score starts at 100 and drops based on detected issues. High-severity issues reduce the score more than low-severity issues.
+The health score starts at 100 and drops based on detected issues, but issue type matters.
+Maintainability-only signals, such as oversized files, should not collapse a project to 0%.
+Scores near 0 are reserved for serious breakage such as missing tests, missing runtime entry points, critical security findings, or unreadable project structure.
+
+Sentinel also reports risk by area:
+
+- Structural risk: oversized files, many imports, complex boundaries
+- Runtime risk: entry points, executable surfaces, provider/API paths
+- Test risk: missing tests, weak or unclear paired coverage around risky files
+- Security risk: secret-handling and unsafe-code signals when assessed
 
 ### Issues
 

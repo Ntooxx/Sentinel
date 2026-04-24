@@ -8,3 +8,10 @@ data/sentinel.log
 data/reports/*.md
 SENTINEL_REPORT.md
 .sentinel/
+sentinel-url-reports/
+server.log
+server.err.log
+sentinel_scan_output.txt
+sentinel_scan_with.md
+sentinel_scan_without.md
+directory_structure.txt

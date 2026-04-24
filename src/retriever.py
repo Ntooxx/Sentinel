@@ -102,12 +102,12 @@ def _score_files(files: dict[str, dict[str, Any]], terms: list[str], goal: str) 
         ).lower()
         score = sum(_term_score(haystack, term) for term in terms)
         score += sum(1 for term in boost_terms if term in haystack)
+        if score <= 0:
+            continue
         if info.get("has_main"):
             score += 1
         if info.get("has_function") or info.get("has_class"):
             score += 1
-        if score <= 0:
-            continue
         scored.append(
             {
                 "path": path,
@@ -259,7 +259,34 @@ def _render_retrieval_text(
 
 
 def _terms(query: str) -> list[str]:
-    return [term for term in re.findall(r"[a-zA-Z0-9_]+", query.lower()) if len(term) > 1]
+    stopwords = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "for",
+        "from",
+        "how",
+        "implemented",
+        "in",
+        "is",
+        "of",
+        "on",
+        "or",
+        "the",
+        "to",
+        "what",
+        "where",
+        "which",
+        "who",
+        "why",
+        "with",
+    }
+    return [
+        term
+        for term in re.findall(r"[a-zA-Z0-9_]+", query.lower())
+        if len(term) > 1 and term not in stopwords
+    ]
 
 
 def _term_score(haystack: str, term: str) -> int:
