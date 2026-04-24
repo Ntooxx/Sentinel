@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+data/sentinel.log
+data/reports/*.md
+SENTINEL_REPORT.md
+.sentinel/

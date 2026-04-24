@@ -1,0 +1,15 @@
+{
+  "large_file_line_threshold": 500,
+  "large_file_size_threshold": 100000,
+  "health_penalties": {
+    "critical": 20,
+    "high": 15,
+    "medium": 8,
+    "low": 3
+  },
+  "significant_change_thresholds": {
+    "new_files": 1,
+    "modified_files": 1,
+    "deleted_files": 1
+  }
+}

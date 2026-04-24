@@ -1,0 +1,60 @@
+{
+  "patterns": [
+    {
+      "name": "automated_tests",
+      "description": "The project includes automated tests",
+      "path_contains_any": [
+        "tests/",
+        "test_",
+        "_test."
+      ],
+      "extension_in": [
+        ".py",
+        ".js",
+        ".ts"
+      ]
+    },
+    {
+      "name": "documentation",
+      "description": "The project includes markdown documentation",
+      "path_contains_any": [
+        "readme.md",
+        "docs/"
+      ],
+      "extension_in": [
+        ".md"
+      ]
+    },
+    {
+      "name": "command_line_interface",
+      "description": "The project exposes a command-line entry point",
+      "requires_main": true,
+      "extension_in": [
+        ".py",
+        ".js",
+        ".ts",
+        ".sh",
+        ".bash"
+      ]
+    },
+    {
+      "name": "containerization",
+      "description": "The project includes container-related assets",
+      "file_name_in": [
+        "dockerfile",
+        "docker-compose.yml",
+        "docker-compose.yaml"
+      ]
+    },
+    {
+      "name": "packaging",
+      "description": "The project includes package or dependency manifests",
+      "file_name_in": [
+        "requirements.txt",
+        "pyproject.toml",
+        "setup.py",
+        "package.json"
+      ]
+    }
+  ]
+}
