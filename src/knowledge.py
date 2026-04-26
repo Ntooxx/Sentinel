@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from copy import deepcopy
@@ -220,6 +220,7 @@ class KnowledgeBase:
         suggestions: Iterable[Dict[str, Any]],
         performance: Dict[str, Any],
         persist: bool = True,
+        health_score_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         suggestion_list = list(suggestions)
         top = suggestion_list[0] if suggestion_list else None
@@ -235,6 +236,8 @@ class KnowledgeBase:
             "duration_seconds": performance.get("duration_seconds", 0),
             "budget_alerts": performance.get("budget_alerts", []),
         }
+        if health_score_data:
+            entry["health_score_data"] = health_score_data
         history = self.data.setdefault("scan_history", [])
         history.append(entry)
         self.data["scan_history"] = history[-100:]
@@ -294,6 +297,10 @@ class KnowledgeBase:
         llm_readiness = self.data.get("llm_readiness", {})
         savings = self.get_savings_summary()
 
+        scan_history = self.data.get("scan_history", [])
+        latest_scan = scan_history[-1] if scan_history else None
+        health_score_data = latest_scan.get("health_score_data") if latest_scan else None
+
         return {
             "total_files": len(files),
             "total_lines": total_lines,
@@ -303,7 +310,7 @@ class KnowledgeBase:
             ),
             "patterns_found": len(self.data["patterns"]),
             "decisions_made": len(self.data["decisions"]),
-            "scan_history_count": len(self.data.get("scan_history", [])),
+            "scan_history_count": len(scan_history),
             "project_name": understanding.get("project_name"),
             "project_type": understanding.get("project_type"),
             "primary_language": understanding.get("primary_language"),
@@ -312,6 +319,7 @@ class KnowledgeBase:
             "tracked_token_savings_percent": savings.get("estimated_token_savings_percent"),
             "last_scan": self.data["last_scan"],
             "last_checkpoint": self.data["last_checkpoint"],
+            "health_score_data": health_score_data,
         }
 
     def export_context(self, max_items: int = 50, budget: str = "medium") -> str:
@@ -330,7 +338,7 @@ class KnowledgeBase:
             lines.append(f"- Primary Language: {summary['primary_language']}")
         lines.append(f"- Files: {summary['total_files']}")
         lines.append(f"- Total Lines: {summary['total_lines']}")
-        lines.append(f"- Open Issues: {summary['open_issues']}")
+        lines.append(f"- Review Signals: {summary['open_issues']}")
         lines.append(f"- Patterns Found: {summary['patterns_found']}")
         if summary.get("top_suggestion"):
             lines.append(f"- Top Suggestion: {summary['top_suggestion']}")
@@ -353,6 +361,9 @@ class KnowledgeBase:
             workflow = understanding.get("workflow_hints", [])
             if workflow:
                 lines.append(f"- Workflow: {', '.join(workflow[: limits['frameworks']])}")
+            coverage = understanding.get("scan_coverage", {})
+            if coverage.get("warning"):
+                lines.append(f"- Scan Coverage Warning: {coverage['warning']}")
             lines.append("")
 
             components = understanding.get("main_components", [])
@@ -380,6 +391,17 @@ class KnowledgeBase:
             architecture = self.data["architecture"]
             if architecture.get("entry_points"):
                 lines.append(f"- Entry Points: {', '.join(architecture['entry_points'][: limits['files']])}")
+            entry_points_by_category = architecture.get("entry_points_by_category", {})
+            if entry_points_by_category:
+                for label, key in [
+                    ("Runtime Entry Points", "runtime"),
+                    ("Build Entry Points", "build"),
+                    ("Generator Entry Points", "generator"),
+                    ("Environment Setup", "environment"),
+                ]:
+                    values = entry_points_by_category.get(key, [])
+                    if values:
+                        lines.append(f"- {label}: {', '.join(values[: limits['files']])}")
             if architecture.get("patterns"):
                 lines.append(f"- Patterns: {', '.join(architecture['patterns'][: limits['patterns']])}")
             if architecture.get("directories"):
@@ -406,7 +428,7 @@ class KnowledgeBase:
             lines.append("")
 
         if self.data["issues"]:
-            lines.append("## Recent Issues")
+            lines.append("## Recent Review Signals")
             for issue in self.data["issues"][: min(max_items, limits["issues"])]:
                 message = issue.get("message") or issue.get("issue", "")
                 severity = issue.get("severity", "low")

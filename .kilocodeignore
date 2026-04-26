@@ -1,0 +1,10 @@
+.git/
+.kilo/node_modules/
+.kilocode/node_modules/
+.pytest_cache/
+.ruff_cache/
+.sentinel/reports/
+tools/sentinel/src/__pycache__/
+**/__pycache__/
+sentinel_cli_*.md
+sentinel_help_*.md

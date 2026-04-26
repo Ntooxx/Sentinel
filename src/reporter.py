@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import html
 import json
@@ -23,25 +23,33 @@ class ReportGenerator:
         lines.append(f"  {result['timestamp']}")
         if "performance" in result:
             perf = result["performance"]
-            mode = "fast" if perf.get("fast_mode") else "full"
-            lines.append(f"  Duration: {perf.get('duration_seconds', 0):.3f}s | Mode: {mode}")
+            lines.append(f"  Duration: {perf.get('duration_seconds', 0):.3f}s | Mode: {self._scan_mode_label(result)}")
         lines.append("=" * self.width)
         lines.append("")
 
         health = result["audit"]["health_score"]
-        lines.append(f"Health: {self._health_bar(health)} {health}%")
+        health_data = result["audit"].get("health_score_data", {})
+        health_text = f"Health: {self._health_bar(health)} {health}%"
+        if health_data.get("security_assessed") is False:
+            health_text += " (excluding security review)"
+        lines.append(health_text)
         risk_summary = result["audit"].get("risk_summary", {})
         if risk_summary:
             lines.append(
                 "Risk: "
-                f"maint={risk_summary.get('maintainability', {}).get('level', 'unknown')} | "
-                f"runtime={risk_summary.get('runtime', {}).get('level', 'unknown')} | "
-                f"tests={risk_summary.get('test', {}).get('level', 'unknown')} | "
-                f"security={risk_summary.get('security', {}).get('level', 'not_assessed')}"
+                f"Maintainability risk: {risk_summary.get('maintainability', {}).get('level', 'unknown')} | "
+                f"Runtime complexity: {risk_summary.get('runtime', {}).get('level', 'unknown')} | "
+                f"Test signal: {self._test_signal_label(risk_summary)} | "
+                f"Security review: {risk_summary.get('security', {}).get('level', 'not_assessed')}"
             )
+        if health_data.get("breakdown"):
+            lines.append("Why this score:")
+            for line in self._health_breakdown_lines(health_data):
+                lines.append(f"  {line}")
         lines.append("")
 
         understanding = result["audit"].get("understanding", {})
+        coverage = result["audit"].get("scan_coverage", {}) or understanding.get("scan_coverage", {})
         if understanding:
             lines.append("Project:")
             if understanding.get("project_name"):
@@ -58,6 +66,9 @@ class ReportGenerator:
             if understanding.get("frameworks"):
                 lines.append(f"  Frameworks: {', '.join(understanding['frameworks'][:6])}")
             lines.append("")
+        if coverage.get("warning"):
+            lines.append(f"Coverage Warning: {coverage['warning']}")
+            lines.append("")
 
         metrics = result["audit"]["metrics"]
         lines.append("Metrics:")
@@ -66,6 +77,12 @@ class ReportGenerator:
             f"Lines: {metrics['total_lines']} | "
             f"TODOs: {metrics['open_todos']}"
         )
+        # Show categorized TODOs if available
+        todo_categories = metrics.get("todo_categories", {})
+        if todo_categories:
+            lines.append("  TODO Categories:")
+            for category, count in todo_categories.items():
+                lines.append(f"    {self._todo_category_label(category)}: {count}")
         budget_alerts = result.get("performance", {}).get("budget_alerts", [])
         if budget_alerts:
             lines.append("  Budget alerts: " + "; ".join(alert["message"] for alert in budget_alerts[:3]))
@@ -74,7 +91,7 @@ class ReportGenerator:
         lines.append("")
         lines.append("Changes:")
         if diff.get("is_first_scan"):
-            lines.append(f"  {diff['summary']}")
+            lines.append("  Baseline scan: all files are treated as new because no previous checkpoint exists.")
         else:
             lines.append(
                 f"  +{diff.get('new_count', 0)} new | "
@@ -87,7 +104,8 @@ class ReportGenerator:
 
         issues = result["audit"]["issues"]
         lines.append("")
-        lines.append(f"Issues ({len(issues)}):")
+        lines.append(f"Confirmed issues: {self._confirmed_issue_count(issues)}")
+        lines.append(f"Review signals ({len(issues)}):")
         if issues:
             for issue in issues[:5]:
                 location = f" [{issue['file']}]" if issue.get("file") else ""
@@ -190,7 +208,7 @@ class ReportGenerator:
         lines = [
             f"health={result['audit']['health_score']}% "
             f"files={metrics['total_files']} "
-            f"issues={len(issues)} "
+            f"review_signals={len(issues)} "
             f"duration={perf.get('duration_seconds', 0):.3f}s "
             f"mode={'fast' if perf.get('fast_mode') else 'full'}"
         ]
@@ -213,20 +231,32 @@ class ReportGenerator:
         diff = result["diff"]
         issues = result["audit"]["issues"]
         suggestions = result.get("suggestions", [])
+        coverage = result["audit"].get("scan_coverage", {})
 
         lines = ["# Sentinel Report", ""]
+        health = result["audit"]["health_score"]
+        health_data = result["audit"].get("health_score_data", {})
+        health_text = f"{health}%"
+        if health_data.get("security_assessed") is False:
+            health_text += " (excluding security review)"
         lines.append(f"- Scan: {result['scan_number']}")
         lines.append(f"- Timestamp: {result['timestamp']}")
-        lines.append(f"- Health Score: {result['audit']['health_score']}%")
+        lines.append(f"- Scan Mode: {self._scan_mode_label(result)}")
+        lines.append(f"- Duration: {result.get('performance', {}).get('duration_seconds', 0)}s")
+        lines.append(f"- Health Score: {health_text}")
         risk_summary = result["audit"].get("risk_summary", {})
         if risk_summary:
             lines.append(
                 "- Risk Summary: "
-                f"Maintainability {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
-                f"Runtime {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
-                f"Tests {risk_summary.get('test', {}).get('level', 'unknown')}; "
-                f"Security {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+                f"Maintainability risk: {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
+                f"Runtime complexity: {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
+                f"Test signal: {self._test_signal_label(risk_summary)}; "
+                f"Security review: {risk_summary.get('security', {}).get('level', 'not_assessed')}"
             )
+        if health_data.get("breakdown"):
+            lines.append("- Why this score: " + health_data.get("explanation", ""))
+            for line in self._health_breakdown_lines(health_data):
+                lines.append(f"  - {line}")
         lines.append("")
 
         understanding = result["audit"].get("understanding", {})
@@ -240,6 +270,25 @@ class ReportGenerator:
                 lines.append(f"- Frameworks: {', '.join(understanding['frameworks'])}")
             if understanding.get("workflow_hints"):
                 lines.append(f"- Workflow Hints: {', '.join(understanding['workflow_hints'])}")
+
+            # Show confidence reasons if available
+            confidence_reasons = understanding.get("confidence_reasons", {})
+            if confidence_reasons:
+                lines.append("")
+                lines.append("### Confidence Reasons")
+                for aspect, data in confidence_reasons.items():
+                    if data.get("level") and data.get("reason"):
+                        lines.append(f"- {aspect.capitalize()} confidence: {data['level']}")
+                        lines.append(f"  - Reason: {data['reason']}")
+            lines.append("")
+        if coverage.get("warning"):
+            lines.append("## Scan Coverage")
+            lines.append(f"- Warning: {coverage['warning']}")
+            if coverage.get("underrepresented_directories"):
+                lines.append(
+                    "- Underrepresented directories: "
+                    + ", ".join(coverage["underrepresented_directories"][:6])
+                )
             lines.append("")
 
         lines.append("## Metrics")
@@ -247,6 +296,12 @@ class ReportGenerator:
         lines.append(f"- Total Lines: {metrics['total_lines']}")
         lines.append(f"- Total Size Bytes: {metrics['total_size_bytes']}")
         lines.append(f"- Open TODOs: {metrics['open_todos']}")
+        # Show categorized TODOs if available
+        todo_categories = metrics.get("todo_categories", {})
+        if todo_categories:
+            lines.append("- TODO Categories:")
+            for category, count in todo_categories.items():
+                lines.append(f"  - {self._todo_category_label(category)}: {count}")
         lines.append("")
 
         lines.append("## Changes")
@@ -259,7 +314,9 @@ class ReportGenerator:
             lines.append(f"- Deleted Files: {', '.join(diff['deleted_files'])}")
         lines.append("")
 
-        lines.append("## Issues")
+        lines.append("## Review Signals")
+        lines.append(f"- Confirmed issues: {self._confirmed_issue_count(issues)}")
+        lines.append(f"- Review signals: {len(issues)}")
         if issues:
             for issue in issues:
                 location = f" ({issue['file']})" if issue.get("file") else ""
@@ -312,11 +369,16 @@ class ReportGenerator:
         suggestions = result.get("suggestions", [])
         understanding = result["audit"].get("understanding", {})
         risk_scores = result["audit"].get("risk_scores", [])
+        risk_groups = result["audit"].get("risk_groups", {})
         llm = result.get("llm", {})
         perf = result.get("performance", {})
         risk_summary = result["audit"].get("risk_summary", {})
+        health_data = result["audit"].get("health_score_data", {})
         components = understanding.get("main_components", [])
         hotspots = understanding.get("hotspots", [])
+        hotspot_groups = understanding.get("hotspot_groups", {})
+        entry_points_by_category = understanding.get("entry_points_by_category", {})
+        coverage = result["audit"].get("scan_coverage", {}) or understanding.get("scan_coverage", {})
         focus_files = llm.get("focus_files", [])
         project_name = understanding.get("project_name") or "Sentinel Project"
         health = int(result["audit"].get("health_score", 0) or 0)
@@ -329,9 +391,27 @@ class ReportGenerator:
             items = [f"<span class=\"pill\">{esc(value)}</span>" for value in values if str(value)]
             return "".join(items) or "<span class=\"muted\">None detected</span>"
 
+        def maybe_pills(values: Iterable[Any], fallback: str = "") -> str:
+            items = [f"<span class=\"pill\">{esc(value)}</span>" for value in values if str(value)]
+            if items:
+                return "".join(items)
+            return f"<span class=\"muted\">{esc(fallback)}</span>" if fallback else ""
+
+        def grouped_pills(groups: Dict[str, Iterable[Any]], *, label_map: Dict[str, str]) -> str:
+            chunks = []
+            for key, label in label_map.items():
+                values = list(groups.get(key, []))
+                if not values:
+                    continue
+                display_values = [item.get("path", item) if isinstance(item, dict) else item for item in values]
+                chunks.append(
+                    f"<div style=\"margin-bottom:12px\"><h3>{esc(label)}</h3><div class=\"file-list\">{pills(display_values[:6])}</div></div>"
+                )
+            return "".join(chunks) or "<p class=\"muted\">None detected.</p>"
+
         def issue_rows() -> str:
             if not issues:
-                return "<tr><td colspan=\"3\" class=\"muted\">No issues detected.</td></tr>"
+                return "<tr><td colspan=\"3\" class=\"muted\">No review signals detected.</td></tr>"
             rows = []
             for issue in issues[:40]:
                 rows.append(
@@ -350,6 +430,14 @@ class ReportGenerator:
             for index, suggestion in enumerate(suggestions[:8], start=1):
                 confidence = suggestion.get("confidence", {})
                 focus = suggestion.get("focus_files", [])
+                fallback = ""
+                if not focus and suggestion.get("category") == "cleanup":
+                    fallback = "Affected files: grouped list available in TODO detail view"
+                focus_html = (
+                    f"<div class=\"file-list\">{maybe_pills(focus[:5], fallback)}</div>"
+                    if focus or fallback
+                    else ""
+                )
                 cards.append(
                     "<article class=\"item\">"
                     f"<div class=\"item-kicker\">#{index} {esc(suggestion.get('priority', 'medium')).upper()}</div>"
@@ -361,7 +449,7 @@ class ReportGenerator:
                     f"<span>effort {esc(suggestion.get('effort', 'medium'))}</span>"
                     f"<span>confidence {esc(confidence.get('level', 'unknown'))}</span>"
                     "</div>"
-                    f"<div class=\"file-list\">{pills(focus[:5])}</div>"
+                    f"{focus_html}"
                     "</article>"
                 )
             return "".join(cards)
@@ -396,12 +484,49 @@ class ReportGenerator:
                 )
             return "".join(rows)
 
+        def grouped_risk_sections() -> str:
+            label_map = {
+                "runtime": "Top runtime risks",
+                "build_tooling": "Top build/tooling risks",
+                "test": "Top test risks",
+                "documentation": "Top documentation risks",
+                "other": "Other risks",
+            }
+            sections = []
+            for key, label in label_map.items():
+                items = list(risk_groups.get(key, []))
+                if not items:
+                    continue
+                rows = []
+                for item in items[:8]:
+                    rows.append(
+                        "<tr>"
+                        f"<td><span class=\"badge\">{esc(item.get('level', 'unknown')).upper()}</span></td>"
+                        f"<td><code>{esc(item.get('file', ''))}</code></td>"
+                        f"<td>{esc(item.get('score', 0))}</td>"
+                        f"<td>{esc(', '.join(item.get('factors', [])[:4]))}</td>"
+                        "</tr>"
+                    )
+                sections.append(
+                    f"<div style=\"margin-bottom:18px\"><h3>{esc(label)}</h3>"
+                    "<table><thead><tr><th>Level</th><th>File</th><th>Score</th><th>Factors</th></tr></thead>"
+                    f"<tbody>{''.join(rows)}</tbody></table></div>"
+                )
+            return "".join(sections) or "<p class=\"muted\">No grouped risk scores available.</p>"
+
+        health_breakdown = "<br>".join(esc(line) for line in self._health_breakdown_lines(health_data))
+        scan_mode = self._scan_mode_label(result)
+        confirmed_issues = self._confirmed_issue_count(issues)
+
         markdown_prompt = suggestions[0].get("suggested_prompt", "") if suggestions else ""
-        timeline_hint = (
-            f"{diff.get('new_count', 0)} new, "
-            f"{diff.get('modified_count', 0)} modified, "
-            f"{diff.get('deleted_count', 0)} deleted"
-        )
+        if diff.get("is_first_scan"):
+            timeline_hint = "Baseline scan: all files are treated as new because no previous checkpoint exists."
+        else:
+            timeline_hint = (
+                f"{diff.get('new_count', 0)} new, "
+                f"{diff.get('modified_count', 0)} modified, "
+                f"{diff.get('deleted_count', 0)} deleted"
+            )
 
         return f"""<!doctype html>
 <html lang="en">
@@ -456,16 +581,21 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
     <div class="muted">Health score</div>
     <div class="stat-value {health_class}" style="font-size:42px;font-weight:900">{health}%</div>
     <div class="progress"><span></span></div>
+    {f'<p class="muted" style="margin-top:10px">(excluding security review)</p>' if result['audit'].get('health_score_data', {}).get('security_assessed') is False else ''}
+    {f'<p style="margin-top:10px">{esc(health_data.get("explanation", ""))}</p>' if health_data.get("explanation") else ''}
+    {f'<p class="muted" style="margin-top:10px">{health_breakdown}</p>' if health_breakdown else ''}
+    <p class="muted" style="margin-top:10px">Scan mode: {esc(scan_mode)}<br>Duration: {esc(perf.get('duration_seconds', 0))}s</p>
     <p class="muted" style="margin-top:10px">Scan #{esc(result.get('scan_number'))} at {esc(result.get('timestamp'))}</p>
   </div>
 </header>
 
-<section class="stats">
-  <div class="stat"><div class="label">Files</div><div class="value">{esc(metrics.get('total_files', 0))}</div></div>
-  <div class="stat"><div class="label">Lines</div><div class="value">{esc(metrics.get('total_lines', 0))}</div></div>
-  <div class="stat"><div class="label">Issues</div><div class="value">{esc(len(issues))}</div></div>
-  <div class="stat"><div class="label">Token Saved</div><div class="value">{esc(llm.get('estimated_token_savings_percent', 0))}%</div></div>
-</section>
+  <section class="stats">
+    <div class="stat"><div class="label">Files</div><div class="value">{esc(metrics.get('total_files', 0))}</div></div>
+    <div class="stat"><div class="label">Lines</div><div class="value">{esc(metrics.get('total_lines', 0))}</div></div>
+    <div class="stat"><div class="label">Confirmed Issues</div><div class="value">{esc(confirmed_issues)}</div></div>
+    <div class="stat"><div class="label">Review Signals</div><div class="value">{esc(len(issues))}</div></div>
+    <div class="stat"><div class="label">TODOs</div><div class="value">{esc(metrics.get('open_todos', 0))}</div></div>
+  </section>
 
 <section class="grid">
   <div class="section">
@@ -477,12 +607,20 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
   </div>
   <div class="section">
     <h2>Risk Summary</h2>
-    <p><strong>Maintainability:</strong> {esc(risk_summary.get('maintainability', {}).get('level', 'unknown'))}</p>
-    <p><strong>Runtime:</strong> {esc(risk_summary.get('runtime', {}).get('level', 'unknown'))}</p>
-    <p><strong>Tests:</strong> {esc(risk_summary.get('test', {}).get('level', 'unknown'))}</p>
-    <p><strong>Security:</strong> {esc(risk_summary.get('security', {}).get('level', 'not assessed'))}</p>
+    <p><strong>Maintainability risk:</strong> {esc(risk_summary.get('maintainability', {}).get('level', 'unknown'))}</p>
+    <p><strong>Runtime complexity:</strong> {esc(risk_summary.get('runtime', {}).get('level', 'unknown'))}</p>
+    <p><strong>Test signal:</strong> {esc(self._test_signal_label(risk_summary))}</p>
+    <p><strong>Security review:</strong> {esc(risk_summary.get('security', {}).get('level', 'not assessed'))}</p>
   </div>
 </section>
+
+{f'''<section class="section">
+  <h2>Scan Coverage</h2>
+  <p><strong>Warning:</strong> {esc(coverage.get("warning", ""))}</p>
+  <p><strong>Source lines:</strong> {esc(coverage.get("category_lines", {}).get("source", 0))}</p>
+  <p><strong>Test lines:</strong> {esc(coverage.get("category_lines", {}).get("tests", 0))}</p>
+  <div class="file-list">{pills(coverage.get("underrepresented_directories", [])[:8])}</div>
+</section>''' if coverage.get("warning") else ''}
 
 <section class="section">
   <h2>Recommended Next Actions</h2>
@@ -495,8 +633,36 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
     <div class="file-list">{pills(focus_files[:10])}</div>
   </div>
   <div class="section">
-    <h2>Hotspots</h2>
+    <h2>Primary Hotspots</h2>
     <div class="file-list">{pills([item.get('path', '') for item in hotspots[:10]])}</div>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="section">
+    <h2>Entry Points</h2>
+    {grouped_pills(
+        entry_points_by_category,
+        label_map={
+            "runtime": "Runtime entry points",
+            "build": "Build entry points",
+            "generator": "Generator entry points",
+            "test": "Test runners",
+            "environment": "Environment setup",
+        },
+    )}
+  </div>
+  <div class="section">
+    <h2>Other Hotspots</h2>
+    {grouped_pills(
+        hotspot_groups,
+        label_map={
+            "build_tooling": "Build/tooling hotspots",
+            "vendor": "Vendor/third-party hotspots — track only, do not refactor by default",
+            "test_data": "Test/data hotspots",
+            "documentation": "Documentation hotspots",
+        },
+    )}
   </div>
 </section>
 
@@ -506,12 +672,14 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
 </section>
 
 <section class="section">
-  <h2>Top File Risks</h2>
-  <table><thead><tr><th>Level</th><th>File</th><th>Score</th><th>Factors</th></tr></thead><tbody>{risk_rows()}</tbody></table>
+  <h2>Top File Risks By Surface</h2>
+  {grouped_risk_sections()}
 </section>
 
 <section class="section">
-  <h2>Issues</h2>
+  <h2>Review Signals</h2>
+  <p><strong>Confirmed issues:</strong> {esc(confirmed_issues)}</p>
+  <p><strong>Review signals:</strong> {esc(len(issues))}</p>
   <table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody>{issue_rows()}</tbody></table>
 </section>
 
@@ -525,7 +693,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
   <pre>{esc(knowledge_context.strip() or 'No knowledge context exported.')}</pre>
 </section>
 
-<footer class="muted" style="padding:24px 0">Generated by Sentinel. Duration: {esc(perf.get('duration_seconds', 0))}s.</footer>
+<footer class="muted" style="padding:24px 0">Generated by Sentinel. Scan mode: {esc(scan_mode)}. Duration: {esc(perf.get('duration_seconds', 0))}s.</footer>
 </main>
 </body>
 </html>
@@ -605,6 +773,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
         understanding = result["audit"].get("understanding", {})
         llm = result.get("llm", {})
         suggestions = result.get("suggestions", [])
+        coverage = result["audit"].get("scan_coverage", {}) or understanding.get("scan_coverage", {})
         lines = [
             "SENTINEL OVERVIEW",
             f"Project: {understanding.get('project_name', 'unknown')}",
@@ -619,13 +788,17 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
                 "Risk Summary: "
                 f"Maintainability {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
                 f"Runtime {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
-                f"Tests {risk_summary.get('test', {}).get('level', 'unknown')}; "
+                f"Tests {self._test_signal_label(risk_summary)}; "
                 f"Security {risk_summary.get('security', {}).get('level', 'not_assessed')}"
             )
         lines.append("")
 
         if understanding.get("frameworks"):
             lines.append(f"Frameworks: {', '.join(understanding['frameworks'])}")
+            lines.append("")
+
+        if coverage.get("warning"):
+            lines.append(f"Scan Coverage: {coverage['warning']}")
             lines.append("")
 
         components = understanding.get("main_components", [])
@@ -640,9 +813,39 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
 
         hotspots = understanding.get("hotspots", [])
         if hotspots:
-            lines.append("Hotspots:")
+            lines.append("Primary Hotspots:")
             for hotspot in hotspots[:4]:
                 lines.append(f"- {hotspot['path']}: {hotspot['reason']}")
+            lines.append("")
+
+        hotspot_groups = understanding.get("hotspot_groups", {})
+        for name, label in [
+            ("build_tooling", "Build/Tooling Hotspots"),
+            ("vendor", "Vendor/Third-Party Hotspots"),
+            ("test_data", "Test/Data Hotspots"),
+            ("documentation", "Documentation Hotspots"),
+        ]:
+            group_items = hotspot_groups.get(name, [])
+            if not group_items:
+                continue
+            lines.append(f"{label}:")
+            for hotspot in group_items[:3]:
+                lines.append(f"- {hotspot['path']}: {hotspot['reason']}")
+            lines.append("")
+
+        entry_points_by_category = understanding.get("entry_points_by_category", {})
+        if entry_points_by_category:
+            lines.append("Entry Points:")
+            for name, label in [
+                ("runtime", "Runtime"),
+                ("build", "Build"),
+                ("generator", "Generator"),
+                ("test", "Test"),
+                ("environment", "Environment"),
+            ]:
+                values = entry_points_by_category.get(name, [])
+                if values:
+                    lines.append(f"- {label}: {', '.join(values[:4])}")
             lines.append("")
 
         important_files = understanding.get("important_files", [])
@@ -715,7 +918,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
             f"Last Checkpoint: {summary.get('last_checkpoint')}",
             f"Files: {summary.get('total_files', 0)}",
             f"Lines: {summary.get('total_lines', 0)}",
-            f"Open Issues: {summary.get('open_issues', 0)}",
+            f"Review Signals: {summary.get('open_issues', 0)}",
         ]
         if summary.get("top_suggestion"):
             lines.append(f"Top Suggestion: {summary['top_suggestion']}")
@@ -740,3 +943,65 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
         lines = [f"{label}:"]
         lines.extend(f"    - {item}" for item in values)
         return lines
+
+    def _test_signal_label(self, risk_summary: Dict[str, Any]) -> str:
+        value = str(risk_summary.get("test", {}).get("level", "unknown"))
+        reason = risk_summary.get("test", {}).get("reason", "")
+        label_map = {
+            "high": "strong",
+            "good": "strong",
+            "medium": "present",
+            "low": "limited",
+            "missing": "missing",
+            "strong": "strong",
+            "present": "present — coverage unknown",
+            "unknown": "unknown",
+        }
+        mapped = label_map.get(value, value)
+        if value == "present" and reason:
+            mapped = f"present — {reason.lower()}"
+        return mapped
+
+    def _todo_category_label(self, category: str) -> str:
+        return {
+            "first_party_source": "first-party source",
+            "tooling": "tooling",
+            "tests_fixtures": "tests/fixtures",
+            "docs": "documentation",
+            "vendor_generated": "vendor/generated",
+        }.get(category, category.replace("_", " "))
+
+    def _health_breakdown_lines(self, health_data: Dict[str, Any]) -> list[str]:
+        breakdown = health_data.get("breakdown", {}) if isinstance(health_data, dict) else {}
+        if not breakdown:
+            return []
+        documentation = f"Documentation: {breakdown.get('documentation_percent', 'unknown')}%"
+        if breakdown.get("documentation_reason"):
+            documentation += f" - {breakdown['documentation_reason']}"
+        # Use maintainability_risk if available (synced with maintainability_percent), else derive
+        maintainability_pct = breakdown.get('maintainability_percent', 'unknown')
+        if "maintainability_risk" in breakdown:
+            maintainability_line = f"Maintainability: {maintainability_pct}% (risk: {breakdown['maintainability_risk']})"
+        else:
+            maintainability_line = f"Maintainability: {maintainability_pct}%"
+        return [
+            maintainability_line,
+            f"Runtime complexity: {breakdown.get('runtime_complexity', 'unknown')}",
+            f"Test signal: {breakdown.get('test_signal', 'unknown')}",
+            documentation,
+            f"Security: {str(breakdown.get('security', 'unknown')).replace('_', ' ')}",
+        ]
+
+    def _confirmed_issue_count(self, issues: Iterable[Dict[str, Any]]) -> int:
+        return sum(1 for issue in issues if issue.get("severity") in {"critical", "high"} and issue.get("type") not in {"todo", "large_file", "large_file_size", "doc_code_drift"})
+
+    def _scan_mode_label(self, result: Dict[str, Any]) -> str:
+        metrics = result.get("audit", {}).get("metrics", {})
+        perf = result.get("performance", {})
+        files = int(metrics.get("total_files", 0) or result.get("files_scanned", 0) or 0)
+        lines = int(metrics.get("total_lines", 0) or 0)
+        if files >= 5_000 or lines >= 500_000:
+            return "deep repo intelligence"
+        if perf.get("fast_mode"):
+            return "fast structure and risk scan"
+        return "full project scan"

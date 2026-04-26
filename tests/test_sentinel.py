@@ -355,6 +355,8 @@ class SentinelAgentTests(unittest.TestCase):
         self.assertIn("Sentinel Command Center", html)
         self.assertIn("run('ask')", html)
         self.assertIn("run('report_html')", html)
+        self.assertIn("run('insights')", html)
+        self.assertIn("run('bundle')", html)
         self.assertIn("/api/run", html)
 
         ask = _run_dashboard_action(
@@ -381,6 +383,109 @@ class SentinelAgentTests(unittest.TestCase):
         self.assertTrue(report["ok"])
         self.assertTrue(report_path.exists())
         self.assertIn(str(report_path), report["artifacts"])
+
+        insights = _run_dashboard_action(
+            self.agent,
+            {
+                "action": "insights",
+                "question": "helper main",
+                "fast": True,
+            },
+        )
+        self.assertTrue(insights["ok"])
+        self.assertIn("SENTINEL INSIGHTS", insights["text"])
+        self.assertIn("drilldowns", insights["data"])
+
+    def test_cli_insights_alerts_ledger_bundle_and_speed_plan_work(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "insights",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--query",
+                    "helper main",
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("SENTINEL INSIGHTS", output.getvalue())
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "alerts",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("SENTINEL WATCH ALERTS", output.getvalue())
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "ledger",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("SENTINEL DECISION LEDGER", output.getvalue())
+
+        bundle_dir = self.base / "bundle"
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "bundle",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--output-dir",
+                    str(bundle_dir),
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertTrue((bundle_dir / "index.html").exists())
+        self.assertTrue((bundle_dir / "analysis.json").exists())
+        self.assertIn("SENTINEL STATIC BUNDLE", output.getvalue())
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = main(
+                [
+                    "speed-plan",
+                    str(self.project_root),
+                    "--config",
+                    str(self.config_path),
+                    "--fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("SENTINEL SCAN SPEED PLAN", output.getvalue())
+
+    def test_scan_cache_reuses_unchanged_file_metadata(self):
+        self.agent = SentinelAgent(str(self.project_root), str(self.config_path))
+        first = self.agent.scan_once(print_report=False, fast_mode=False)
+        second = self.agent.scan_once(print_report=False, fast_mode=False, create_checkpoint=False)
+
+        self.assertGreater(first["performance"]["cache"]["misses"], 0)
+        self.assertGreater(second["performance"]["cache"]["hits"], 0)
+        self.assertEqual(second["performance"]["cache"]["misses"], 0)
 
     @unittest.skipIf(shutil.which("git") is None, "git is required for analyze-url")
     def test_cli_analyze_url_command_clones_local_git_source(self):

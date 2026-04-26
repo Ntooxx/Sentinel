@@ -51,6 +51,16 @@ DEFAULT_CONFIG = {
         ".bash",
         ".cfg",
         ".ini",
+        ".cpp",
+        ".c",
+        ".h",
+        ".hpp",
+        ".cc",
+        ".cxx",
+        ".hh",
+        ".hxx",
+        ".rs",
+        ".cmake",
     ],
     "ignore_dirs": [
         "__pycache__",
@@ -136,7 +146,7 @@ DEFAULT_PATTERNS = {
             "name": "command_line_interface",
             "description": "The project exposes a command-line entry point",
             "requires_main": True,
-            "extension_in": [".py", ".js", ".ts", ".sh", ".bash"],
+            "extension_in": [".py", ".js", ".ts", ".sh", ".bash", ".cpp", ".c", ".cc", ".cxx", ".rs"],
         },
         {
             "name": "containerization",
@@ -146,7 +156,7 @@ DEFAULT_PATTERNS = {
         {
             "name": "packaging",
             "description": "The project includes package or dependency manifests",
-            "file_name_in": ["requirements.txt", "pyproject.toml", "setup.py", "package.json"],
+            "file_name_in": ["requirements.txt", "pyproject.toml", "setup.py", "package.json", "Cargo.toml", "CMakeLists.txt"],
         },
     ]
 }

@@ -99,7 +99,7 @@ class KnowledgeBaseTests(unittest.TestCase):
         self.assertIn("## Project Understanding", context)
         self.assertIn("## Architecture", context)
         self.assertIn("## Dependencies", context)
-        self.assertIn("## Recent Issues", context)
+        self.assertIn("## Recent Review Signals", context)
         self.assertIn("## Suggested Next Move", context)
         self.assertIn("## LLM Strategy", context)
 

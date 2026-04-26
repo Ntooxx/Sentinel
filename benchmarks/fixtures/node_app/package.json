@@ -1,0 +1,11 @@
+{
+  "name": "sentinel-node-fixture",
+  "description": "Small Node fixture for Sentinel benchmark snapshots.",
+  "scripts": {
+    "test": "node index.js",
+    "build": "node index.js"
+  },
+  "bin": {
+    "sentinel-node-fixture": "index.js"
+  }
+}

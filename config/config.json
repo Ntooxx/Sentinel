@@ -17,7 +17,20 @@
     ".sh",
     ".bash",
     ".cfg",
-    ".ini"
+    ".ini",
+    ".cpp",
+    ".c",
+    ".h",
+    ".hpp",
+    ".cc",
+    ".cxx",
+    ".hh",
+    ".hxx",
+    ".rs",
+    ".go",
+    "go.mod",
+    "go.sum",
+    ".cmake"
   ],
   "ignore_dirs": [
     "__pycache__",

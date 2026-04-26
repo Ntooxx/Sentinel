@@ -11,7 +11,8 @@
       "extension_in": [
         ".py",
         ".js",
-        ".ts"
+        ".ts",
+        ".go"
       ]
     },
     {

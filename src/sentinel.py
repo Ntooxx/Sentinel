@@ -144,6 +144,7 @@ class SentinelAgent:
         create_checkpoint: bool = True,
         top_suggestions: Optional[int] = None,
         extra_ignore_paths: Optional[list[str]] = None,
+        use_git_discovery: bool = False,
     ) -> Dict[str, Any]:
         started_at = perf_counter()
         self.scan_count += 1
@@ -155,6 +156,7 @@ class SentinelAgent:
             max_size=int(self.config["max_file_size_bytes"]),
             ignore_paths=self._runtime_ignore_paths(extra_ignore_paths),
             fast_mode=fast_mode,
+            use_git_discovery=use_git_discovery,
         )
         diff = self.auditor.diff_from_last_checkpoint(current_files)
         audit = self.auditor.audit_project(current_files)
@@ -188,6 +190,8 @@ class SentinelAgent:
             "fast_mode": fast_mode,
             "output_format": output_format,
             "compact": compact,
+            "cache": getattr(self.auditor, "last_cache_stats", {}),
+            "discovery_mode": getattr(self.auditor, "last_discovery_mode", "walk"),
             "budgets": self.config.get("performance_budgets", {}),
             "budget_alerts": self._evaluate_performance_budgets(
                 duration_seconds=duration,
@@ -195,6 +199,7 @@ class SentinelAgent:
                 context_tokens=int(llm_readiness.get("estimated_compact_context_tokens", 0) or 0),
             ),
         }
+        alerts = self.build_watch_alerts(audit, diff, performance)
 
         result = {
             "scan_number": self.scan_count,
@@ -208,6 +213,7 @@ class SentinelAgent:
             "project_summary": self.knowledge.get_project_summary(),
             "llm": llm_readiness,
             "performance": performance,
+            "alerts": alerts,
         }
         self.knowledge.record_scan_event(
             health_score=audit["health_score"],
@@ -216,6 +222,7 @@ class SentinelAgent:
             suggestions=suggestions,
             performance=performance,
             persist=True,
+            health_score_data=audit.get("health_score_data"),
         )
         result["project_summary"] = self.knowledge.get_project_summary()
 
@@ -784,6 +791,209 @@ class SentinelAgent:
             "message": f"Loaded coverage for {len(files)} file(s)",
         }
 
+    def build_watch_alerts(
+        self,
+        audit: Dict[str, Any],
+        diff: Dict[str, Any],
+        performance: Dict[str, Any],
+    ) -> list[Dict[str, Any]]:
+        alerts: list[Dict[str, Any]] = []
+        health = int(audit.get("health_score", 0) or 0)
+        if health < 55:
+            alerts.append({"severity": "high", "type": "health", "message": f"Health score is low at {health}%"})
+        elif health < 75:
+            alerts.append({"severity": "medium", "type": "health", "message": f"Health score needs attention at {health}%"})
+
+        changed = int(diff.get("new_count", 0)) + int(diff.get("modified_count", 0)) + int(diff.get("deleted_count", 0))
+        if changed >= 25:
+            alerts.append({"severity": "medium", "type": "change_volume", "message": f"{changed} files changed since the last checkpoint"})
+
+        for budget_alert in performance.get("budget_alerts", []):
+            alerts.append(
+                {
+                    "severity": "medium",
+                    "type": "performance_budget",
+                    "message": budget_alert.get("message", "A performance budget was exceeded"),
+                }
+            )
+
+        high_risks = [item for item in audit.get("risk_scores", []) if item.get("level") == "high"]
+        if high_risks:
+            alerts.append(
+                {
+                    "severity": "medium",
+                    "type": "risk_hotspots",
+                    "message": f"{len(high_risks)} high-risk file(s) are currently ranked for review",
+                    "files": [item.get("file") for item in high_risks[:5] if item.get("file")],
+                }
+            )
+
+        coverage = audit.get("scan_coverage", {})
+        if coverage.get("warning"):
+            alerts.append({"severity": "medium", "type": "scan_coverage", "message": coverage["warning"]})
+        return alerts
+
+    def evidence_report(self, query: str = "", fast_mode: bool = True, limit: int = 6) -> Dict[str, Any]:
+        scan = self.scan_once(print_report=False, fast_mode=fast_mode, include_suggestions=True, create_checkpoint=False)
+        audit = scan.get("audit", {})
+        issues_by_file: dict[str, list[Dict[str, Any]]] = {}
+        for issue in audit.get("issues", []):
+            path = issue.get("file") or ""
+            if path:
+                issues_by_file.setdefault(path, []).append(issue)
+
+        drilldowns = []
+        for risk in audit.get("risk_scores", [])[:15]:
+            path = risk.get("file", "")
+            info = self.knowledge.get_file_info(path) or {}
+            drilldowns.append(
+                {
+                    "file": path,
+                    "risk": risk,
+                    "issues": issues_by_file.get(path, [])[:5],
+                    "symbols": info.get("symbols", [])[:8],
+                    "imports": info.get("imports", [])[:8],
+                    "line_count": info.get("line_count", 0),
+                    "todo_count": info.get("todo_count", 0),
+                    "why": ", ".join(risk.get("factors", [])) or "ranked by Sentinel risk scoring",
+                }
+            )
+
+        suggestion_evidence = []
+        for suggestion in scan.get("suggestions", [])[:8]:
+            confidence = suggestion.get("confidence", {})
+            suggestion_evidence.append(
+                {
+                    "title": suggestion.get("title", ""),
+                    "priority": suggestion.get("priority", "medium"),
+                    "reason": suggestion.get("reason", ""),
+                    "focus_files": suggestion.get("focus_files", []),
+                    "confidence": confidence,
+                    "evidence": confidence.get("evidence", []),
+                    "uncertainty": confidence.get("uncertainty", []),
+                    "verification": suggestion.get("verification", {}),
+                }
+            )
+
+        retrieval = None
+        if query.strip():
+            retrieval = self.retrieve(query, limit=limit, fast_mode=fast_mode)
+
+        return {
+            "project_dir": str(self.project_dir),
+            "query": query,
+            "scan": scan,
+            "alerts": scan.get("alerts", []),
+            "diff_impact": self._build_diff_impact(scan),
+            "suggestions": suggestion_evidence,
+            "drilldowns": drilldowns,
+            "retrieval": retrieval,
+        }
+
+    def decision_ledger(self, limit: int = 20) -> Dict[str, Any]:
+        return {
+            "project_dir": str(self.project_dir),
+            "decisions": self.knowledge.data.get("decisions", [])[-max(1, limit):],
+            "tasks": self.knowledge.get_task_memory(limit=limit),
+            "scans": self.knowledge.get_scan_history(limit=limit),
+            "savings": self.knowledge.get_savings_summary(),
+        }
+
+    def save_static_bundle(self, output_dir: Optional[str] = None, fast_mode: bool = True) -> Dict[str, Any]:
+        destination = Path(output_dir).resolve() if output_dir else self.reports_path / f"static_bundle_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        ensure_dir(destination)
+        scan = self.scan_once(print_report=False, fast_mode=fast_mode, include_suggestions=True, create_checkpoint=False)
+        context_pack = self.build_context_pack(budget="medium")
+        prompt_pack = self.build_prompt_pack(scan, goal="next", budget="small")
+        markdown = self.reporter.render_markdown(scan, knowledge_context=context_pack["context"])
+        html = self.reporter.render_html(scan, knowledge_context=context_pack["context"])
+        insights = self.evidence_report(fast_mode=fast_mode)
+
+        index_path = destination / "index.html"
+        artifacts = {
+            "index": str(index_path),
+            "markdown": str(destination / "SENTINEL_REPORT.md"),
+            "html": str(destination / "SENTINEL_REPORT.html"),
+            "context": str(destination / "CONTEXT.md"),
+            "prompt": str(destination / "NEXT_PROMPT.md"),
+            "analysis": str(destination / "analysis.json"),
+        }
+        ensure_parent_dir(index_path).write_text(html, encoding="utf-8")
+        (destination / "SENTINEL_REPORT.md").write_text(markdown, encoding="utf-8")
+        (destination / "SENTINEL_REPORT.html").write_text(html, encoding="utf-8")
+        (destination / "CONTEXT.md").write_text(context_pack["context"], encoding="utf-8")
+        (destination / "NEXT_PROMPT.md").write_text(prompt_pack.get("prompt_text", ""), encoding="utf-8")
+        (destination / "analysis.json").write_text(
+            json.dumps({"scan": scan, "context": context_pack, "prompt": prompt_pack, "insights": insights}, indent=2, default=str),
+            encoding="utf-8",
+        )
+        return {
+            "project_dir": str(self.project_dir),
+            "output_dir": str(destination),
+            "artifacts": artifacts,
+            "health_score": scan.get("audit", {}).get("health_score"),
+            "files_scanned": scan.get("files_scanned"),
+        }
+
+    def scan_speed_plan(self, fast_mode: bool = True) -> Dict[str, Any]:
+        scan = self.scan_once(print_report=False, fast_mode=fast_mode, include_suggestions=False, create_checkpoint=False)
+        perf = scan.get("performance", {})
+        cache = perf.get("cache", {})
+        metrics = scan.get("audit", {}).get("metrics", {})
+        return {
+            "project_dir": str(self.project_dir),
+            "current": {
+                "duration_seconds": perf.get("duration_seconds", 0),
+                "files_scanned": scan.get("files_scanned", 0),
+                "lines": metrics.get("total_lines", 0),
+                "cache": cache,
+                "quality_position": "Preserve exact per-file analysis for changed files; reuse cached analysis only when size and mtime match.",
+            },
+            "implemented": [
+                "Persistent scan metadata cache beside checkpoints",
+                "Cache reuse for unchanged files with full-scan entries eligible for fast and full scans",
+                "Opt-in git-aware candidate file discovery with os.walk fallback",
+                "Bounded parallel analysis for cache misses",
+                "Dashboard and JSON performance cache counters",
+            ],
+            "plan": [
+                {
+                    "phase": "1. Incremental risk recomputation",
+                    "impact": "medium",
+                    "work": "Recompute global metrics from cached per-file facts, but recompute expensive per-file extraction only for misses.",
+                    "quality_guard": "Keep aggregate health and suggestions derived from the complete file map every scan.",
+                },
+                {
+                    "phase": "2. Optional native index",
+                    "impact": "very large",
+                    "work": "Store cache in SQLite with indexes on path, extension, component, symbols, imports, risk score, and TODO count.",
+                    "quality_guard": "SQLite is an acceleration layer only; JSON report output remains canonical and reproducible.",
+                },
+                {
+                    "phase": "3. Configurable source-only profile",
+                    "impact": "large",
+                    "work": "Expose git discovery as a documented source-only scan mode for cloned repositories and CI, while local scans keep workspace-inclusive behavior.",
+                    "quality_guard": "The default local scan remains os.walk based so ignored local artifacts do not silently disappear from existing reports.",
+                },
+            ],
+            "non_goals": [
+                "Do not skip changed files.",
+                "Do not sample full scans.",
+                "Do not drop TODO, import, symbol, or risk extraction to hit a timer.",
+            ],
+        }
+
+    def _build_diff_impact(self, scan: Dict[str, Any]) -> Dict[str, Any]:
+        diff = scan.get("diff", {})
+        changed = [*diff.get("new_files", []), *diff.get("modified_files", []), *diff.get("deleted_files", [])]
+        risk_map = {item.get("file"): item for item in scan.get("audit", {}).get("risk_scores", [])}
+        return {
+            "summary": diff.get("summary", ""),
+            "changed_files": changed[:50],
+            "changed_count": len(changed),
+            "risky_changed_files": [risk_map[path] for path in changed if path in risk_map],
+        }
+
     def release_check(self) -> Dict[str, Any]:
         files = {path.name.lower(): path for path in self.project_dir.iterdir() if path.is_file()}
         setup_path = self.project_dir / "setup.py"
@@ -992,7 +1202,7 @@ def analyze_repository_url(
 
     clone_dir = clone_parent / safe_name
     source = _normalize_git_source(repo_source)
-    command = ["git", "clone", "--depth", "1", source, str(clone_dir)]
+    command = ["git", "-c", "core.longpaths=true", "clone", "--depth", "1", source, str(clone_dir)]
     started = perf_counter()
     clone_result: subprocess.CompletedProcess[str] | None = None
     agent: SentinelAgent | None = None
@@ -1007,10 +1217,22 @@ def analyze_repository_url(
             check=False,
         )
         if clone_result.returncode != 0:
-            raise RuntimeError(clone_result.stderr.strip() or clone_result.stdout.strip() or "git clone failed")
+            detail = clone_result.stderr.strip() or clone_result.stdout.strip() or "git clone failed"
+            if "Filename too long" in detail or "unable to checkout working tree" in detail:
+                detail += (
+                    "\nSentinel already retried with git -c core.longpaths=true. "
+                    "On Windows, enable long paths with `git config --global core.longpaths true` "
+                    "and the Windows LongPathsEnabled policy, or choose a shorter output directory."
+                )
+            raise RuntimeError(detail)
 
         agent = SentinelAgent(str(clone_dir))
-        scan = agent.scan_once(print_report=False, fast_mode=fast_mode, include_suggestions=True)
+        scan = agent.scan_once(
+            print_report=False,
+            fast_mode=fast_mode,
+            include_suggestions=True,
+            use_git_discovery=True,
+        )
         knowledge_context = agent.knowledge.export_context(budget="medium")
         markdown = agent.reporter.render_markdown(scan, knowledge_context=knowledge_context)
         markdown_path = report_dir / "SENTINEL_REPORT.md"
@@ -1189,6 +1411,30 @@ def _run_dashboard_action(agent: SentinelAgent, request: Dict[str, Any]) -> Dict
     elif action == "coverage":
         data = agent.coverage_report()
         text = _render_coverage(data)
+    elif action == "insights":
+        data = agent.evidence_report(
+            query=str(request.get("query") or request.get("question") or ""),
+            fast_mode=fast,
+            limit=limit,
+        )
+        text = _render_insights(data)
+    elif action == "alerts":
+        scan = agent.scan_once(print_report=False, fast_mode=fast, include_suggestions=True, create_checkpoint=False)
+        data = {"project_dir": str(agent.project_dir), "alerts": scan.get("alerts", []), "scan": scan}
+        text = _render_alerts(data)
+    elif action == "ledger":
+        data = agent.decision_ledger(limit=_request_int(request, "memory_limit", 20))
+        text = _render_ledger(data)
+    elif action == "speed_plan":
+        data = agent.scan_speed_plan(fast_mode=fast)
+        text = _render_speed_plan(data)
+    elif action == "bundle":
+        data = agent.save_static_bundle(
+            output_dir=str(request.get("output_dir") or request.get("output_path") or "").strip() or None,
+            fast_mode=fast,
+        )
+        artifacts = list(data.get("artifacts", {}).values())
+        text = _render_static_bundle(data)
     elif action == "cleanup_reports":
         data = agent.cleanup_reports(
             keep=_request_int(request, "keep_reports", 5),
@@ -1449,6 +1695,7 @@ textarea{min-height:76px;resize:vertical}
     <p>Scan, summarize, retrieve context, and generate agent prompts.</p>
     <div class="toolbar"><button onclick="run('scan')">Scan</button><button onclick="run('overview')">Overview</button><button onclick="run('brief')">Brief</button></div>
     <div class="toolbar"><button onclick="run('context')">Context</button><button onclick="run('prompt')">Prompt</button><button onclick="run('graph')">Graph</button></div>
+    <div class="toolbar"><button onclick="run('insights')">Insights</button><button onclick="run('alerts')">Alerts</button></div>
   </div>
   <div class="tool">
     <h3>Ask</h3>
@@ -1459,6 +1706,7 @@ textarea{min-height:76px;resize:vertical}
     <h3>Reports</h3>
     <p>Generate shareable markdown and HTML reports.</p>
     <div class="toolbar"><button onclick="run('report_html')">HTML</button><button onclick="run('report_markdown')">Markdown</button><button onclick="run('report_both')">Both</button></div>
+    <div class="toolbar"><button onclick="run('bundle')">Static Bundle</button></div>
   </div>
   <div class="tool">
     <h3>Quality</h3>
@@ -1470,7 +1718,7 @@ textarea{min-height:76px;resize:vertical}
     <h3>Memory</h3>
     <p>Inspect history, token savings, and record lightweight task memory.</p>
     <div class="toolbar"><button onclick="run('timeline')">Timeline</button><button onclick="run('savings')">Savings</button><button onclick="run('memory_list')">Memory</button></div>
-    <div class="toolbar"><button onclick="run('memory_record')">Record Note</button></div>
+    <div class="toolbar"><button onclick="run('memory_record')">Record Note</button><button onclick="run('ledger')">Ledger</button><button onclick="run('speed_plan')">Speed Plan</button></div>
   </div>
   <div class="tool">
     <h3>Maintenance</h3>
@@ -1506,7 +1754,7 @@ textarea{min-height:76px;resize:vertical}
 </section>
 <section class="layout">
   <div class="card"><h2>Top File Risks</h2><table><thead><tr><th>Level</th><th>File</th><th>Score</th></tr></thead><tbody id="fileRisks"></tbody></table></div>
-  <div class="card"><h2>Issues</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody id="issues"></tbody></table></div>
+  <div class="card"><h2>Review Signals</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody id="issues"></tbody></table></div>
 </section>
 <section class="card" style="margin-top:12px"><h2>Health Timeline</h2><pre id="timeline">Loading...</pre></section>
 </main>
@@ -1519,6 +1767,15 @@ const levelClass = value => {
   if (n >= 55) return 'warn';
   return 'bad';
 };
+const testSignal = risk => {
+  const value = String((risk.test || {}).level || 'unknown');
+  return ({high:'strong', good:'strong', medium:'present', low:'limited'})[value] || value;
+};
+const confirmedIssueCount = issues => (issues || []).filter(issue => {
+  const severity = String(issue.severity || '').toLowerCase();
+  const type = String(issue.type || '').toLowerCase();
+  return ['critical', 'high'].includes(severity) && !['todo', 'large_file', 'large_file_size', 'doc_code_drift'].includes(type);
+}).length;
 function payload(action){
   const output = document.getElementById('outputPath').value.trim();
   return {
@@ -1582,6 +1839,7 @@ async function load(){
   const latest = data.latest || {};
   const audit = latest.audit || {};
   const perf = latest.performance || {};
+  const cache = perf.cache || {};
   const metrics = audit.metrics || {};
   const understanding = audit.understanding || {};
   const risk = audit.risk_summary || {};
@@ -1589,13 +1847,17 @@ async function load(){
   const suggestions = latest.suggestions || [];
   const issues = audit.issues || [];
   const fileRisks = audit.risk_scores || [];
+  const confirmedIssues = confirmedIssueCount(issues);
   document.getElementById('updated').textContent = latest.timestamp ? `Updated ${latest.timestamp}` : 'Waiting for scan';
   document.getElementById('stats').innerHTML = [
     ['Health', (audit.health_score ?? '-') + '%', levelClass(audit.health_score)],
     ['Files', metrics.total_files ?? '-'],
     ['Lines', metrics.total_lines ?? '-'],
-    ['Issues', (audit.issues || []).length],
+    ['Confirmed Issues', confirmedIssues],
+    ['Review Signals', issues.length],
     ['Duration', (perf.duration_seconds ?? 0) + 's'],
+    ['Cache Hits', cache.hits ?? 0],
+    ['Alerts', (latest.alerts || []).length],
     ['Token Savings', ((latest.llm || {}).estimated_token_savings_percent ?? '-') + '%']
   ].map(([k,v,c])=>`<div class="card"><div class="label">${esc(k)}</div><div class="value ${c || ''}">${esc(v)}</div></div>`).join('');
   document.getElementById('identity').innerHTML = `
@@ -1605,7 +1867,8 @@ async function load(){
   `;
   document.getElementById('risk').innerHTML = ['maintainability','runtime','test','security'].map(name => {
     const item = risk[name] || {};
-    return `<p><b>${esc(name)}</b>: ${esc(item.level || 'unknown')} <span class="muted">${esc(item.reason || '')}</span></p>`;
+    const label = name === 'test' ? testSignal(risk) : (item.level || 'unknown');
+    return `<p><b>${esc(name)}</b>: ${esc(label)} <span class="muted">${esc(item.reason || '')}</span></p>`;
   }).join('');
   document.getElementById('suggestions').innerHTML = suggestions.slice(0,8).map(s =>
     `<li><b>[${esc(s.priority)}] ${esc(s.title)}</b><br><span class="muted">${esc(s.action || '')}</span><br><span class="muted">${esc(s.ranking_label || '')} confidence=${esc((s.confidence||{}).level || 'unknown')}</span></li>`
@@ -1619,7 +1882,7 @@ async function load(){
   ).join('') || '<tr><td colspan="3" class="muted">No file risks yet.</td></tr>';
   document.getElementById('issues').innerHTML = issues.slice(0,10).map(i =>
     `<tr><td><span class="badge">${esc(i.severity)}</span></td><td>${esc(i.message)}</td><td><code>${esc(i.file || '')}</code></td></tr>`
-  ).join('') || '<tr><td colspan="3" class="muted">No issues detected.</td></tr>';
+  ).join('') || '<tr><td colspan="3" class="muted">No review signals detected.</td></tr>';
   document.getElementById('timeline').textContent = (data.history || []).map(h =>
     `${h.timestamp} health=${h.health_score}% changes=${h.change_summary}`
   ).join('\\n') || 'No scan history yet.';
@@ -2283,6 +2546,138 @@ def _render_coverage(result: Dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_insights(result: Dict[str, Any]) -> str:
+    lines = ["SENTINEL INSIGHTS", f"Project: {result.get('project_dir')}", ""]
+    lines.append("Alerts:")
+    alerts = result.get("alerts", [])
+    if alerts:
+        for alert in alerts[:10]:
+            lines.append(f"- [{alert.get('severity')}] {alert.get('type')}: {alert.get('message')}")
+    else:
+        lines.append("- None")
+
+    diff = result.get("diff_impact", {})
+    lines.extend(["", "Diff Impact:", f"- {diff.get('summary', 'No diff summary')}"])
+    if diff.get("risky_changed_files"):
+        for item in diff["risky_changed_files"][:8]:
+            lines.append(f"- risky change: {item.get('file')} score={item.get('score')}")
+
+    lines.extend(["", "Suggestion Evidence:"])
+    for suggestion in result.get("suggestions", [])[:6]:
+        lines.append(f"- [{suggestion.get('priority')}] {suggestion.get('title')}")
+        evidence = suggestion.get("evidence", [])
+        if evidence:
+            lines.append(f"  evidence: {'; '.join(str(item) for item in evidence[:3])}")
+        uncertainty = _as_text_list(suggestion.get("uncertainty", []))
+        if uncertainty:
+            lines.append(f"  uncertainty: {'; '.join(str(item) for item in uncertainty[:2])}")
+
+    lines.extend(["", "File Drilldowns:"])
+    for item in result.get("drilldowns", [])[:8]:
+        risk = item.get("risk", {})
+        lines.append(
+            f"- [{risk.get('level')}] {item.get('file')} score={risk.get('score')} "
+            f"todos={item.get('todo_count')} lines={item.get('line_count')} why={item.get('why')}"
+        )
+        if item.get("symbols"):
+            lines.append(f"  symbols: {', '.join(item['symbols'][:5])}")
+    if result.get("retrieval"):
+        lines.extend(["", "Query Retrieval:", result["retrieval"].get("text", "").strip()])
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _as_text_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item)]
+    return [str(value)]
+
+
+def _render_alerts(result: Dict[str, Any]) -> str:
+    lines = ["SENTINEL WATCH ALERTS", f"Project: {result.get('project_dir')}", ""]
+    alerts = result.get("alerts", [])
+    if not alerts:
+        lines.append("- No alerts for the latest scan.")
+    for alert in alerts:
+        lines.append(f"- [{alert.get('severity')}] {alert.get('type')}: {alert.get('message')}")
+        if alert.get("files"):
+            lines.append(f"  files: {', '.join(alert['files'])}")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_ledger(result: Dict[str, Any]) -> str:
+    lines = ["SENTINEL DECISION LEDGER", f"Project: {result.get('project_dir')}", ""]
+    lines.append("Decisions:")
+    decisions = result.get("decisions", [])
+    if decisions:
+        for item in decisions:
+            lines.append(f"- {item.get('timestamp')} {item.get('decision')}: {item.get('reason')}")
+    else:
+        lines.append("- None recorded")
+    lines.append("")
+    lines.append("Tasks:")
+    tasks = result.get("tasks", [])
+    if tasks:
+        for task in tasks:
+            changed = ", ".join(task.get("changed_files", [])[:4]) or "none"
+            tests = ", ".join(task.get("tests", [])[:3]) or "none"
+            lines.append(f"- {task.get('timestamp')} {task.get('goal')} | changed={changed} | tests={tests}")
+    else:
+        lines.append("- None recorded")
+    lines.append("")
+    lines.append("Scan History:")
+    scans = result.get("scans", [])
+    if scans:
+        for scan in scans:
+            lines.append(f"- {scan.get('timestamp')} health={scan.get('health_score')}% {scan.get('change_summary')}")
+    else:
+        lines.append("- None")
+    lines.append("")
+    lines.append(f"Tracked token savings: {result.get('savings', {}).get('estimated_token_savings_percent', 0)}%")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_static_bundle(result: Dict[str, Any]) -> str:
+    lines = [
+        "SENTINEL STATIC BUNDLE",
+        f"Output: {result.get('output_dir')}",
+        f"Health: {result.get('health_score')}%",
+        f"Files scanned: {result.get('files_scanned')}",
+        "",
+        "Artifacts:",
+    ]
+    for name, path in result.get("artifacts", {}).items():
+        lines.append(f"- {name}: {path}")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_speed_plan(result: Dict[str, Any]) -> str:
+    current = result.get("current", {})
+    lines = [
+        "SENTINEL SCAN SPEED PLAN",
+        f"Project: {result.get('project_dir')}",
+        "",
+        "Current Measurement:",
+        f"- Duration: {current.get('duration_seconds')}s",
+        f"- Files: {current.get('files_scanned')}",
+        f"- Lines: {current.get('lines')}",
+        f"- Cache: {current.get('cache')}",
+        f"- Quality: {current.get('quality_position')}",
+        "",
+        "Already Implemented:",
+    ]
+    lines.extend(f"- {item}" for item in result.get("implemented", []))
+    lines.extend(["", "Plan:"])
+    for item in result.get("plan", []):
+        lines.append(f"- {item.get('phase')} [{item.get('impact')}]")
+        lines.append(f"  work: {item.get('work')}")
+        lines.append(f"  guard: {item.get('quality_guard')}")
+    lines.extend(["", "Non-goals:"])
+    lines.extend(f"- {item}" for item in result.get("non_goals", []))
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _render_release_check(result: Dict[str, Any]) -> str:
     lines = [
         "SENTINEL RELEASE CHECK",
@@ -2348,6 +2743,11 @@ def _render_features() -> str:
         "- timeline: scan and task memory over time\n"
         "- mcp-health: MCP/file-bridge readiness panel\n"
         "- coverage: ingest coverage.xml and flag untested hotspots\n"
+        "- insights: evidence explorer with drilldowns, diff impact, alerts, and optional retrieval\n"
+        "- alerts: watch-style regression alerts for health, risk, coverage, and budgets\n"
+        "- ledger: decision, task, scan, and savings ledger\n"
+        "- bundle: portable static report bundle for CI artifacts or hosting\n"
+        "- speed-plan: current scan measurement plus a no-quality-loss acceleration plan\n"
         "- cleanup-reports: mark stale archived reports as historical\n"
         "- release-check: open-source release readiness checklist\n"
         "\n"
@@ -2362,6 +2762,9 @@ def _render_features() -> str:
         "  project-sentinel verify . --dry-run\n"
         "  project-sentinel pr .\n"
         "  project-sentinel release-check .\n"
+        "  project-sentinel insights . --query \"auth routing\" --fast\n"
+        "  project-sentinel bundle . --output-dir .sentinel/static-report --fast\n"
+        "  project-sentinel speed-plan . --fast\n"
         "  project-sentinel dashboard . --port 8765\n"
         "  project-sentinel memory record . --goal \"fixed CLI\" --changed-file src/sentinel.py --test \"python -m pytest tests\"\n"
     )
@@ -2589,6 +2992,11 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "timeline",
         "mcp-health",
         "coverage",
+        "insights",
+        "alerts",
+        "ledger",
+        "bundle",
+        "speed-plan",
         "cleanup-reports",
         "release-check",
         "features",
@@ -2987,6 +3395,54 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["text", "json"],
         default="text",
         help="Output format for coverage",
+    )
+
+    insights_parser = subparsers.add_parser("insights", parents=[common], help="Show dashboard-style evidence, drilldowns, alerts, and diff impact")
+    insights_parser.add_argument("--query", default="", help="Optional query to include retrieval evidence")
+    insights_parser.add_argument("--fast", action="store_true", help="Use faster scanning")
+    insights_parser.add_argument("--limit", type=int, default=6, help="Maximum retrieved files for query evidence")
+    insights_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for insights",
+    )
+
+    alerts_parser = subparsers.add_parser("alerts", parents=[common], help="Show watch-style alerts for the latest scan")
+    alerts_parser.add_argument("--fast", action="store_true", help="Use faster scanning")
+    alerts_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for alerts",
+    )
+
+    ledger_parser = subparsers.add_parser("ledger", parents=[common], help="Show decisions, task memory, scan history, and savings")
+    ledger_parser.add_argument("--limit", type=int, default=20, help="Number of ledger entries to show")
+    ledger_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for ledger",
+    )
+
+    bundle_parser = subparsers.add_parser("bundle", parents=[common], help="Write a portable static Sentinel report bundle")
+    bundle_parser.add_argument("--output-dir", default=None, help="Directory where the bundle should be written")
+    bundle_parser.add_argument("--fast", action="store_true", help="Use faster scanning")
+    bundle_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for bundle summary",
+    )
+
+    speed_parser = subparsers.add_parser("speed-plan", parents=[common], help="Measure current scan behavior and print a no-quality-loss speed plan")
+    speed_parser.add_argument("--fast", action="store_true", help="Measure using fast scan mode")
+    speed_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for speed plan",
     )
 
     cleanup_parser = subparsers.add_parser("cleanup-reports", parents=[common], help="Mark old Sentinel reports as historical")
@@ -3498,6 +3954,57 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(agent.reporter.render_json(result))
             else:
                 print(_render_coverage(result))
+            return 0
+
+        if args.command == "insights":
+            result = agent.evidence_report(
+                query=args.query,
+                fast_mode=args.fast,
+                limit=args.limit,
+            )
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_insights(result))
+            return 0
+
+        if args.command == "alerts":
+            scan = agent.scan_once(
+                print_report=False,
+                fast_mode=args.fast,
+                include_suggestions=True,
+                create_checkpoint=False,
+                extra_ignore_paths=args.ignore_path,
+            )
+            result = {"project_dir": str(agent.project_dir), "alerts": scan.get("alerts", []), "scan": scan}
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_alerts(result))
+            return 0
+
+        if args.command == "ledger":
+            result = agent.decision_ledger(limit=args.limit)
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_ledger(result))
+            return 0
+
+        if args.command == "bundle":
+            result = agent.save_static_bundle(output_dir=args.output_dir, fast_mode=args.fast)
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_static_bundle(result))
+            return 0
+
+        if args.command == "speed-plan":
+            result = agent.scan_speed_plan(fast_mode=args.fast)
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_speed_plan(result))
             return 0
 
         if args.command == "cleanup-reports":

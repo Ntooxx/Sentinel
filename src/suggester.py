@@ -98,6 +98,8 @@ class Suggester:
         effort = "low" if len(focus_files) <= 2 and category not in {"refactoring"} else "medium"
         if category == "refactoring" or len(focus_files) > 5:
             effort = "high"
+        if category == "cleanup":
+            effort = "low to triage, high to remediate"
 
         if priority in {"critical", "high"}:
             label = "risky"
@@ -138,9 +140,15 @@ class Suggester:
             stem = test.split("/")[-1].removeprefix("test_").removesuffix(".py")
             if not focus_stems or stem in focus_stems:
                 selected.append(test)
+        python_selected = [test for test in selected if test.endswith(".py")]
+        if python_selected:
+            return [f"python -m pytest {' '.join(python_selected[:4])}"]
         if selected:
-            return [f"python -m pytest {' '.join(selected[:4])}"]
-        return ["python -m pytest tests"]
+            return ["Run the project's native test runner for the affected test files."]
+        if any(test.endswith(".py") for test in tests):
+            python_tests = [test for test in tests if test.endswith(".py")]
+            return [f"python -m pytest {' '.join(python_tests[:4])}"]
+        return ["Run the project's native test runner."]
 
     def _check_hotspot_trace(
         self,
@@ -149,8 +157,10 @@ class Suggester:
         __: Dict[str, Any],
     ) -> Dict[str, Any] | None:
         understanding = audit.get("understanding", {})
-        hotspots = understanding.get("hotspots", [])
-        entry_points = audit.get("structure", {}).get("entry_points", [])
+        hotspot_groups = understanding.get("hotspot_groups", {})
+        hotspots = understanding.get("hotspots", []) or hotspot_groups.get("runtime", []) or hotspot_groups.get("build_tooling", [])
+        entry_points_by_category = audit.get("structure", {}).get("entry_points_by_category", {})
+        entry_points = entry_points_by_category.get("runtime", []) or entry_points_by_category.get("build", []) or entry_points_by_category.get("generator", [])
         if not entry_points or not hotspots:
             return None
 
@@ -218,7 +228,7 @@ class Suggester:
 
     def _is_testable_source_file(self, path: str) -> bool:
         lower = path.lower()
-        return lower.endswith((".py", ".js", ".ts"))
+        return lower.endswith((".py", ".js", ".ts", ".cpp", ".c", ".h", ".hpp"))
 
     def _test_candidate_for_file(self, path: str, structure: Dict[str, Any]) -> str:
         stem = path.split("/")[-1].removesuffix(".py")
@@ -230,19 +240,33 @@ class Suggester:
         return expected
 
     def _check_todos(self, audit: Dict[str, Any], _: Dict[str, Any], __: Dict[str, Any]) -> Dict[str, Any] | None:
-        todos = audit.get("metrics", {}).get("open_todos", 0)
+        metrics = audit.get("metrics", {})
+        todos = metrics.get("open_todos", 0)
+        todo_categories = metrics.get("todo_categories", {})
         if todos > 5:
+            source_todos = todo_categories.get("first_party_source", 0)
+            tooling_todos = todo_categories.get("tooling", 0)
+            test_todos = todo_categories.get("tests_fixtures", 0)
+            docs_todos = todo_categories.get("docs", 0)
+            vendor_todos = todo_categories.get("vendor_generated", 0)
+            reason = (
+                f"Total TODOs: {todos}. "
+                f"First-party source: {source_todos}; tooling: {tooling_todos}; "
+                f"test/fixture: {test_todos}; documentation: {docs_todos}; "
+                f"vendor/generated: {vendor_todos}."
+            )
             return {
                 "category": "cleanup",
                 "priority": "medium",
-                "title": f"Address {todos} TODO/FIXME markers",
-                "reason": "Accumulated TODOs can signal technical debt",
-                "action": "Review and resolve TODO items",
+                "title": f"Prioritise {source_todos} first-party source TODO/FIXME markers",
+                "reason": reason,
+                "action": "Review first-party TODOs first, then triage tooling, tests, and documentation separately",
                 "focus_files": [],
                 "suggested_prompt": (
-                    f"There are {todos} TODO/FIXME markers in the codebase. "
-                    "List them all, prioritize the most important ones, and "
-                    "implement the top three fixes."
+                    f"There are {todos} TODO/FIXME markers in the codebase: "
+                    f"{source_todos} first-party source, {tooling_todos} tooling, "
+                    f"{test_todos} tests/fixtures, {docs_todos} documentation, and {vendor_todos} vendor/generated. "
+                    "prioritize the most important first-party source items, and implement the top three fixes."
                 ),
             }
         return None

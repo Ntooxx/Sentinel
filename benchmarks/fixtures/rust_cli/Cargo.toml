@@ -1,0 +1,5 @@
+[package]
+name = "sentinel-rust-fixture"
+version = "0.1.0"
+description = "Small Rust CLI fixture for Sentinel benchmark snapshots."
+edition = "2021"
