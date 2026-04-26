@@ -156,43 +156,53 @@ Use Sentinel when you want:
 
 Sentinel includes:
 
-- Project scanning
-- Codebase auditing
-- Architecture summarisation
-- Persistent knowledge storage
-- Checkpoint tracking between scans
-- Prioritised next-step suggestions
-- Suggestion confidence scoring
-- Impact and effort labels
-- Verification hints
-- Risk scoring for high-impact files
-- Documentation drift detection
-- Low-token context packs
-- Agent prompt generation
-- Kilo file bridge output
-- Stale context detection
-- Markdown report generation
-- HTML report generation
-- Terminal reports
-- Local live dashboard
-- Repo URL analysis with report bundle output
-- Local project Q&A with Ask Sentinel
-- PR summary generation
-- Coverage hotspot analysis
-- Release-readiness checks
-- MCP health checks
-- Autofix planning
-- Stale report cleanup
-- Continuous project monitoring
-- Python AST symbol indexing
-- Import graph generation
-- Call graph generation
-- Dependency hotspot detection
-- Runtime path analysis
-- Task memory recording
-- Token-saving timeline
-- Adapter prompts for Cline, Claude Code, Codex, Roo, and Continue
-- Standard-library-only Python implementation
+### Core Analysis
+- **Project Scanning**: Deep codebase analysis with AST parsing and import graph generation
+- **Codebase Auditing**: Rule-based detection of risks, hotspots, and code smells
+- **Architecture Summarisation**: Overview of project structure, entry points, and dependencies
+- **Persistent Knowledge Storage**: Stores learned project state in `.sentinel/` directory
+- **Checkpoint Tracking**: Compares scans to detect changes and drift
+
+### AI Agent Support
+- **Prioritised Next-Step Suggestions**: Ranked by impact, effort, and confidence
+- **Suggestion Confidence Scoring**: Quantified reliability of recommendations
+- **Impact and Effort Labels**: Clear prioritization for developers and agents
+- **Verification Hints**: Focused test commands for each suggestion
+- **Agent Prompt Generation**: Project-aware prompts for Cline, Claude Code, Codex, Roo, and Continue
+- **Low-Token Context Packs**: Compact project briefs for token-sensitive workflows
+
+### Risk & Quality
+- **Risk Scoring**: High-impact file identification and risk assessment
+- **Documentation Drift Detection**: Flags mismatches between docs and code
+- **Coverage Hotspot Analysis**: Identifies weakly tested areas from coverage.xml
+- **Dependency Hotspot Detection**: Finds risky dependency patterns
+- **Release-Readiness Checks**: Open-source readiness checklist
+
+### Visualization & Reporting
+- **Local Live Dashboard**: Browser-based GUI for all Sentinel workflows
+- **HTML Report Generation**: Shareable project health reports
+- **Markdown Report Generation**: Detailed project documentation
+- **Terminal Reports**: Quick CLI summaries
+- **Repo URL Analysis**: Analyze GitHub repos with complete report bundles
+- **Local Project Q&A**: Ask Sentinel questions about your codebase
+
+### Advanced Analysis
+- **Python AST Symbol Indexing**: Detailed symbol extraction and indexing
+- **Import Graph Generation**: Visualize and analyze import dependencies
+- **Call Graph Generation**: Track function call relationships
+- **Runtime Path Analysis**: Understand execution flows
+- **Task Memory Recording**: Track work history and token savings
+
+### Integration & Workflow
+- **Kilo File Bridge**: No-MCP integration with Kilo AI coding assistant
+- **MCP Server**: Run Sentinel as a Model Context Protocol server
+- **Continuous Monitoring**: Watch for project changes with interval scanning
+- **Autofix Planning**: Generate and apply small safe fixes
+- **PR Summary Generation**: Summarize changes, risks, and suggested tests
+- **Adapter Prompts**: Tool-specific prompts for various AI coding assistants
+
+### Standard Library Only
+- **Pure Python Implementation**: No external dependencies beyond standard library
 
 ---
 
@@ -446,24 +456,47 @@ src/
   utils.py         Shared helpers and defaults
 
 config/
-  config.json
-  audit_rules.json
-  patterns.json
+  config.json          Main configuration
+  audit_rules.json     Risk and hotspot detection rules
+  patterns.json        Code pattern matching rules
 
 .sentinel/
-  knowledge_base.json
-  checkpoints.json
-  reports/
+  knowledge_base.json  Discovered project knowledge
+  checkpoints.json     Scan checkpoints and diffs
+  reports/             Archived markdown reports
+  kilo/                Kilo AI integration files
+
+kilo/                  Kilo configuration and rules
+  rules/
+    sentinel-file-bridge.md    No-MCP file bridge workflow
+    sentinel-first.md          Sentinel-first operating rule
+  agents/
+    sentinel-code.md           Sentinel-first agent profile
+
+.kilocode/              Legacy Kilo configuration fallback
+  mcp.json
+  rules/
+    sentinel-first.md
+
+benchmarks/             Performance benchmarks and fixtures
 
 tests/
   test_sentinel.py
   test_auditor.py
   test_knowledge.py
+  test_knowledge_repo.py
+  test_ladybird_regressions.py
+  test_weighted_entry_points.py
 
 docs/
   ARCHITECTURE.md
   API.md
   USER_GUIDE.md
+  INSTALL_AND_UPGRADE.md
+  PRIVACY_AND_SAFETY.md
+  PRODUCT_TIERS.md
+
+sentinel-url-reports/   URL analysis report bundles
 ```
 
 ---
@@ -482,6 +515,15 @@ Sentinel writes project memory and reports into the scanned project.
 | `.sentinel/kilo/prompt.md` | Focused Kilo task prompt |
 | `.sentinel/kilo/focus-files.txt` | Validated files Kilo should inspect first |
 | `.sentinel/kilo/status.json` | Bridge health, freshness, and validation metadata |
+| `.kilo/kilo.jsonc` | Modern Kilo MCP configuration |
+| `.kilo/rules/sentinel-file-bridge.md` | No-MCP file bridge workflow |
+| `.kilo/rules/sentinel-first.md` | Sentinel-first operating rule |
+| `.kilo/agents/sentinel-code.md` | Selectable Sentinel-first Kilo agent profile |
+| `.kilocode/mcp.json` | Compatibility fallback for older Kilo builds |
+| `.kilocode/rules/sentinel-first.md` | Legacy Sentinel-first rule fallback |
+| `SENTINEL_REPORT.html` | Shareable HTML report for project health |
+| `sentinel_next_prompt.md` | Next-step prompt for AI agents |
+| `time_to_do_this.md` | Task planning and timeline documentation |
 
 ---
 
@@ -737,8 +779,10 @@ Sentinel can integrate with Kilo in two ways:
 
 | Mode | Description |
 |---|---|
-| No-MCP file bridge | Writes compact context into normal workspace files that Kilo can read directly |
-| MCP bridge | Exposes Sentinel as tools when Kilo's MCP dispatcher is working correctly |
+| **No-MCP File Bridge** (Recommended) | Writes compact context into normal workspace files that Kilo can read directly. Works without MCP server configuration. |
+| **MCP Bridge** | Exposes Sentinel as tools when Kilo's MCP dispatcher is working correctly. Requires MCP setup. |
+
+The file bridge is the most reliable integration method and works across all Kilo versions.
 
 ---
 
@@ -750,19 +794,19 @@ Use the no-MCP file bridge for the strongest practical setup:
 project-sentinel kilo-bridge . --scan-root axiom --budget small --fast --force
 ```
 
-This writes:
+This creates the following integration files:
 
 ```text
-CONTEXT.md
-.sentinel/kilo/prompt.md
-.sentinel/kilo/focus-files.txt
-.sentinel/kilo/status.json
-.kilo/kilo.jsonc
-.kilo/rules/sentinel-file-bridge.md
-.kilo/rules/sentinel-first.md
-.kilo/agents/sentinel-code.md
-.kilocode/mcp.json
-.kilocode/rules/sentinel-first.md
+CONTEXT.md                    # Auto-readable compact project brief
+.sentinel/kilo/prompt.md      # Task prompt Kilo should follow
+.sentinel/kilo/focus-files.txt # First files Kilo should inspect
+.sentinel/kilo/status.json    # Token, health, freshness metadata
+.kilo/kilo.jsonc              # Modern Kilo MCP configuration
+.kilo/rules/sentinel-file-bridge.md  # No-MCP file bridge workflow
+.kilo/rules/sentinel-first.md        # Sentinel-first operating rule
+.kilo/agents/sentinel-code.md        # Selectable agent profile
+.kilocode/mcp.json            # Compatibility fallback
+.kilocode/rules/sentinel-first.md    # Legacy fallback
 ```
 
 Daily refresh before a Kilo task:
@@ -784,6 +828,8 @@ Optional background refresh:
 ```bash
 project-sentinel kilo-watch . --scan-root axiom --budget small --fast --interval 30
 ```
+
+If a focus file disappears or the scan root moves, Sentinel marks the bridge as stale and prints the exact `kilo-refresh` command needed to regenerate it.
 
 ---
 
