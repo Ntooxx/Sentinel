@@ -233,13 +233,29 @@ def is_truthy_env(name: str) -> bool:
 
 def ensure_parent_dir(path: os.PathLike[str] | str) -> Path:
     target = Path(path)
-    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise OSError(
+            f"Cannot create state directory at {target.parent}: {exc}. "
+            "This may be caused by an intermediate path component that is not a directory, "
+            "a Windows path length limit, or a restricted temp directory. "
+            "Try setting SENTINEL_HOME to a writable directory with a short path."
+        ) from exc
     return target
 
 
 def ensure_dir(path: os.PathLike[str] | str) -> Path:
     target = Path(path)
-    target.mkdir(parents=True, exist_ok=True)
+    try:
+        target.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise OSError(
+            f"Cannot create directory at {target}: {exc}. "
+            "This may be caused by an intermediate path component that is not a directory, "
+            "a Windows path length limit, or a restricted temp directory. "
+            "Try setting SENTINEL_HOME to a writable directory with a short path."
+        ) from exc
     return target
 
 

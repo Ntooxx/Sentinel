@@ -48,8 +48,13 @@ class SentinelAgent:
     def __init__(self, project_dir: str, config_path: Optional[str] = None):
         self.repo_root = Path(__file__).resolve().parent.parent
         self.project_dir = Path(project_dir).resolve()
-        if not self.project_dir.is_dir():
+        if not self.project_dir.exists():
             raise ValueError(f"Project directory does not exist: {self.project_dir}")
+        if not self.project_dir.is_dir():
+            raise ValueError(
+                f"Project path is not a directory: {self.project_dir}. "
+                "If this is a file, provide the parent directory instead."
+            )
 
         self.config, self.config_base_dir = self._load_config(config_path)
         state_home = os.getenv("SENTINEL_HOME")
