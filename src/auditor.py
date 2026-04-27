@@ -1021,7 +1021,7 @@ class ProjectAuditor:
 
             fc = classifyFile(filepath, info)
             is_runtime_entry = fc.isRuntimeEntryCandidate or info.get("has_main", False)
-            if is_runtime_entry and not is_test_file and not fc.isTest and not fc.isTestRunner and not fc.isFixture:
+            if is_runtime_entry and not is_test_file and not fc.isTest and not fc.isTestRunner and not fc.isFixture and not fc.isGeneratedSdk and not fc.isGenerated:
                 entry_points.append(filepath)
                 score = self._calculate_entry_point_score(filepath, parts, info)
                 category = self._categorize_entry_point(filepath)
@@ -1379,18 +1379,23 @@ class ProjectAuditor:
         project_name = None
         description = ""
 
-        def _is_html_or_badge(text: str) -> bool:
-            if not text:
+        BAD_TITLE_PREFIXES = ("<div", "<p", "<img", "<a", "<picture", "<svg", "<h1", "<table", "<span", "<section")
+
+        def _is_bad_project_name(value: str) -> bool:
+            if not value:
                 return True
-            lowered = text.strip().lower()
-            if lowered.startswith("<"):
+            v = value.strip().lower()
+            if v.startswith(BAD_TITLE_PREFIXES):
                 return True
-            if lowered.startswith("[![") or lowered.startswith("!["):
+            if "align=\"center\"" in v:
                 return True
-            if lowered.startswith("<!--") and "-->" in lowered:
+            if v.startswith("<"):
                 return True
-            # treat empty or whitespace-only as non-useful
-            if not lowered:
+            if v.startswith("[![") or v.startswith("!["):
+                return True
+            if v.startswith("<!--") and "-->" in v:
+                return True
+            if "application logic" in v:
                 return True
             return False
 
@@ -1401,7 +1406,7 @@ class ProjectAuditor:
             cleaned = []
             for line in lines:
                 stripped = line.strip()
-                if _is_html_or_badge(stripped):
+                if _is_bad_project_name(stripped):
                     continue
                 cleaned.append(line)
             result = "\n".join(cleaned).strip()
@@ -1420,33 +1425,31 @@ class ProjectAuditor:
                 continue
             metadata = info.get("metadata", {})
             if not project_name and metadata.get("name"):
-                project_name = metadata["name"]
-                if project_name.startswith("@") or project_name.startswith("com."):
-                    project_name = project_name.split("/")[-1] if "/" in project_name else project_name
+                raw = metadata["name"]
+                if not _is_bad_project_name(raw):
+                    project_name = raw
+                    if project_name.startswith("@") or project_name.startswith("com."):
+                        project_name = project_name.split("/")[-1] if "/" in project_name else project_name
             if not description and metadata.get("description"):
                 raw = metadata["description"]
-                if not _is_html_or_badge(raw):
+                if not _is_bad_project_name(raw):
                     description = raw
             if not description and info.get("summary"):
                 raw = info["summary"]
                 cleaned = _clean_readme_text(raw)
-                if cleaned and not _is_html_or_badge(cleaned):
+                if cleaned and not _is_bad_project_name(cleaned):
                     description = cleaned
-            if not project_name and candidate.lower() in {"readme.md", "readme"}:
+            if candidate.lower() in {"readme.md", "readme"}:
                 raw_title = metadata.get("doc_title")
-                if raw_title and not _is_html_or_badge(raw_title):
-                    project_name = raw_title
-                else:
+                if raw_title and not _is_bad_project_name(raw_title):
+                    if not project_name or project_name == project_name.lower():
+                        project_name = raw_title
+                elif not project_name:
                     candidate_name = info.get("summary", "").strip()
-                    if candidate_name and not _is_html_or_badge(candidate_name):
+                    if candidate_name and not _is_bad_project_name(candidate_name):
                         project_name = candidate_name
-            elif candidate.lower() in {"readme.md", "readme"}:
-                readme_title = metadata.get("doc_title")
-                if readme_title and not _is_html_or_badge(readme_title):
-                    if project_name and project_name == project_name.lower():
-                        project_name = readme_title
 
-        if not project_name or _is_html_or_badge(project_name):
+        if not project_name or _is_bad_project_name(project_name):
             project_name = self.root_dir.name
 
         return project_name, description

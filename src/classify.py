@@ -239,15 +239,26 @@ def detectRepoArchetype(
     )
 
     # Detect framework subdir roots like tensorflow/core, tensorflow/python, tensorflow/compiler
-    framework_subdir_roots = {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "c", "cc", "tools"}
-    has_framework_layout = False
+    framework_subdir_roots = {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "c", "cc", "tools", "stream_executor", "tpu", "dtensor"}
+    top_level_dirs = set()
     second_level_dirs = set()
     for p in files:
         parts = p.split("/")
+        if len(parts) >= 1:
+            top_level_dirs.add(parts[0].lower())
         if len(parts) >= 2:
             second_level_dirs.add(parts[1].lower())
+    has_framework_layout = False
     framework_matches = second_level_dirs & framework_subdir_roots
     if len(framework_matches) >= 2:
+        has_framework_layout = True
+
+    # Direct check: tensorflow/core, tensorflow/python, tensorflow/compiler, tensorflow/lite pattern
+    has_tensorflow_like = (
+        "tensorflow" in top_level_dirs
+        or "tensorflow" in second_level_dirs
+    )
+    if has_tensorflow_like and len(framework_matches) >= 2:
         has_framework_layout = True
 
     main_count = sum(1 for p in files if p.endswith("main.rs") or p.endswith("main.go") or p.endswith("main.py") or p.endswith("main.cpp") or p.endswith("main.cc") or p.endswith("main.ts"))
@@ -257,7 +268,9 @@ def detectRepoArchetype(
         and ("/gen/" in p or "/generated/" in p or "/genop/" in p or "/tools/" in p or p.startswith("tools/") or "/cmd/" in p or p.startswith("cmd/"))
     )
     effective_main_count = main_count - main_in_gen_count
-    if (has_large_runtime or has_framework_layout) and effective_main_count <= 2 and source_count >= 3 and primary == ARCHETYPE_APP:
+
+    # Early framework_library detection (before monorepo/app checks override)
+    if has_framework_layout and effective_main_count <= 2 and source_count >= 3 and primary == ARCHETYPE_APP:
         primary = ARCHETYPE_FRAMEWORK_LIBRARY
         confidence = "medium"
         workflow = "framework_library"
@@ -304,6 +317,11 @@ def _is_gen_name(name: str) -> bool:
     if name.endswith(".gen.rs") or name.endswith(".generated.rs"):
         return True
     if name.endswith(".gen.java") or name.endswith(".generated.java"):
+        return True
+    # Catch *_gen.cc, *_gen.cpp, *_gen.c, *_gen.h patterns
+    if stem.endswith("_gen") and any(name.endswith(s) for s in {".cc", ".cpp", ".cxx", ".c", ".h", ".hpp", ".hh", ".py", ".go", ".rs"}):
+        return True
+    if stem.endswith("_generated") and any(name.endswith(s) for s in {".cc", ".cpp", ".cxx", ".c", ".h", ".hpp", ".hh", ".py", ".go", ".rs"}):
         return True
     return False
 
