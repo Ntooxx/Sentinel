@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 import subprocess
@@ -8,8 +9,33 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Dict, List, Optional
 
+from classify import (
+    ARCHETYPE_APP,
+    ARCHETYPE_CLI_SERVER,
+    ARCHETYPE_DESKTOP_APP,
+    ARCHETYPE_BROWSER_ENGINE,
+    ARCHETYPE_FRAMEWORK_LIBRARY,
+    ARCHETYPE_MONOREPO,
+    ARCHETYPE_TEST_SUITE,
+    ARCHETYPE_VENDOR_HEAVY,
+    ARCHETYPE_GENERATED_HEAVY,
+    ARCHETYPE_DOCUMENTATION_HEAVY,
+    ARCHETYPE_MIXED_LANGUAGE,
+    FileClassification,
+    classifyFile,
+    classifyComponentRole,
+    classifyLargeFilePolicy,
+    classifyRiskSurface,
+    classifyRoleLabel,
+    classifySurface,
+    is_under_monorepo_root,
+    monorepo_component_key,
+    riskFromScore,
+    detectRepoArchetype,
+)
 from utils import DEFAULT_AUDIT_RULES, DEFAULT_PATTERNS, merge_dicts, now_iso, read_json, write_json
 
 SCAN_CACHE_VERSION = 1
@@ -99,6 +125,8 @@ class ProjectAuditor:
         use_git_discovery: bool = False,
     ) -> Dict[str, Dict[str, Any]]:
         """Scan the project directory and return per-file metadata."""
+        log = logging.getLogger("sentinel")
+        t0 = perf_counter()
 
         ignored_dirs = {entry.lower() for entry in ignore_dirs}
         allowed_entries = {entry.lower() for entry in extensions}
@@ -144,6 +172,11 @@ class ProjectAuditor:
         self.scan_cache = next_cache
         self.last_cache_stats = cache_stats
         self._save_scan_cache()
+        t1 = perf_counter()
+        log.debug(
+            "Scan timing: discovery+analysis=%.3fs hits=%d misses=%d files=%d",
+            t1 - t0, cache_stats["hits"], cache_stats["misses"], len(files),
+        )
         return dict(sorted(files.items()))
 
     def _iter_candidate_files(
@@ -317,287 +350,96 @@ class ProjectAuditor:
     def _mtime_to_iso(self, mtime: float) -> str:
         return datetime.fromtimestamp(mtime).astimezone().isoformat(timespec="seconds")
 
-    def _path_parts(self, filepath: str) -> tuple[str, ...]:
-        return Path(filepath).parts
-
-    def _path_parts_lower(self, filepath: str) -> tuple[str, ...]:
-        return tuple(part.lower() for part in self._path_parts(filepath))
-
-    def _is_generated_sdk_file(self, filepath: str) -> bool:
-        lower_path = filepath.replace("\\", "/").lower()
-        name = Path(filepath).name.lower()
-        if "/gen/" in lower_path or "/generated/" in lower_path:
-            return True
-        if name.endswith(".gen.ts") or name.endswith(".generated.ts"):
-            return True
-        if name in {"sdk.gen.ts", "types.gen.ts", "client.gen.ts"}:
-            return True
-        if name.endswith(".gen.go") or name.endswith(".generated.go"):
-            return True
-        if name.endswith("_gen.go") or name.endswith("_generated.go"):
-            return True
-        parts = Path(filepath).parts
-        if len(parts) >= 2 and parts[0].lower() in {"gen", "generated"}:
-            return True
-        return False
-
-    def _is_localization_file(self, filepath: str) -> bool:
-        lower_path = filepath.replace("\\", "/").lower()
-        if "/i18n/" in lower_path or "/locales/" in lower_path or "/translations/" in lower_path:
-            return True
-        # Language-specific files inside i18n/locales folders
-        lang_pattern = re.compile(r"/(?:i18n|locales|translations)/[^/]+\.\w+$")
-        if lang_pattern.search(lower_path):
-            parts = lower_path.split("/")
-            name = parts[-1] if parts else ""
-            stem = name.split(".")[0] if "." in name else name
-            if stem in {"en", "fr", "de", "es", "it", "pt", "ru", "ja", "zh", "ko", "ar", "hi", "nl", "pl", "tr", "sv", "da", "fi", "nb", "cs", "hu", "ro", "uk", "el", "he", "th", "vi", "id", "ms", "tl", "bn", "ta", "te", "mr", "gu", "kn", "ml"}:
-                return True
-            return True
-        return False
-
-    def _is_specification_file(self, filepath: str) -> bool:
-        lower_path = filepath.replace("\\", "/").lower()
-        ext = Path(filepath).suffix.lower()
-        name = Path(filepath).name.lower()
-        if ext != ".md":
-            return False
-        # Files in spec/ or adr/ directories are spec docs
-        if "/specs/" in lower_path or "/adr/" in lower_path:
-            return True
-        # Files in docs/ that contain spec-related keywords in the filename
-        if "/docs/" in lower_path:
-            spec_keywords = ["spec", "design", "architecture", "adr", "proposal"]
-            if any(kw in name for kw in spec_keywords):
-                return True
-            return False
-        # Standalone markdown files anywhere with spec-related keywords in the filename
-        spec_keywords = ["spec", "design", "architecture", "adr", "proposal"]
-        if any(kw in name for kw in spec_keywords):
-            return True
-        return False
-
     def _classify_path_context(self, filepath: str, info: Optional[Dict[str, Any]] = None) -> str:
-        lower_path = filepath.replace("\\", "/").lower()
-        parts = self._path_parts_lower(filepath)
-        ext = str((info or {}).get("extension") or Path(filepath).suffix).lower()
-        name = Path(filepath).name.lower()
-
-        # Generated SDK — check before vendor to catch project-owned generated code
-        if self._is_generated_sdk_file(filepath):
-            return "generated_sdk"
-
-        # Localization/resource files
-        if self._is_localization_file(filepath):
-            return "localization_resource"
-
-        # Specification/documentation markdown files
-        if self._is_specification_file(filepath):
-            return "specification_documentation"
-
-        # Generated/bundled assets — highest priority to catch early
-        if "/src-tauri/gen/" in lower_path:
-            return "vendor_generated"
-        if any(token in lower_path for token in ["vendor/", "third_party/", "3rdparty/", "node_modules/"]):
-            return "vendor_generated"
-        if name in {"package-lock.json", "pnpm-lock.yaml", "yarn.lock", "cargo.lock"}:
-            return "vendor_generated"
-        if ext == ".map" or (ext == ".js" and "min" in name):
-            return "vendor_generated"
-
-        if any(part == ".devcontainer" for part in parts):
-            return "environment"
-        if name == "build.rs" or name.startswith("build.") or name.startswith("configure.") or name.startswith("install."):
-            return "build_tooling"
-        if "generator" in name or name.startswith("generate_") or name.startswith("gen_"):
-            return "generator"
-        if "/rust/build.rs" in lower_path or "/bytecode/asminterpreter/gen_" in lower_path:
-            return "generator"
-        if "/meta/generators/" in lower_path:
-            return "generator"
-        if "/meta/linters/" in lower_path:
-            return "lint_tooling"
-        if "/meta/" in lower_path:
-            return "build_tooling"
-        if "/utilities/" in lower_path or "/scripts/" in lower_path or "/tools/" in lower_path:
-            return "tooling"
-        if "/documentation/" in lower_path or "/docs/" in lower_path:
-            return "documentation"
-        if "/tests/" in lower_path or "/test/" in lower_path or "/wpt-import/" in lower_path:
-            if "wpt-import" in lower_path or ext in {".json", ".txt", ".html"}:
-                return "test_data"
+        fc = classifyFile(filepath, info)
+        if fc.isTest:
             return "test"
+        if fc.isTestRunner:
+            return "test"
+        if fc.isFixture:
+            return "test_data"
+        if fc.isGeneratedSdk:
+            return "generated_sdk"
+        if fc.isGenerated:
+            return "generated_sdk"
+        if fc.isVendor:
+            return "vendor_generated"
+        if fc.isLocalization:
+            return "localization_resource"
+        if fc.isSpecification:
+            return "specification_documentation"
+        if fc.isDocumentation:
+            return "documentation"
+        if fc.isBuildTooling:
+            return "build_tooling"
+        if fc.isGenerator:
+            return "generator"
+        if fc.isEnvironmentSetup:
+            return "environment"
+        if fc.isDependencyLock:
+            return "vendor_generated"
+        if fc.isConfig:
+            return "data_or_config"
+
+        lower_path = filepath.replace("\\", "/").lower()
+        parts = tuple(p.lower() for p in Path(filepath).parts)
+
+        if "wpt-import" in lower_path or "fixtures" in lower_path:
+            return "test_data"
+        if any(part in {"tests", "test", "spec"} for part in parts):
+            return "test"
+        if "/meta/" in lower_path:
+            if "/generators/" in lower_path:
+                return "generator"
+            if "/linters/" in lower_path:
+                return "lint_tooling"
+            if "/lagom/" in lower_path:
+                if "/fuzzers/" in lower_path or "/fuzzer/" in lower_path:
+                    return "lint_tooling"
+                return "build_tooling"
+            if "/cmake/" in lower_path:
+                return "build_tooling"
+            if "/utils/" in lower_path:
+                return "build_tooling"
+            name_lower = Path(filepath).name.lower()
+            if name_lower.startswith("import") and "test" in name_lower:
+                return "test"
+            if name_lower.endswith(".sh") and "wpt" in name_lower:
+                return "test"
+            return "build_tooling"
         if "/libraries/libweb/" in lower_path:
             return "browser_engine"
         if "/libraries/libjs/" in lower_path:
             return "javascript_engine"
         if "/libraries/libmain/" in lower_path:
             return "runtime_entry"
-        if ext == ".go" and name.endswith("_test.go"):
-            return "test"
-        if any(part in {"tests", "test", "spec"} for part in parts) or name.startswith("test_") or ".spec." in name:
-            if "wpt-import" in lower_path or ext in {".json", ".txt", ".html"}:
-                return "test_data"
-            return "test"
-        if "wpt-import" in lower_path or "fixtures" in lower_path:
-            return "test_data"
-        if any(part in {"docs", "doc", "documentation"} for part in parts) or ext == ".md":
-            return "documentation"
-        if parts and parts[0] == "meta":
-            if len(parts) > 1 and parts[1] == "generators":
-                return "generator"
-            if len(parts) > 1 and parts[1] == "linters":
-                return "lint_tooling"
-            return "build_tooling"
+        if "/libraries/libtest/" in lower_path:
+            return "test_support"
         if parts and parts[0] == "libraries":
-            if len(parts) > 1 and parts[1] == "libweb":
-                return "browser_engine"
-            if len(parts) > 1 and parts[1] == "libjs":
-                return "javascript_engine"
-            if len(parts) > 1 and parts[1] == "libmain":
-                return "runtime_entry"
-            if len(parts) > 1 and parts[1] == "libtest":
-                return "test_support"
             return "first_party_source"
         if parts and parts[0] == "ak":
             return "core_utility"
-        if len(parts) > 1 and parts[0] == "base" and parts[1] == "res":
-            return "resources"
         if parts and parts[0] in {"services", "ui", "cmd", "api", "server"}:
             return "runtime_source"
         if parts and parts[0] in {"utilities", "scripts", "tools"}:
+            name_lower = Path(filepath).name.lower()
+            if "test" in name_lower and "runner" in name_lower:
+                return "test"
             return "tooling"
-        # e2e directories
-        if any(part == "e2e" for part in parts):
-            return "test"
-        # demo/sample data directories
         if any(part in {"demo-vault", "demo-vault-v2", "demo", "samples", "examples"} for part in parts):
             return "test_data"
-        if ext in {".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"}:
-            return "data_or_config"
         return "application"
 
     def _component_key_for_path(self, filepath: str) -> Optional[str]:
-        parts = self._path_parts(filepath)
-        lower_parts = self._path_parts_lower(filepath)
+        parts = tuple(Path(filepath).parts)
         if len(parts) < 2 or any(part.startswith(".") for part in parts[:-1]):
             if parts and parts[0] == ".devcontainer":
                 return parts[0]
             return None
-
-        top = lower_parts[0]
-        if top in {"tests", "test"}:
-            return "/".join(parts[:2]) if len(parts) >= 2 else parts[0]
-        if top in {"docs", "doc", "documentation"}:
-            return parts[0]
-        if top == ".devcontainer":
-            return parts[0]
-        if top == "meta":
-            if len(parts) >= 2 and lower_parts[1] in {"generators", "linters", "cmake"}:
-                return "/".join(parts[:2])
-            return parts[0]
-        if top == "libraries":
-            return "/".join(parts[:2]) if len(parts) >= 2 else parts[0]
-        if top == "base" and len(parts) >= 2 and lower_parts[1] == "res":
-            return "/".join(parts[:2])
-        if top in {"services", "utilities", "ui", "cmd", "api", "server"} and len(parts) >= 2:
-            return "/".join(parts[:2])
-
-        # Monorepo splitting: packages/, apps/, services/, crates/, modules/, libs/
-        monorepo_roots = {"packages", "apps", "services", "crates", "modules", "libs"}
-        if top in monorepo_roots and len(parts) >= 2:
-            second_level = lower_parts[1] if len(lower_parts) > 1 else ""
-            if second_level:
-                return "/".join(parts[:2])
-
-        return parts[0]
+        return monorepo_component_key(filepath)
 
     def _component_role_for_context(self, key: str) -> str:
-        lower_key = key.lower()
-        specific_roles = {
-            "vendor": "third-party or vendored dependencies — track only, do not refactor by default",
-            "cmd": "Go CLI entry points and command definitions",
-            "api": "API surface and request handling",
-            "server": "server runtime and HTTP handlers",
-            "libraries/libcompress": "compression and archive codecs",
-            "libraries/libcore": "platform and event-loop utilities",
-            "libraries/libcrypto": "cryptography and certificate handling",
-            "libraries/libdatabase": "database and storage layer",
-            "libraries/libdevtools": "developer tools integration",
-            "libraries/libdiff": "diff and patch utilities",
-            "libraries/libdns": "DNS protocol and resolution",
-            "libraries/libfilesystem": "filesystem abstraction",
-            "libraries/libgc": "garbage collector infrastructure",
-            "libraries/libgfx": "graphics, fonts, and image codecs",
-            "libraries/libhttp": "HTTP networking stack",
-            "libraries/libidl": "IDL parsing and bindings support",
-            "libraries/libimagedecoderclient": "image decoder client bindings",
-            "libraries/libipc": "interprocess communication",
-            "libraries/libline": "command-line editing utilities",
-            "libraries/libmedia": "media playback and container support",
-            "libraries/libregex": "regular expression engine",
-            "libraries/librequests": "network request orchestration",
-            "libraries/libsyntax": "syntax parsing and highlighting",
-            "libraries/libtextcodec": "text encoding data and codecs",
-            "libraries/libthreading": "threading and concurrency primitives",
-            "libraries/libtls": "TLS and secure transport",
-            "libraries/libunicode": "Unicode data and text processing",
-            "libraries/liburl": "URL parsing and canonicalization",
-            "libraries/libwasm": "WebAssembly runtime and validation",
-            "libraries/libwebsocket": "WebSocket protocol support",
-            "libraries/libwebview": "browser embedding and view integration",
-            "libraries/libxml": "XML parsing and DOM support",
-            "services/imagedecoder": "image decoder service",
-            "services/requestserver": "network request service",
-            "services/webcontent": "page runtime service",
-            "services/webdriver": "WebDriver automation service",
-            "services/webworker": "worker runtime service",
-            "utilities": "developer command-line utilities",
-            "meta/utils": "build and developer utilities",
-            "meta/lagom": "host-side tools and standalone apps",
-            "meta/cmake": "build system integration",
-            "base/res": "resources, default config, and assets",
-            "tests/ak": "core utility tests",
-        }
-        if lower_key in specific_roles:
-            return specific_roles[lower_key]
-        if lower_key.startswith("tests/libweb"):
-            return "test suite / WPT fixtures"
-        if lower_key.startswith("tests/libjs"):
-            return "JavaScript engine tests"
-        if lower_key.startswith("tests"):
-            return "test suite / test infrastructure"
-        if lower_key.startswith("documentation") or lower_key.startswith("docs"):
-            return "documentation"
-        if lower_key.startswith(".devcontainer"):
-            return "development environment"
-        if lower_key.startswith("meta/generators"):
-            return "code generation tooling"
-        if lower_key.startswith("meta/linters"):
-            return "lint tooling"
-        if lower_key.startswith("meta/cmake"):
-            return "build tooling"
-        if lower_key.startswith("meta"):
-            return "build and developer tooling"
-        if lower_key.startswith("libraries/libweb"):
-            return "browser engine code"
-        if lower_key.startswith("libraries/libjs"):
-            return "JavaScript engine code"
-        if lower_key.startswith("libraries/libmain"):
-            return "runtime entrypoint support"
-        if lower_key.startswith("libraries/libtest"):
-            return "test support library"
-        if lower_key == "ak":
-            return "core utility library"
-        if lower_key.startswith("base/res"):
-            return "resources and default assets"
-        if lower_key.startswith("services"):
-            return "runtime services"
-        if lower_key.startswith("utilities"):
-            return "developer utilities"
-        if lower_key.startswith("ui"):
-            return "user interface"
-        return self._infer_component_role(key)
+        return classifyComponentRole(key)
 
     def _is_runtime_hotspot_not_entry(self, filepath: str) -> bool:
         lower_path = filepath.replace("\\", "/").lower()
@@ -625,12 +467,32 @@ class ProjectAuditor:
             return True
         return False
 
-    def _categorize_entry_point(self, filepath: str) -> str:
+    def _categorize_entry_point(self, filepath: str, info: Any = None) -> str:
+        fc = classifyFile(filepath, info)
         lower_path = filepath.replace("\\", "/").lower()
-        parts = self._path_parts_lower(filepath)
+        parts = tuple(p.lower() for p in Path(filepath).parts)
         name = Path(filepath).name.lower()
 
-        if any(part == ".devcontainer" for part in parts):
+        if fc.isTest or fc.isFixture:
+            return "test"
+        if fc.isTestRunner:
+            return "test"
+        if fc.isGeneratedSdk or fc.isGenerated:
+            return "generator"
+        if fc.isGenerator:
+            return "generator"
+        if fc.isBuildTooling:
+            return "build"
+        if fc.isEnvironmentSetup:
+            return "environment"
+        if fc.isDocumentation:
+            return "documentation"
+        if fc.isDependencyLock:
+            return "build"
+        if fc.isVendor:
+            return "build"
+
+        if any(part == ".devcontainer" for part in parts) or ".devcontainer" in lower_path:
             return "environment"
         if any(part in {"tests", "test", "spec", "e2e"} for part in parts) or "libtest" in lower_path:
             return "test"
@@ -638,26 +500,17 @@ class ProjectAuditor:
             if len(parts) > 1 and parts[1] == "generators":
                 return "generator"
             return "build"
-        if (
-            name.startswith("generate_")
-            or name.startswith("gen_")
-            or "codegen" in lower_path
-            or "generator" in lower_path
-            or "asmintgen" in lower_path
-        ):
-            return "generator"
-        if any(token in lower_path for token in ["cmake/", "/build", "/configure", "/install", "toolchain", "vcpkg"]):
-            return "build"
+
+        # Examples are example entry points, not primary runtime
+        if any(part in {"examples", "example", "samples", "sample", "demo", "demos"} for part in parts):
+            return "example"
+
+        # API surfaces for framework/library repos
+        if any(part in {"api", "apis"} for part in parts) and fc.isRuntimeSource:
+            return "runtime_surface"
+
         if name in {"setup.py", "package.json", "pyproject.toml"}:
             return "packaging"
-
-        # Generated SDK files are never runtime entry points
-        if self._is_generated_sdk_file(filepath):
-            return "generator"
-
-        # Runtime hotspot names are not entry points
-        if self._is_runtime_hotspot_not_entry(filepath):
-            return "tooling"
 
         if name == "build.rs" or name.startswith("build.") or name.startswith("install."):
             return "build"
@@ -667,25 +520,34 @@ class ProjectAuditor:
             return "runtime"
         if parts and parts[0] == "libraries":
             return "runtime"
-        if any(part in {"src", "source", "app", "cmd"} for part in parts):
+        if name in {"main.rs", "main.go", "main.ts", "index.ts", "index.js", "app.ts", "app.js", "server.ts", "server.js", "main.py", "server.py", "app.py", "cli.py"}:
+            return "runtime"
+        if re.search(r"/cmd/[^/]+/main\.(go|rs)$", lower_path):
+            return "runtime"
+        if "src-tauri/src/main.rs" in lower_path:
+            return "runtime"
+        if any(part in {"src", "source", "app", "cmd"} for part in parts) and name.startswith("main."):
             return "runtime"
         if parts and parts[0] == "utilities":
             return "tooling"
         return "tooling"
 
     def _categorize_hotspot(self, filepath: str, info: Dict[str, Any]) -> str:
-        context = self._classify_path_context(filepath, info)
-        if context in {"test", "test_data", "test_support"}:
-            return "test_data"
-        if context in {"documentation", "specification_documentation"}:
-            return "documentation"
-        if context in {"vendor_generated", "generated_sdk"}:
-            return "vendor"
-        if context in {"environment", "build_tooling", "generator", "lint_tooling", "tooling"}:
-            return "build_tooling"
-        if context == "localization_resource":
-            return "build_tooling"
-        return "runtime"
+        surface = classifyRiskSurface(filepath, info)
+        surface_to_group = {
+            "runtime": "runtime",
+            "build_tooling": "build_tooling",
+            "generator": "generator",
+            "test_runner": "test_runner",
+            "test_data": "test_data",
+            "documentation": "documentation",
+            "vendor": "vendor",
+            "generated": "build_tooling",
+            "environment_setup": "build_tooling",
+            "config": "build_tooling",
+            "unknown": "runtime",
+        }
+        return surface_to_group.get(surface, "runtime")
 
     def _count_action_markers(self, content: str) -> int:
         count = 0
@@ -923,13 +785,19 @@ class ProjectAuditor:
 
     def audit_project(self, file_data: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         """Perform a comprehensive project audit."""
+        log = logging.getLogger("sentinel")
+        t0 = perf_counter()
 
         metrics = self._compute_metrics(file_data)
+        t1 = perf_counter()
         structure = self._analyze_structure(file_data)
+        t2 = perf_counter()
         patterns = self._detect_patterns(file_data)
         architecture = self._summarize_architecture(metrics, structure, patterns)
+        t3 = perf_counter()
         issues = self._find_issues(file_data, metrics, structure)
         risk_scores = self._score_file_risks(file_data, structure, issues)
+        t4 = perf_counter()
         scan_coverage = self._evaluate_scan_coverage(file_data, structure)
         if scan_coverage.get("warning"):
             issues.append(
@@ -955,9 +823,15 @@ class ProjectAuditor:
         maintainability_pct = health_score_data.get("breakdown", {}).get("maintainability_percent", 85)
         risk_summary = self._summarize_risk_categories(issues, risk_scores, structure, maintainability_pct)
         # Update health score risk summary so it includes the maintainability risk from the breakdown
-        risk_summary.setdefault("maintainability", {})["level"] = self._maintainability_score_to_risk(maintainability_pct)
+        risk_summary.setdefault("maintainability", {})["level"] = riskFromScore(maintainability_pct)
         # Recalculate health score with updated risk summary that includes correct maintainability
         health_score_data = self._calculate_health_score(issues, metrics, risk_summary)
+
+        t5 = perf_counter()
+        log.debug(
+            "Audit timing: metrics=%.3fs structure=%.3fs patterns=%.3fs issues=%.3fs coverage=%.3fs total=%.3fs",
+            t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4, t5 - t0,
+        )
 
         return {
             "timestamp": now_iso(),
@@ -973,6 +847,10 @@ class ProjectAuditor:
             "risk_summary": risk_summary,
             "health_score": health_score_data["score"],
             "health_score_data": health_score_data,
+            "performance": {
+                "audit_seconds": round(t5 - t0, 4),
+                "file_count": len(file_data),
+            },
         }
 
     def _compute_metrics(self, files: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -994,22 +872,23 @@ class ProjectAuditor:
             ext = info["extension"]
             ext_counts[ext] = ext_counts.get(ext, 0) + 1
 
-            # Categorize based on path
             todo_count = info.get("todo_count", 0)
             if todo_count > 0:
-                lower_path = path.lower()
-                if any(token in lower_path for token in ["tests/", "test_", "spec", "wpt-import"]):
+                fc = classifyFile(path, info)
+                if fc.isTest or fc.isTestRunner or fc.isFixture:
                     todo_categories["tests_fixtures"] += todo_count
-                elif any(token in lower_path for token in ["docs", "documentation", ".md"]):
+                elif fc.isDocumentation or fc.isSpecification:
                     todo_categories["docs"] += todo_count
-                elif any(token in lower_path for token in ["vendor", "generated", "dist", "build", "gen/"]):
+                elif fc.isVendor or fc.isGenerated or fc.isGeneratedSdk:
                     todo_categories["vendor_generated"] += todo_count
-                elif any(token in lower_path for token in [".sh", ".bash", "makefile", "dockerfile", "config", "meta"]):
+                elif fc.isBuildTooling or fc.isGenerator or fc.isConfig:
                     todo_categories["tooling"] += todo_count
-                elif any(token in lower_path for token in ["/i18n/", "/locales/", "/translations/"]):
+                elif fc.isLocalization or fc.isDependencyLock:
                     todo_categories["vendor_generated"] += todo_count
-                elif "/specs/" in lower_path or "/adr/" in lower_path:
-                    todo_categories["docs"] += todo_count
+                elif fc.isEnvironmentSetup:
+                    todo_categories["tooling"] += todo_count
+                elif fc.isRuntimeSource:
+                    todo_categories["first_party_source"] += todo_count
                 else:
                     todo_categories["first_party_source"] += todo_count
 
@@ -1033,7 +912,7 @@ class ProjectAuditor:
             "largest_files": largest_files,
         }
 
-    def _calculate_entry_point_score(self, filepath: str, parts: tuple[str, ...]) -> int:
+    def _calculate_entry_point_score(self, filepath: str, parts: tuple[str, ...], info: Any = None) -> int:
         """Calculate a score for an entry point based on its directory."""
         score = 100  # Base score
 
@@ -1055,10 +934,14 @@ class ProjectAuditor:
 
         if category == "runtime":
             score += 25
+        elif category == "runtime_surface":
+            score += 20
+        elif category == "example":
+            score -= 35
         elif category == "build":
             score += 5
         elif category == "generator":
-            score += 8
+            score -= 15
         elif category == "test":
             score -= 45
         elif category == "environment":
@@ -1081,6 +964,10 @@ class ProjectAuditor:
         # Low weight for build/generator directories
         if any(part in {"build", "meta", "generators"} for part in lower_parts):
             score -= 10
+
+        # Penalize examples and generators more strongly
+        if any(part in {"examples", "example", "samples", "sample", "demo", "demos"} for part in lower_parts):
+            score -= 40
 
         return max(0, score)
 
@@ -1132,10 +1019,11 @@ class ProjectAuditor:
             ):
                 documentation_files.append(filepath)
 
-            if info.get("has_main") and not is_test_file:
+            fc = classifyFile(filepath, info)
+            is_runtime_entry = fc.isRuntimeEntryCandidate or info.get("has_main", False)
+            if is_runtime_entry and not is_test_file and not fc.isTest and not fc.isTestRunner and not fc.isFixture:
                 entry_points.append(filepath)
-                # Calculate score based on directory
-                score = self._calculate_entry_point_score(filepath, parts)
+                score = self._calculate_entry_point_score(filepath, parts, info)
                 category = self._categorize_entry_point(filepath)
                 detail = {
                     "path": filepath,
@@ -1146,7 +1034,7 @@ class ProjectAuditor:
                 entry_points_by_category.setdefault(category, []).append(detail)
 
         ordered_entry_points: List[Dict[str, Any]] = []
-        for category in ["runtime", "build", "generator", "tooling", "test", "environment", "packaging"]:
+        for category in ["runtime", "runtime_surface", "example", "build", "generator", "tooling", "test", "environment", "packaging", "documentation"]:
             values = sorted(entry_points_by_category.get(category, []), key=lambda item: item["score"], reverse=True)
             entry_points_by_category[category] = values
             ordered_entry_points.extend(values)
@@ -1250,29 +1138,29 @@ class ProjectAuditor:
         warning = ""
         if has_go_mod_on_disk and not has_go_files_scanned:
             warning = (
-                "Scan coverage warning: Go module detected (go.mod exists on disk) but no Go source files "
-                "were scanned. Project identity and test detection may be incomplete."
+                "Scan coverage note: Go module detected (go.mod) but no Go source files "
+                "scanned. Expected Go source directories like cmd/, api/, server/ may be excluded."
             )
         elif has_go_mod_on_disk and not has_go_mod_scanned:
             warning = (
-                "Scan coverage warning: go.mod exists on disk but was not included in the scan. "
-                "Results may be affected by filtering."
+                "Scan coverage note: go.mod exists but was not included in the scan. "
+                "Results may be affected by extension filtering."
             )
         elif underrepresented:
-            if test_ratio >= 0.55:
-                warning = (
-                    "Scan coverage warning: Tests dominate this scan and major source directories "
-                    "appear underrepresented. Results may be incomplete or affected by filtering."
-                )
-            else:
-                warning = (
-                    "Scan coverage warning: Major source directories appear underrepresented. "
-                    "Results may be incomplete or affected by filtering."
-                )
-        elif test_ratio >= 0.7 and source_ratio <= 0.2:
+            dirs_str = ", ".join(underrepresented[:4])
             warning = (
-                "Scan coverage warning: Tests represent a large share of scanned lines while "
-                "source directories are lightly represented. Results may be incomplete."
+                f"Scan coverage note: expected directories {dirs_str} "
+                f"are below previous baseline."
+            )
+        elif test_ratio >= 0.7 and source_ratio <= 0.2 and source_ratio > 0:
+            warning = (
+                "Scan coverage note: tests represent a large share of scanned lines while "
+                "source directories are lightly represented."
+            )
+        elif source_ratio == 0 and total_lines > 100:
+            warning = (
+                "Scan coverage note: no first-party source lines detected; "
+                "all scanned content appears to be tests, data, or tooling."
             )
 
         return {
@@ -1443,14 +1331,16 @@ class ProjectAuditor:
         components = self._summarize_components(files)
         languages = self._detect_languages(metrics.get("file_types", {}))
         primary_language = self._detect_primary_language(metrics.get("file_types", {}), languages, files)
-        project_type = self._infer_project_type(primary_language, structure, frameworks, components)
+        project_type = self._infer_project_type(primary_language, structure, frameworks, components, files)
+        archetype_data = detectRepoArchetype(files, components, primary_language, frameworks)
+        archetype = archetype_data["primaryArchetype"]
+        secondary_archetypes = archetype_data.get("secondaryArchetypes", [])
         purpose = self._infer_project_purpose(description, files, components)
         hotspot_groups = self._identify_hotspots(files, metrics, structure, issues, risk_scores)
         primary_hotspots = hotspot_groups.get("runtime", []) + hotspot_groups.get("build_tooling", [])
         important_files = self._identify_important_files(files, metrics, structure, primary_hotspots)
-        workflow_hints = self._build_workflow_hints(structure, frameworks, files)
+        workflow_hints = self._build_workflow_hints(structure, frameworks, files, archetype)
 
-        # Calculate confidence reasons
         confidence_reasons = self._calculate_confidence_reasons(
             project_name, description, primary_language, languages, files, structure, primary_hotspots
         )
@@ -1459,7 +1349,6 @@ class ProjectAuditor:
         summary = " ".join(bit for bit in summary_bits if bit).strip()
         if purpose:
             summary = f"{summary}. {purpose}"
-        # Clean up duplicate project names in summary
         if project_name and summary.lower().startswith(project_name.lower() + " appears to be " + project_name.lower()):
             summary = summary[len(project_name) + 1:].strip()
             summary = summary[0].upper() + summary[1:] if summary else ""
@@ -1467,6 +1356,8 @@ class ProjectAuditor:
         return {
             "project_name": project_name or self.root_dir.name,
             "project_type": project_type,
+            "archetype": archetype,
+            "archetype_secondary": secondary_archetypes,
             "primary_language": primary_language,
             "languages": languages,
             "frameworks": frameworks,
@@ -1488,6 +1379,41 @@ class ProjectAuditor:
         project_name = None
         description = ""
 
+        def _is_html_or_badge(text: str) -> bool:
+            if not text:
+                return True
+            lowered = text.strip().lower()
+            if lowered.startswith("<"):
+                return True
+            if lowered.startswith("[![") or lowered.startswith("!["):
+                return True
+            if lowered.startswith("<!--") and "-->" in lowered:
+                return True
+            # treat empty or whitespace-only as non-useful
+            if not lowered:
+                return True
+            return False
+
+        def _clean_readme_text(text: str) -> str:
+            if not text:
+                return ""
+            lines = text.splitlines()
+            cleaned = []
+            for line in lines:
+                stripped = line.strip()
+                if _is_html_or_badge(stripped):
+                    continue
+                cleaned.append(line)
+            result = "\n".join(cleaned).strip()
+            if result.startswith("#"):
+                first_newline = result.find("\n")
+                if first_newline != -1:
+                    after_heading = result[first_newline + 1:].strip()
+                    if after_heading:
+                        return after_heading
+                    return ""
+            return result
+
         for candidate in candidates:
             info = files.get(candidate)
             if not info:
@@ -1495,17 +1421,33 @@ class ProjectAuditor:
             metadata = info.get("metadata", {})
             if not project_name and metadata.get("name"):
                 project_name = metadata["name"]
+                if project_name.startswith("@") or project_name.startswith("com."):
+                    project_name = project_name.split("/")[-1] if "/" in project_name else project_name
             if not description and metadata.get("description"):
-                description = metadata["description"]
+                raw = metadata["description"]
+                if not _is_html_or_badge(raw):
+                    description = raw
             if not description and info.get("summary"):
-                description = info["summary"]
-            # For README files, use the summary as the project name if no name is found
+                raw = info["summary"]
+                cleaned = _clean_readme_text(raw)
+                if cleaned and not _is_html_or_badge(cleaned):
+                    description = cleaned
             if not project_name and candidate.lower() in {"readme.md", "readme"}:
-                project_name = metadata.get("doc_title") or info.get("summary")
+                raw_title = metadata.get("doc_title")
+                if raw_title and not _is_html_or_badge(raw_title):
+                    project_name = raw_title
+                else:
+                    candidate_name = info.get("summary", "").strip()
+                    if candidate_name and not _is_html_or_badge(candidate_name):
+                        project_name = candidate_name
             elif candidate.lower() in {"readme.md", "readme"}:
                 readme_title = metadata.get("doc_title")
-                if readme_title and project_name and project_name == project_name.lower():
-                    project_name = readme_title
+                if readme_title and not _is_html_or_badge(readme_title):
+                    if project_name and project_name == project_name.lower():
+                        project_name = readme_title
+
+        if not project_name or _is_html_or_badge(project_name):
+            project_name = self.root_dir.name
 
         return project_name, description
 
@@ -1626,67 +1568,57 @@ class ProjectAuditor:
             )
 
         components.sort(key=lambda item: (item["line_count"], item["file_count"]), reverse=True)
-        return components
+
+        # Split large top-level directories one level deeper if they have meaningful subdirectories
+        split_components: List[Dict[str, Any]] = []
+        for component in components:
+            if "/" in component["path"] or component["file_count"] <= 200:
+                split_components.append(component)
+                continue
+            # Try to split by second-level directory
+            sub_buckets: Dict[str, Dict[str, Any]] = {}
+            for filepath, line_count in grouped.get(component["path"], {}).get("representative_files", []):
+                parts = Path(filepath).parts
+                if len(parts) >= 2:
+                    sub_key = "/".join(parts[:2])
+                else:
+                    sub_key = component["path"]
+                if sub_key == component["path"]:
+                    continue
+                if sub_key not in sub_buckets:
+                    sub_buckets[sub_key] = {
+                        "path": sub_key,
+                        "file_count": 0,
+                        "line_count": 0,
+                        "role": classifyComponentRole(sub_key),
+                        "representative_files": [],
+                        "symbols": [],
+                    }
+                sub_buckets[sub_key]["file_count"] += 1
+                sub_buckets[sub_key]["line_count"] += line_count
+                sub_buckets[sub_key]["representative_files"].append((filepath, line_count))
+            if sub_buckets:
+                for sub in sub_buckets.values():
+                    sub["representative_files"] = sorted(sub["representative_files"], key=lambda item: item[1], reverse=True)[:3]
+                split_components.extend(sorted(sub_buckets.values(), key=lambda item: (item["line_count"], item["file_count"]), reverse=True))
+            else:
+                split_components.append(component)
+
+        if split_components:
+            components = split_components
+            components.sort(key=lambda item: (item["line_count"], item["file_count"]), reverse=True)
+
+        # Filter out tiny components (<= 2 files) unless they are meaningful
+        # but keep at least 3 components to avoid empty reports
+        if len(components) > 3:
+            meaningful = [c for c in components if c["file_count"] > 2]
+            if len(meaningful) >= 3:
+                components = meaningful
+
+        return components[:15]
 
     def _infer_component_role(self, key: str) -> str:
-        role_map = {
-            "core": "runtime orchestration",
-            "agents": "agent behaviors and coordination",
-            "memory": "state and persistence",
-            "dashboard": "operator UI and reporting",
-            "models": "data models and schemas",
-            "tests": "regression safety and validation",
-            "docs": "documentation and onboarding",
-            "config": "configuration and defaults",
-            "scripts": "automation and tooling",
-            "language": "language, prompts, and communication",
-            "evolution": "optimization and strategy logic",
-            "api": "API surface and request handling",
-            "web": "web application surface",
-            "e2e": "end-to-end tests",
-            "demo-vault": "demo/sample data",
-            "demo-vault-v2": "demo/sample data",
-            "demo": "demo/sample data",
-            "samples": "demo/sample data",
-            "examples": "demo/sample data",
-            "cmd": "Go CLI entry points",
-            "server": "server runtime and HTTP handlers",
-            "llama": "native C++/GGML/llama.cpp backend",
-            "ml": "native ML backend components",
-            "vendor": "third-party or vendored dependencies",
-            "opencode": "CLI / AI coding agent core",
-        }
-        tail = key.split("/")[-1].lower()
-        if tail in role_map:
-            return role_map[tail]
-        # Monorepo subpackage heuristic
-        if "/" in key:
-            parts = key.split("/")
-            pkg_root = parts[0].lower()
-            sub = parts[1].lower()
-            if pkg_root in {"packages", "apps", "services", "crates", "modules", "libs"}:
-                # Try known subpackage names
-                sub_roles = {
-                    "sdk": "generated/client SDK",
-                    "app": "frontend application",
-                    "cli": "CLI application",
-                    "web": "web application",
-                    "console": "console/web app",
-                    "desktop": "desktop shell",
-                    "server": "server runtime",
-                    "api": "API service",
-                    "core": "core library",
-                    "shared": "shared utilities",
-                    "types": "type definitions",
-                    "utils": "utility modules",
-                    "ui": "user interface components",
-                    "containers": "container/build tooling",
-                    "mobile": "mobile application",
-                }
-                if sub in sub_roles:
-                    return sub_roles[sub]
-                return f"{sub} package"
-        return "application logic"
+        return classifyComponentRole(key)
 
     def _infer_project_type(
         self,
@@ -1694,22 +1626,43 @@ class ProjectAuditor:
         structure: Dict[str, Any],
         frameworks: List[str],
         components: List[Dict[str, Any]],
+        files: Dict[str, Dict[str, Any]],
     ) -> str:
         component_paths = {component["path"].lower() for component in components}
         descriptors: List[str] = []
+        archetype_data = detectRepoArchetype(files, components, primary_language, frameworks)
+        archetype = archetype_data["primaryArchetype"]
 
-        if primary_language == "c++" and "libraries/libweb" in component_paths:
+        if archetype == ARCHETYPE_BROWSER_ENGINE:
             descriptors.append("C++ browser engine / web browser project")
-        elif primary_language == "go":
-            descriptors.append("Go-based CLI/server application")
-            has_backend_components = any(
-                "llama" in path or "ggml" in path or "backend" in path or "ml/" in path
-                for path in component_paths
-            )
-            if has_backend_components:
-                descriptors.append("with native C++/GGML/llama.cpp backend components")
+        elif archetype == ARCHETYPE_DESKTOP_APP:
+            descriptors.append("TypeScript/Tauri desktop app" if any(p.endswith(".ts") for p in files) else "Desktop application")
+        elif archetype == ARCHETYPE_CLI_SERVER:
+            descriptors.append("Go-based CLI/server application" if primary_language == "go" else "CLI/server application")
+        elif archetype == ARCHETYPE_MONOREPO:
+            descriptors.append("Monorepo")
+        elif archetype == ARCHETYPE_FRAMEWORK_LIBRARY:
+            if primary_language in {"python", "c++"}:
+                descriptors.append(f"Python/C++ framework/library" if primary_language == "python" else "C++ framework/library")
+            elif primary_language == "go":
+                descriptors.append("Go framework/library")
+            else:
+                descriptors.append(f"{primary_language} framework/library" if primary_language != "unknown" else "Framework/library")
+        elif archetype == ARCHETYPE_APP:
+            descriptors.append(f"{primary_language} application" if primary_language != "unknown" else "Application")
         else:
-            descriptors.append(f"{primary_language} project" if primary_language != "unknown" else "software project")
+            descriptors.append(f"{primary_language} project" if primary_language != "unknown" else "Software project")
+
+        # Detect multiple languages from files
+        languages = set()
+        for p in files:
+            ext = Path(p).suffix.lower()
+            if ext in {".py", ".js", ".ts", ".rs", ".go", ".cpp", ".c", ".h", ".hpp", ".cc", ".java", ".kt", ".rb", ".cs"}:
+                languages.add(ext)
+        if len(languages) >= 2 and archetype not in {ARCHETYPE_BROWSER_ENGINE, ARCHETYPE_DESKTOP_APP}:
+            lang_names = sorted({{".py": "Python", ".js": "JavaScript", ".ts": "TypeScript", ".rs": "Rust", ".go": "Go", ".cpp": "C++", ".c": "C", ".java": "Java", ".kt": "Kotlin"}.get(e, e) for e in languages})
+            if len(lang_names) <= 3 and primary_language not in {"unknown"}:
+                descriptors[0] = f"{'/'.join(lang_names)} project"
 
         tooling = []
         if "python_packaging" in frameworks or any(path.startswith("Meta/") for path in structure.get("entry_points", [])):
@@ -1730,24 +1683,14 @@ class ProjectAuditor:
         elif structure.get("has_tests"):
             descriptors.append("and a test suite")
 
-        # Add frontend/backend architecture hints from components
         has_frontend = any(path in component_paths for path in {"src", "ui", "web", "frontend", "app/ui"})
         has_backend = any(path in component_paths for path in {"src-tauri", "api", "backend", "server"})
-        if has_frontend and has_backend:
+        if has_frontend and has_backend and archetype not in {ARCHETYPE_BROWSER_ENGINE, ARCHETYPE_DESKTOP_APP}:
             descriptors.append("with frontend and backend components")
-        elif has_frontend:
+        elif has_frontend and archetype not in {ARCHETYPE_BROWSER_ENGINE, ARCHETYPE_DESKTOP_APP}:
             descriptors.append("with frontend components")
-        elif has_backend:
+        elif has_backend and archetype not in {ARCHETYPE_BROWSER_ENGINE, ARCHETYPE_DESKTOP_APP}:
             descriptors.append("with backend components")
-
-        # Detect React UI
-        if any("ui" in path or "app" in path for path in component_paths):
-            has_react = any(
-                "package.json" in path or Path(path).name == "package.json"
-                for path in structure.get("config_files", [])
-            )
-            if has_react and not any(descriptor.startswith("React") for descriptor in descriptors):
-                pass
 
         return " ".join(descriptors)
 
@@ -1759,41 +1702,52 @@ class ProjectAuditor:
     ) -> str:
         lowered_description = description.strip().lower()
 
-        build_config_keywords = [
+        html_or_build_patterns = [
             "cmake_minimum_required",
             "project(",
             "cmake ",
-            "cmake_minimum_required(version",
+            "<p ", "<p>", "<img ", "<div ", "</",
+            "[![", "![",
+            "<!--",
         ]
-        if any(keyword in lowered_description for keyword in build_config_keywords):
+        if any(pattern in lowered_description for pattern in html_or_build_patterns):
             lowered_description = ""
 
         low_signal_descriptions = {
             "",
             "readme",
             "sample project",
+            "application logic, application logic, application logic",
+            "application logic",
         }
         if lowered_description and lowered_description not in low_signal_descriptions:
-            return description.rstrip(".") + "."
+            result = description.rstrip(".") + "."
+            if "application logic" in result.lower() and result.lower().count("application logic") > 1:
+                return "Purpose could not be confidently inferred from README."
+            return result
 
         readme = files.get("README.md") or files.get("readme.md")
-        if readme and readme.get("summary") and readme["summary"].lower() not in {"readme"}:
-            return readme["summary"].rstrip(".") + "."
+        summary = readme.get("summary", "") if readme else ""
+        if summary:
+            summary_lower = summary.lower()
+            if not any(pattern in summary_lower for pattern in html_or_build_patterns) and summary_lower not in {"readme"} and "application logic" not in summary_lower:
+                return summary.rstrip(".") + "."
 
         component_paths = {component["path"].lower() for component in components}
         if "libraries/libweb" in component_paths and "libraries/libjs" in component_paths:
             return "Browser engine and web platform runtime with build tooling and extensive standards tests."
 
-        # Build richer purpose from component roles and detected frameworks
         core_components = [component for component in components if component["path"] not in {"tests", "docs"}]
         if core_components:
             visible_roles = [c["role"] for c in core_components[:3]]
+            generic_label_count = sum(1 for r in visible_roles if "application logic" in r.lower())
+            if generic_label_count == len(visible_roles):
+                return "Purpose could not be confidently inferred from README."
             if len(visible_roles) == 1:
                 purpose = f"It is organized around {visible_roles[0]}."
             else:
                 purpose = f"It is organized around {', '.join(visible_roles[:-1])}, and {visible_roles[-1]}."
 
-            # Add framework/tech hints
             tech_hints = []
             has_react = any("react" in (c.get("role") or "").lower() for c in core_components)
             has_rust = any("rust" in (c.get("role") or "").lower() for c in core_components)
@@ -1805,7 +1759,7 @@ class ProjectAuditor:
                 purpose += f" Built with {' and '.join(tech_hints)}."
             return purpose
 
-        return "It provides application code that Sentinel can inspect, summarize, and guide."
+        return "Purpose could not be confidently inferred from README."
 
     def _identify_important_files(
         self,
@@ -1865,6 +1819,8 @@ class ProjectAuditor:
         groups: Dict[str, List[Dict[str, Any]]] = {
             "runtime": [],
             "build_tooling": [],
+            "generator": [],
+            "test_runner": [],
             "vendor": [],
             "test_data": [],
             "documentation": [],
@@ -1872,9 +1828,19 @@ class ProjectAuditor:
         ranked_candidates: List[tuple[float, str, Dict[str, Any]]] = []
 
         for path, info in files.items():
+            fc = classifyFile(path, info)
+            if fc.isVendor or fc.isDependencyLock or fc.isGeneratedSdk or fc.isLocalization:
+                continue
             group = self._categorize_hotspot(path, info)
             if group not in groups:
                 continue
+            # Only first-party runtime source should appear in runtime hotspots
+            if group == "runtime":
+                if fc.isTest or fc.isTestRunner or fc.isFixture or fc.isGenerator or fc.isBuildTooling or fc.isEnvironmentSetup or fc.isDocumentation or fc.isSpecification or fc.isConfig:
+                    continue
+                lower_path = path.replace("\\", "/").lower()
+                if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/", "/tests/", "/test/", "/e2e/", "/integration/", "/smoke/", "/fixtures/", "/testdata/", "/wpt-import/"}):
+                    continue
             reasons = []
             if path in entry_point_scores:
                 reasons.append("entry point")
@@ -1890,7 +1856,7 @@ class ProjectAuditor:
 
             if group == "runtime":
                 score += 10
-                if self._is_data_or_config_file(path, info):
+                if fc.isConfig or fc.isDependencyLock or fc.isDocumentation:
                     score -= 40
             elif group == "test_data":
                 score -= 10
@@ -1927,6 +1893,7 @@ class ProjectAuditor:
         structure: Dict[str, Any],
         frameworks: List[str],
         files: Dict[str, Dict[str, Any]],
+        archetype: str = "",
     ) -> List[str]:
         hints = []
         entry_points_by_category = structure.get("entry_points_by_category", {})
@@ -1934,7 +1901,28 @@ class ProjectAuditor:
         build_entries = entry_points_by_category.get("build", []) + entry_points_by_category.get("generator", [])
         environment_entries = entry_points_by_category.get("environment", [])
 
-        if runtime_entries:
+        if archetype in (ARCHETYPE_FRAMEWORK_LIBRARY,):
+            hints.append("Framework/library repo detected. Choose the relevant API/runtime surface before editing.")
+            dirs_lower = {d.lower() for d in structure.get("directories", [])}
+            if any("api" in d for d in dirs_lower):
+                hints.append("For API changes, start from the API layer.")
+            if any("core" in d or "runtime" in d for d in dirs_lower):
+                hints.append("For runtime/core changes, start from the runtime/core directories.")
+            if any("compiler" in d for d in dirs_lower):
+                hints.append("For compiler/lowering changes, start from the compiler directories.")
+            if any("lite" in d or "mobile" in d for d in dirs_lower):
+                hints.append("For mobile/lite runtime changes, start from the lite/mobile directories.")
+            if any("tools" in d or "build" in d for d in dirs_lower):
+                hints.append("For tooling/build changes, start from the tools/build directories.")
+        elif archetype == ARCHETYPE_MONOREPO:
+            hints.append("Monorepo: split by product/package first.")
+            dirs = structure.get("directories", [])
+            packages = sorted({p.split("/")[1] for p in dirs if "/" in p and p.split("/")[0].lower() in {"packages", "apps", "services", "crates"}})
+            if packages:
+                hints.append(f"Packages detected: {', '.join(packages[:4])}")
+        elif archetype in (ARCHETYPE_BROWSER_ENGINE,):
+            hints.append("Browser engine: start from the real runtime/browser entry point.")
+        elif runtime_entries:
             hints.append(f"Start runtime tracing from {runtime_entries[0]}")
         elif build_entries:
             hints.append(f"Start build or generator tracing from {build_entries[0]}")
@@ -1951,7 +1939,7 @@ class ProjectAuditor:
             hints.append("This is a Go project — look for cmd/, api/, and server/ for entry points")
         if environment_entries:
             hints.append(f"Environment setup lives in {environment_entries[0]}")
-        return hints[:4]
+        return hints[:5]
 
     def _detect_languages(self, file_types: Dict[str, int]) -> List[str]:
         language_map = {
@@ -2107,8 +2095,7 @@ class ProjectAuditor:
         size_threshold = int(self.rules.get("large_file_size_threshold", 100_000))
 
         for filepath, info in files.items():
-            context = self._classify_path_context(filepath, info)
-            is_vendor = context == "vendor_generated"
+            fc = classifyFile(filepath, info)
 
             if info["todo_count"] > 0:
                 issues.append(
@@ -2123,41 +2110,30 @@ class ProjectAuditor:
                 )
 
             if info["line_count"] > line_threshold:
-                if is_vendor:
+                if fc.isVendor or fc.isDependencyLock:
                     continue
-                if context == "generated_sdk":
-                    category = "maintainability"
-                    detail = "Generated SDK/client file; regenerate from source schema instead of editing manually."
-                elif context == "localization_resource":
-                    category = "maintainability"
-                    detail = "Large localization/resource file; large by design. Review only if translation loading or schema changes."
-                elif context == "specification_documentation":
-                    category = "maintainability"
-                    detail = "Large documentation/specification file; review for readability and drift, not source module boundaries."
-                elif self._is_data_or_config_file(filepath, info):
-                    category = "maintainability"
-                    if self._is_documentation_file(filepath, info):
-                        detail = "Large documentation file; review for readability if frequently edited."
-                    else:
-                        detail = "Large config/data file; validate schema before editing. Do not refactor like source code."
+                policy = classifyLargeFilePolicy(filepath, info)
+                is_config_or_doc = fc.isConfig or fc.isDocumentation or fc.isLocalization or fc.isSpecification
+                if "{lines}" in policy:
+                    message = policy.format(lines=info['line_count'])
                 else:
-                    category = "structural"
-                    detail = "File is " + str(info['line_count']) + " lines; consider reviewing module boundaries"
+                    message = policy
                 issues.append(
                     {
                         "type": "large_file",
                         "severity": "medium",
-                        "category": category,
+                        "category": "maintainability" if is_config_or_doc else "structural",
                         "file": filepath,
-                        "message": detail,
+                        "message": message,
                         "timestamp": now_iso(),
                     }
                 )
 
             if info["size"] > size_threshold:
-                if is_vendor:
+                if fc.isVendor or fc.isDependencyLock:
                     continue
-                category = "maintainability" if self._is_data_or_config_file(filepath, info) else "structural"
+                is_config_or_doc = fc.isConfig or fc.isDocumentation or fc.isLocalization or fc.isSpecification
+                category = "maintainability" if is_config_or_doc else "structural"
                 issues.append(
                     {
                         "type": "large_file_size",
@@ -2178,14 +2154,20 @@ class ProjectAuditor:
                     details.append("placeholder language")
                 if empty_headings:
                     details.append(f"{empty_headings} empty-looking headings")
+                fc = classifyFile(filepath, info)
+                if fc.isGeneratedSdk or fc.isLocalization:
+                    category = "structural"
+                    detail = "Large generated sdk/localization file; review for readability and drift: " + ", ".join(details)
+                else:
+                    category = "maintainability"
+                    detail = "Documentation may be stale or scaffold-like: " + ", ".join(details)
                 issues.append(
                     {
                         "type": "doc_code_drift",
                         "severity": "medium",
-                        "category": "maintainability",
+                        "category": category,
                         "file": filepath,
-                        "message": "Documentation may be stale or scaffold-like: "
-                        + ", ".join(details),
+                        "message": detail,
                         "timestamp": now_iso(),
                     }
                 )
@@ -2215,7 +2197,10 @@ class ProjectAuditor:
                 }
             )
 
-        if metrics.get("total_files", 0) > 3 and not structure.get("entry_points"):
+        archetype_data = detectRepoArchetype(files, [], "", [])
+        if archetype_data["primaryArchetype"] in (ARCHETYPE_FRAMEWORK_LIBRARY, ARCHETYPE_MONOREPO):
+            pass
+        elif metrics.get("total_files", 0) > 3 and not structure.get("entry_points"):
             issues.append(
                 {
                     "type": "no_entry_point",
@@ -2228,19 +2213,6 @@ class ProjectAuditor:
             )
 
         return issues
-
-    def _is_documentation_file(self, filepath: str, info: Dict[str, Any]) -> bool:
-        ext = str(info.get("extension") or Path(filepath).suffix).lower()
-        name = Path(filepath).name.lower()
-        return ext in {".md", ".txt"} or name in {"readme.md", "readme.txt", "readme"}
-
-    def _is_data_or_config_file(self, filepath: str, info: Dict[str, Any]) -> bool:
-        ext = str(info.get("extension") or Path(filepath).suffix).lower()
-        name = Path(filepath).name.lower()
-        return ext in {".json", ".yaml", ".yml", ".toml", ".ini", ".cfg"} or name in {
-            "dockerfile",
-            "makefile",
-        }
 
     def _score_file_risks(
         self,
@@ -2258,11 +2230,35 @@ class ProjectAuditor:
 
         risks: list[dict[str, Any]] = []
         for path, info in files.items():
+            fc = classifyFile(path, info)
+
             if path in test_files:
                 continue
-            context = self._classify_path_context(path, info)
-            if context in {"vendor_generated", "generated_sdk", "localization_resource", "specification_documentation"}:
+            if fc.isTest or fc.isTestRunner or fc.isFixture:
                 continue
+            if fc.isGeneratedSdk or fc.isGenerated:
+                continue
+            if fc.isVendor:
+                continue
+            if fc.isDependencyLock:
+                continue
+            if fc.isLocalization:
+                continue
+            if fc.isDocumentation or fc.isSpecification:
+                continue
+            if fc.isGenerator:
+                continue
+            if fc.isEnvironmentSetup:
+                continue
+            if fc.isBuildTooling:
+                continue
+            # Exclude examples
+            lower_path = path.replace("\\", "/").lower()
+            if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/"}):
+                continue
+
+            risk_surface = classifyRiskSurface(path, info)
+
             score = 0
             factors: list[str] = []
 
@@ -2270,13 +2266,9 @@ class ProjectAuditor:
                 score += 30
                 factors.append("entry point")
             line_count = int(info.get("line_count", 0))
-            if line_count > 500:
-                if self._is_data_or_config_file(path, info):
-                    score += 8
-                    factors.append("large data/config file")
-                else:
-                    score += 20
-                    factors.append("large file")
+            if line_count > 500 and (fc.isConfig or fc.isDependencyLock or fc.isDocumentation or fc.isLocalization):
+                score += 8
+                factors.append("large data/config file")
             elif line_count > 250:
                 score += 10
                 factors.append("moderate size")
@@ -2290,9 +2282,8 @@ class ProjectAuditor:
             if info.get("has_main"):
                 score += 10
                 factors.append("runtime surface")
-            # Only add "executable code" for non-documentation files
             if info.get("has_class") or info.get("has_function"):
-                if not self._is_documentation_file(path, info):
+                if not fc.isDocumentation:
                     score += 6
                     factors.append("executable code")
                 else:
@@ -2314,14 +2305,20 @@ class ProjectAuditor:
                 level = "medium"
             else:
                 level = "low"
+            seen_factors: set[str] = set()
+            deduped_factors: list[str] = []
+            for f in factors:
+                if f not in seen_factors:
+                    seen_factors.add(f)
+                    deduped_factors.append(f)
             risks.append(
                 {
                     "file": path,
                     "score": min(score, 100),
                     "level": level,
-                    "factors": factors[:6],
-                    "risk_categories": self._risk_categories(path, info, factors),
-                    "surface": self._risk_surface(path, info),
+                    "factors": deduped_factors[:6],
+                    "risk_categories": self._risk_categories(path, info, deduped_factors),
+                    "surface": risk_surface,
                     "coverage": coverage,
                 }
             )
@@ -2343,7 +2340,9 @@ class ProjectAuditor:
         return {"entries": entries}
 
     def _classify_test_coverage(self, path: str, test_index: Dict[str, Any]) -> Dict[str, Any]:
+        fc = classifyFile(path)
         ext = Path(path).suffix.lower()
+
         if ext not in {".py", ".go"}:
             return {"status": "not_applicable", "test_file": None}
 
@@ -2368,30 +2367,32 @@ class ProjectAuditor:
         return {"status": "none", "test_file": None}
 
     def _risk_categories(self, path: str, info: Dict[str, Any], factors: List[str]) -> List[str]:
+        fc = classifyFile(path, info)
         categories = set()
+
         if any(factor in factors for factor in {"large file", "moderate size", "many imports", "several imports"}):
             categories.add("structural")
+
         if "large data/config file" in factors:
             categories.add("maintainability")
+
         if any(factor in factors for factor in {"entry point", "runtime surface"}):
             categories.add("runtime")
+
         if "no obvious paired test" in factors:
             categories.add("test")
-        if Path(path).suffix == ".py" and (info.get("has_class") or info.get("has_function")):
+
+        surface = classifySurface(path, info)
+        if surface == "runtime" or (Path(path).suffix == ".py" and (info.get("has_class") or info.get("has_function"))):
             categories.add("runtime")
+
+        if fc.role == "documentation":
+            categories.add("maintainability")
+
         return sorted(categories) or ["maintainability"]
 
     def _risk_surface(self, path: str, info: Dict[str, Any]) -> str:
-        context = self._classify_path_context(path, info)
-        if context in {"browser_engine", "javascript_engine", "runtime_entry", "runtime_source", "first_party_source", "core_utility"}:
-            return "runtime"
-        if context in {"build_tooling", "generator", "lint_tooling", "tooling", "environment"}:
-            return "build_tooling"
-        if context in {"test", "test_data", "test_support"}:
-            return "test"
-        if context == "documentation":
-            return "documentation"
-        return "runtime" if "runtime" in self._risk_categories(path, info, []) else "other"
+        return classifyRiskSurface(path, info)
 
     def _group_risk_scores(
         self,
@@ -2400,26 +2401,28 @@ class ProjectAuditor:
     ) -> Dict[str, List[Dict[str, Any]]]:
         groups: Dict[str, List[Dict[str, Any]]] = {
             "runtime": [],
+            "runtime_surface": [],
             "build_tooling": [],
-            "test": [],
+            "generator": [],
+            "test_runner": [],
+            "test_data": [],
             "documentation": [],
+            "specification": [],
+            "vendor": [],
+            "generated_sdk": [],
+            "dependency_lock": [],
+            "environment_setup": [],
+            "config": [],
+            "example": [],
             "other": [],
         }
         for risk in risk_scores:
             path = risk.get("file", "")
-            surface = risk.get("surface") or self._risk_surface(path, files.get(path, {}))
+            surface = risk.get("surface") or classifyRiskSurface(path, files.get(path, {}))
             if surface not in groups:
                 surface = "other"
             groups[surface].append(risk)
         return {key: values[:10] for key, values in groups.items() if values}
-
-    @staticmethod
-    def _maintainability_score_to_risk(maintainability_pct: int) -> str:
-        if maintainability_pct >= 85:
-            return "low"
-        elif maintainability_pct >= 65:
-            return "medium"
-        return "high"
 
     def _summarize_risk_categories(
         self,
@@ -2458,7 +2461,7 @@ class ProjectAuditor:
                 continue
             if category == "maintainability" and maintainability_percent is not None:
                 # Use the same function as health scoring to avoid contradiction
-                data["level"] = self._maintainability_score_to_risk(maintainability_percent)
+                data["level"] = riskFromScore(maintainability_percent)
             else:
                 high_threshold = 20 if category == "maintainability" else 8
                 if signals >= high_threshold:
@@ -2472,26 +2475,44 @@ class ProjectAuditor:
         has_test_files = structure is not None and bool(structure.get("has_tests"))
         test_files_count = len(structure.get("test_files", [])) if structure else 0
 
+        # Count e2e, integration, smoke vs fixture
+        e2e_count = 0
+        fixture_count = 0
+        if structure:
+            for tf in structure.get("test_files", []):
+                lower_tf = tf.lower()
+                if "/e2e/" in lower_tf or "e2e" in lower_tf.split("/")[-1]:
+                    e2e_count += 1
+                if "/fixtures/" in lower_tf or "/testdata/" in lower_tf or "/wpt-import/" in lower_tf:
+                    fixture_count += 1
+
+        has_coverage_warning = any(issue.get("type") == "scan_coverage" for issue in issues)
+
         if any(issue.get("type") == "no_tests" for issue in issues):
-            has_coverage_warning = any(issue.get("type") == "scan_coverage" for issue in issues)
             if has_coverage_warning:
                 summary["test"]["level"] = "missing"
                 summary["test"]["reason"] = "No automated test suite was detected — scan coverage may be incomplete or test detection uncertain"
             else:
                 summary["test"]["level"] = "missing"
                 summary["test"]["reason"] = "No automated test suite was detected"
-        elif summary["test"]["signals"] >= 12:
-            summary["test"]["level"] = "strong"
-            summary["test"]["reason"] = "Large test surface and related test signals were detected"
-        elif summary["test"]["signals"] >= 3 or test_files_count >= 5:
-            summary["test"]["level"] = "present"
-            summary["test"]["reason"] = "Some test files or test relationships were detected"
+        elif has_test_files and test_files_count > 5:
+            parts = []
+            if e2e_count > 0:
+                parts.append(f"{e2e_count} end-to-end test file(s)")
+            if fixture_count > 0:
+                parts.append(f"{fixture_count} test fixture file(s)")
+            if parts:
+                summary["test"]["level"] = "strong"
+                summary["test"]["reason"] = "Several real test directories/files detected including " + "; ".join(parts)
+            else:
+                summary["test"]["level"] = "strong"
+                summary["test"]["reason"] = f"Several real test directories/files detected ({test_files_count} test files)"
         elif has_test_files or test_files_count > 0:
             summary["test"]["level"] = "present"
-            summary["test"]["reason"] = "Test files detected, but coverage not measured"
+            summary["test"]["reason"] = "present — coverage unknown"
         else:
-            summary["test"]["level"] = "unknown"
-            summary["test"]["reason"] = "No strong test signal was inferred from risk scoring"
+            summary["test"]["level"] = "missing"
+            summary["test"]["reason"] = "missing"
 
         if any(issue.get("type") == "no_entry_point" for issue in issues):
             summary["runtime"]["level"] = "medium"
@@ -2563,7 +2584,7 @@ class ProjectAuditor:
                 "runtime complexity, and unassessed security reduce confidence."
             )
 
-        maintainability_risk_level = self._maintainability_score_to_risk(maintainability)
+        maintainability_risk_level = riskFromScore(maintainability)
 
         # Ensure health score is never below maintainability - 30 to avoid contradiction
         final_score = max(0, min(100, round(score)))
@@ -2582,7 +2603,8 @@ class ProjectAuditor:
                 "test_signal": test_signal,
                 "documentation_percent": documentation,
                 "documentation_reason": (
-                    f"stale/scaffold-like signals found in {documentation_drift} documentation file(s); "
+                    f"{documentation_drift} documentation file(s) contain drift indicators or placeholder-like patterns; "
+                    f"sample matches before treating them as stale. "
                     f"{large_docs} large documentation file(s) need review; {documentation_todos} documentation TODO(s)"
                 ),
                 "security": "assessed" if security_assessed else "not_assessed",

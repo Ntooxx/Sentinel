@@ -9,6 +9,17 @@ from typing import Any, Dict, Iterable
 from utils import ensure_parent_dir
 
 
+def _dedupe_list(items: list) -> list:
+    """Deduplicate a list while preserving order."""
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+
 class ReportGenerator:
     """Formats Sentinel scan results for terminals and saved reports."""
 
@@ -264,6 +275,9 @@ class ReportGenerator:
             lines.append("## Project Understanding")
             lines.append(f"- Project: {understanding.get('project_name', 'unknown')}")
             lines.append(f"- Type: {understanding.get('project_type', 'unknown')}")
+            archetype = understanding.get("archetype", "")
+            if archetype:
+                lines.append(f"- Archetype: {archetype}")
             if understanding.get("purpose"):
                 lines.append(f"- Purpose: {understanding['purpose']}")
             if understanding.get("frameworks"):
@@ -474,12 +488,13 @@ class ReportGenerator:
                 return "<tr><td colspan=\"4\" class=\"muted\">No file risk scores available.</td></tr>"
             rows = []
             for item in risk_scores[:15]:
+                deduped = _dedupe_list(item.get("factors", []))
                 rows.append(
                     "<tr>"
                     f"<td><span class=\"badge\">{esc(item.get('level', 'unknown')).upper()}</span></td>"
                     f"<td><code>{esc(item.get('file', ''))}</code></td>"
                     f"<td>{esc(item.get('score', 0))}</td>"
-                    f"<td>{esc(', '.join(item.get('factors', [])[:4]))}</td>"
+                    f"<td>{esc(', '.join(deduped[:4]))}</td>"
                     "</tr>"
                 )
             return "".join(rows)
@@ -488,8 +503,16 @@ class ReportGenerator:
             label_map = {
                 "runtime": "Top runtime risks",
                 "build_tooling": "Top build/tooling risks",
-                "test": "Top test risks",
+                "generator": "Top generator risks",
+                "test_runner": "Top test runner risks",
+                "test_data": "Top test/data risks",
                 "documentation": "Top documentation risks",
+                "specification": "Top specification risks",
+                "vendor": "Vendor/third-party hotspots — track only, do not refactor by default",
+                "generated_sdk": "Generated SDK/client code — regenerate from schema instead of editing manually",
+                "dependency_lock": "Dependency/lockfile signals",
+                "environment_setup": "Environment/setup signals",
+                "config": "Config/data signals",
                 "other": "Other risks",
             }
             sections = []
@@ -499,12 +522,13 @@ class ReportGenerator:
                     continue
                 rows = []
                 for item in items[:8]:
+                    deduped = _dedupe_list(item.get("factors", []))
                     rows.append(
                         "<tr>"
                         f"<td><span class=\"badge\">{esc(item.get('level', 'unknown')).upper()}</span></td>"
                         f"<td><code>{esc(item.get('file', ''))}</code></td>"
                         f"<td>{esc(item.get('score', 0))}</td>"
-                        f"<td>{esc(', '.join(item.get('factors', [])[:4]))}</td>"
+                        f"<td>{esc(', '.join(deduped[:4]))}</td>"
                         "</tr>"
                     )
                 sections.append(
@@ -601,6 +625,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
   <div class="section">
     <h2>Project Identity</h2>
     <p><strong>Type:</strong> {esc(understanding.get('project_type', 'unknown'))}</p>
+    <p><strong>Archetype:</strong> {esc(understanding.get('archetype', 'unknown'))}</p>
     <p><strong>Purpose:</strong> {esc(understanding.get('purpose', 'unknown'))}</p>
     <p><strong>Workflow:</strong> {esc(', '.join(understanding.get('workflow_hints', [])[:6]) or 'not detected')}</p>
     <p><strong>Recent changes:</strong> {esc(timeline_hint)}</p>
@@ -644,11 +669,14 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
     {grouped_pills(
         entry_points_by_category,
         label_map={
-            "runtime": "Runtime entry points",
-            "build": "Build entry points",
+            "runtime": "Primary runtime entry points",
+            "runtime_surface": "Runtime/API surfaces",
+            "example": "Example entry points",
+            "build": "Build/tooling entry points",
             "generator": "Generator entry points",
             "test": "Test runners",
             "environment": "Environment setup",
+            "documentation": "Documentation/specs",
         },
     )}
   </div>
@@ -657,10 +685,19 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
     {grouped_pills(
         hotspot_groups,
         label_map={
+            "runtime": "Primary runtime hotspots",
+            "runtime_surface": "Runtime/API surface hotspots",
             "build_tooling": "Build/tooling hotspots",
+            "generator": "Generator hotspots",
+            "test_runner": "Test runner hotspots",
             "vendor": "Vendor/third-party hotspots — track only, do not refactor by default",
+            "generated_sdk": "Generated SDK/client code",
+            "dependency_lock": "Dependency/lockfile signals",
             "test_data": "Test/data hotspots",
             "documentation": "Documentation hotspots",
+            "specification": "Specification hotspots",
+            "environment_setup": "Environment/setup",
+            "example": "Example hotspots",
         },
     )}
   </div>
@@ -778,6 +815,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
             "SENTINEL OVERVIEW",
             f"Project: {understanding.get('project_name', 'unknown')}",
             f"Type: {understanding.get('project_type', 'unknown')}",
+            f"Archetype: {understanding.get('archetype', 'unknown')}",
         ]
         if understanding.get("summary"):
             lines.append(f"Summary: {understanding['summary']}")
@@ -820,10 +858,18 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
 
         hotspot_groups = understanding.get("hotspot_groups", {})
         for name, label in [
+            ("runtime", "Primary Runtime Hotspots"),
+            ("runtime_surface", "Runtime/API Surface Hotspots"),
             ("build_tooling", "Build/Tooling Hotspots"),
-            ("vendor", "Vendor/Third-Party Hotspots"),
+            ("generator", "Generator Hotspots"),
+            ("test_runner", "Test Runner Hotspots"),
+            ("vendor", "Vendor/Third-Party Hotspots — track only, do not refactor by default"),
+            ("generated_sdk", "Generated SDK/client code — regenerate from schema instead of editing manually"),
+            ("dependency_lock", "Dependency/lockfile signals"),
             ("test_data", "Test/Data Hotspots"),
             ("documentation", "Documentation Hotspots"),
+            ("specification", "Specification Hotspots"),
+            ("example", "Example Hotspots"),
         ]:
             group_items = hotspot_groups.get(name, [])
             if not group_items:
@@ -837,11 +883,14 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
         if entry_points_by_category:
             lines.append("Entry Points:")
             for name, label in [
-                ("runtime", "Runtime"),
-                ("build", "Build"),
-                ("generator", "Generator"),
-                ("test", "Test"),
-                ("environment", "Environment"),
+                ("runtime", "Primary runtime entry points"),
+                ("runtime_surface", "Runtime/API surfaces"),
+                ("example", "Example entry points"),
+                ("build", "Build/tooling entry points"),
+                ("generator", "Generator entry points"),
+                ("test", "Test runners"),
+                ("environment", "Environment setup"),
+                ("documentation", "Documentation"),
             ]:
                 values = entry_points_by_category.get(name, [])
                 if values:
@@ -873,9 +922,10 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
                 coverage_text = coverage.get("status", "unknown")
                 if coverage.get("test_file"):
                     coverage_text += f" via {coverage['test_file']}"
+                deduped = _dedupe_list(item.get("factors", []))
                 lines.append(
                     f"- [{item.get('level')}] {item.get('file')} score={item.get('score')} "
-                    f"({', '.join(item.get('factors', [])[:3])}; coverage={coverage_text})"
+                    f"({', '.join(deduped[:3])}; coverage={coverage_text})"
                 )
             lines.append("")
 
@@ -950,7 +1000,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
         label_map = {
             "high": "strong",
             "good": "strong",
-            "medium": "present",
+            "medium": "present — coverage unknown",
             "low": "limited",
             "missing": "missing",
             "strong": "strong",
@@ -958,8 +1008,10 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
             "unknown": "unknown",
         }
         mapped = label_map.get(value, value)
+        if value == "strong" and reason:
+            return f"strong — {reason.lower()}"
         if value == "present" and reason:
-            mapped = f"present — {reason.lower()}"
+            return f"present — {reason.lower()}"
         return mapped
 
     def _todo_category_label(self, category: str) -> str:

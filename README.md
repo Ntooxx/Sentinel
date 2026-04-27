@@ -1,79 +1,20 @@
-# Project Sentinel Agent
+# Sentinel
 
-**Sentinel** is a project-aware CLI for AI-assisted development.
+Fast repo intelligence reports for AI coding agents.
 
-It scans a codebase, understands how the project is organised, stores persistent knowledge, and recommends the next highest-value action to take.
+Sentinel scans a repository and generates:
+- an architecture summary
+- runtime/build/test/documentation hotspots
+- review signals, not fake confirmed bugs
+- compact AI context
+- a ready-to-use next-step prompt
+- HTML and Markdown reports
 
-Instead of forcing an AI agent to rediscover the same repository every session, Sentinel gives it a compact project memory layer with:
+> Sentinel is in alpha. It produces review signals and AI-agent context, not guaranteed bug findings. Always review recommendations before applying changes.
 
-- Architecture overview
-- Important files
-- Entry points
-- Hotspots
-- Risks
-- Test hints
-- Next-step suggestions
-- Agent-ready context packs
+> Example: Sentinel generated a deep AI-ready repo intelligence report for Ladybird, a 1.4M-line browser engine, in about 40 seconds.
 
-By default, Sentinel stores its runtime state inside the scanned project:
-
-```text
-.sentinel/
-```
-
-This makes Sentinel easy to use as:
-
-- A standalone CLI
-- A vendored tool inside another repository
-- A project memory layer for AI coding agents
-- A local assistant for engineering audits and reports
-
----
-
-## Why Sentinel Exists
-
-Modern AI coding agents are powerful, but they can waste a lot of time and context by repeatedly reading the same repository from scratch.
-
-Sentinel solves this by creating a persistent, structured memory of the project.
-
-Instead of giving an AI agent the whole repository, Sentinel gives it the right context first.
-
-```text
-Without Sentinel:
-
-AI Agent
-  ↓
-Reads many files manually
-  ↓
-Uses lots of tokens
-  ↓
-May miss risks or important files
-  ↓
-Guesses the next action
-
-
-With Sentinel:
-
-Sentinel scans project
-  ↓
-Builds project memory
-  ↓
-Ranks risks and focus files
-  ↓
-Creates compact context
-  ↓
-AI Agent starts with better direction
-```
-
-Sentinel is not just another dashboard.
-
-It is an operating layer for agentic development:
-
-```text
-Small context in.
-Focused action out.
-Clear verification path.
-```
+Sentinel does not claim to be a full replacement for SonarQube/Semgrep/CodeQL. It generates review signals and AI-agent context, not guaranteed bug findings.
 
 ---
 

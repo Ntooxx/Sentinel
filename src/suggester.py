@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from classify import classifyRiskSurface
 from utils import estimate_text_tokens, normalize_budget_name
 
 
@@ -157,24 +158,64 @@ class Suggester:
         __: Dict[str, Any],
     ) -> Dict[str, Any] | None:
         understanding = audit.get("understanding", {})
+        archetype = understanding.get("archetype", "")
         hotspot_groups = understanding.get("hotspot_groups", {})
-        hotspots = understanding.get("hotspots", []) or hotspot_groups.get("runtime", []) or hotspot_groups.get("build_tooling", [])
+        all_hotspots = understanding.get("hotspots", []) or hotspot_groups.get("runtime", []) or hotspot_groups.get("build_tooling", [])
+        runtime_hotspots = [h for h in (hotspot_groups.get("runtime", []) or []) if classifyRiskSurface(h.get("path", "")) == "runtime"]
+        if not runtime_hotspots:
+            runtime_hotspots = [h for h in all_hotspots if classifyRiskSurface(h.get("path", "")) == "runtime"]
         entry_points_by_category = audit.get("structure", {}).get("entry_points_by_category", {})
-        entry_points = entry_points_by_category.get("runtime", []) or entry_points_by_category.get("build", []) or entry_points_by_category.get("generator", [])
-        if not entry_points or not hotspots:
+        runtime_entries = entry_points_by_category.get("runtime", [])
+        entry_points = runtime_entries or entry_points_by_category.get("build", []) or entry_points_by_category.get("generator", [])
+        if not runtime_hotspots:
             return None
 
-        hotspot_paths = [item.get("path") for item in hotspots[:3] if item.get("path")]
-        reason = f"Start from {entry_points[0]} and trace into {', '.join(hotspot_paths[:2])}"
+        hotspot_paths = [item.get("path") for item in runtime_hotspots[:3] if item.get("path")]
+
+        if archetype == "framework_library":
+            return {
+                "category": "debugging",
+                "priority": "medium",
+                "title": "Map the relevant API/runtime surface before editing",
+                "reason": f"Framework/library repo detected. Relevant surfaces: {', '.join(hotspot_paths[:2])}",
+                "action": "Map the relevant API/runtime surface before editing",
+                "focus_files": hotspot_paths,
+                "suggested_prompt": (
+                    "Map the relevant API/runtime surface before editing. "
+                    "Explain which modules are touched first, identify the hotspots involved, "
+                    "and recommend the safest first change before making edits."
+                ),
+            }
+
+        if archetype == "monorepo":
+            return {
+                "category": "debugging",
+                "priority": "medium",
+                "title": "Select the affected package/app/service first, then trace locally",
+                "reason": f"Monorepo detected. Local hotspots: {', '.join(hotspot_paths[:2])}",
+                "action": "Select the affected package/app/service first, then trace locally",
+                "focus_files": hotspot_paths,
+                "suggested_prompt": (
+                    "Select the affected package/app/service first, then trace locally. "
+                    "Explain which modules are touched first, identify the hotspots involved, "
+                    "and recommend the safest first change before making edits."
+                ),
+            }
+
+        if not entry_points:
+            return None
+
+        runtime_focus = [entry_points[0], *hotspot_paths] if entry_points else hotspot_paths
+        reason = f"Start from {runtime_focus[0]} and trace into {', '.join(hotspot_paths[:2])}" if len(hotspot_paths) >= 2 else f"Start from {runtime_focus[0]} and trace into hotspots"
         return {
             "category": "debugging",
             "priority": "medium",
             "title": "Trace the main execution path before editing",
             "reason": reason,
             "action": "Map the runtime path through entry points and current hotspots",
-            "focus_files": [entry_points[0], *hotspot_paths],
+            "focus_files": runtime_focus,
             "suggested_prompt": (
-                f"Trace the execution flow starting at {entry_points[0]}. "
+                f"Trace the execution flow starting at {runtime_focus[0]}. "
                 "Explain which modules are touched first, identify the hotspots involved, "
                 "and recommend the safest first change before making edits."
             ),
@@ -488,6 +529,31 @@ class Suggester:
             for issue in audit.get("issues", [])[:3]
             if issue.get("message")
         ]
+        risk_file_messages: list[str] = []
+        for risk in audit.get("risk_scores", [])[:5]:
+            surface = risk.get("surface", "runtime")
+            if surface not in ("runtime",):
+                continue
+            path = risk.get("file", "")
+            score = risk.get("score", 0)
+            factors = risk.get("factors", [])
+            deduped_factors: list[str] = []
+            seen_set: set[str] = set()
+            for f in factors:
+                key = f.lower().strip()
+                if key not in seen_set:
+                    seen_set.add(key)
+                    deduped_factors.append(f)
+            extra = []
+            if deduped_factors:
+                extra.append(", ".join(deduped_factors[:2]))
+            if score >= 40:
+                extra.append(f"risk score {score}")
+            parts = [path]
+            if extra:
+                parts.append(": ".join(extra))
+            if len(risk_file_messages) < 3:
+                risk_file_messages.append("; ".join(parts))
         summary = understanding.get("summary") or knowledge.get("understanding", {}).get("summary", "")
         project_name = understanding.get("project_name") or "the project"
 
@@ -508,7 +574,10 @@ class Suggester:
             prompt_lines.append("Focus files first:")
             prompt_lines.extend(f"- {path}" for path in focus_files)
 
-        if top_issues:
+        if risk_file_messages:
+            prompt_lines.append("Current risks:")
+            prompt_lines.extend(f"- {msg}" for msg in risk_file_messages)
+        elif top_issues:
             prompt_lines.append("Current risks:")
             prompt_lines.extend(f"- {issue}" for issue in top_issues)
 
@@ -548,6 +617,8 @@ class Suggester:
     ) -> List[str]:
         focus = []
         seen = set()
+        understanding = audit.get("understanding", {})
+        archetype = understanding.get("archetype", "")
 
         def add_many(items: List[str]) -> None:
             for item in items:
@@ -559,7 +630,13 @@ class Suggester:
 
         if selected:
             add_many(selected.get("focus_files", []))
-        add_many([item.get("path") for item in audit.get("understanding", {}).get("important_files", []) if item.get("path")])
+        important = audit.get("understanding", {}).get("important_files", [])
+        if archetype in ("framework_library",):
+            api_important = [item.get("path") for item in important if item.get("path") and ("api/" in item["path"] or "core/" in item["path"])]
+            add_many(api_important)
+        runtime_important = [item.get("path") for item in important if item.get("path") and classifyRiskSurface(item["path"]) == "runtime"]
+        add_many(runtime_important)
+        add_many([item.get("path") for item in important if item.get("path")])
         add_many(diff.get("modified_files", []))
         add_many(diff.get("new_files", []))
         return focus[:limit]
@@ -571,6 +648,7 @@ class Suggester:
         understanding: Dict[str, Any],
     ) -> str:
         normalized = goal.strip().lower()
+        archetype = understanding.get("archetype", "")
         objectives = {
             "next": "execute the highest-value next engineering step with minimal extra discovery",
             "debug": "find the most likely root cause and produce the safest fix path",
@@ -580,6 +658,10 @@ class Suggester:
             "test": "improve or repair test coverage around the most important behavior",
         }
         objective = objectives.get(normalized, objectives["next"])
+        if archetype == "framework_library" and normalized == "next":
+            objective = "map the relevant API/runtime surface, then execute the highest-value next engineering step with minimal extra discovery"
+        if archetype == "monorepo" and normalized == "next":
+            objective = "select the affected package/app/service first, then execute the highest-value next engineering step with minimal extra discovery"
         if selected and normalized == "next":
             objective = f"{objective}: {selected.get('action', '').rstrip('.')}"
         if normalized == "plan" and understanding.get("hotspots"):

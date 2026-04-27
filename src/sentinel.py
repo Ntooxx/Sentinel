@@ -150,6 +150,7 @@ class SentinelAgent:
         self.scan_count += 1
         self.log.info("Starting scan #%s for %s", self.scan_count, self.project_dir)
 
+        t0 = perf_counter()
         current_files = self.auditor.scan_directory(
             ignore_dirs=self.config["ignore_dirs"],
             extensions=self.config["important_extensions"],
@@ -158,8 +159,10 @@ class SentinelAgent:
             fast_mode=fast_mode,
             use_git_discovery=use_git_discovery,
         )
+        t1 = perf_counter()
         diff = self.auditor.diff_from_last_checkpoint(current_files)
         audit = self.auditor.audit_project(current_files)
+        t2 = perf_counter()
         dependencies = self._detect_dependencies(current_files)
 
         self._sync_knowledge(current_files, diff, audit, dependencies)
@@ -184,12 +187,21 @@ class SentinelAgent:
         llm_readiness = self._build_llm_readiness(audit, suggestions)
         self.knowledge.update_llm_readiness(llm_readiness, persist=False)
         self.knowledge.save()
-        duration = round(perf_counter() - started_at, 4)
+        t3 = perf_counter()
+        duration = round(t3 - started_at, 4)
+        t_discovery = round(t1 - t0, 4)
+        t_audit = round(t2 - t1, 4)
+        t_suggest = round(t3 - t2, 4)
         performance = {
             "duration_seconds": duration,
             "fast_mode": fast_mode,
             "output_format": output_format,
             "compact": compact,
+            "timing": {
+                "discovery": t_discovery,
+                "audit": t_audit,
+                "suggestions": t_suggest,
+            },
             "cache": getattr(self.auditor, "last_cache_stats", {}),
             "discovery_mode": getattr(self.auditor, "last_discovery_mode", "walk"),
             "budgets": self.config.get("performance_budgets", {}),
@@ -199,6 +211,10 @@ class SentinelAgent:
                 context_tokens=int(llm_readiness.get("estimated_compact_context_tokens", 0) or 0),
             ),
         }
+        self.log.debug(
+            "Scan timing: discovery=%.4fs audit=%.4fs suggest=%.4fs total=%.4fs files=%d",
+            t_discovery, t_audit, t_suggest, duration, len(current_files),
+        )
         alerts = self.build_watch_alerts(audit, diff, performance)
 
         result = {

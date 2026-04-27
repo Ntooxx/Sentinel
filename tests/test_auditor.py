@@ -343,7 +343,7 @@ class MonorepoClassificationTests(unittest.TestCase):
         # Check roles
         self.assertEqual(components.get("packages/opencode"), "CLI / AI coding agent core")
         self.assertEqual(components.get("packages/app"), "frontend application")
-        self.assertEqual(components.get("packages/desktop"), "desktop shell")
+        self.assertEqual(components.get("packages/desktop"), "desktop application shell")
 
     def test_i18n_files_are_classified_as_localization_resource(self):
         (self.project_root / "packages" / "app" / "src" / "i18n").mkdir(parents=True)
