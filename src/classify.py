@@ -237,6 +237,19 @@ def detectRepoArchetype(
         or p.startswith("core/") or p.startswith("runtime/") or p.startswith("api/") or p.startswith("python/") or p.startswith("compiler/") or p.startswith("lite/")
         for p in files
     )
+
+    # Detect framework subdir roots like tensorflow/core, tensorflow/python, tensorflow/compiler
+    framework_subdir_roots = {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "c", "cc", "tools"}
+    has_framework_layout = False
+    second_level_dirs = set()
+    for p in files:
+        parts = p.split("/")
+        if len(parts) >= 2:
+            second_level_dirs.add(parts[1].lower())
+    framework_matches = second_level_dirs & framework_subdir_roots
+    if len(framework_matches) >= 2:
+        has_framework_layout = True
+
     main_count = sum(1 for p in files if p.endswith("main.rs") or p.endswith("main.go") or p.endswith("main.py") or p.endswith("main.cpp") or p.endswith("main.cc") or p.endswith("main.ts"))
     main_in_gen_count = sum(
         1 for p in files
@@ -244,14 +257,19 @@ def detectRepoArchetype(
         and ("/gen/" in p or "/generated/" in p or "/genop/" in p or "/tools/" in p or p.startswith("tools/") or "/cmd/" in p or p.startswith("cmd/"))
     )
     effective_main_count = main_count - main_in_gen_count
-    if has_large_runtime and effective_main_count <= 2 and source_count > 3 and primary == ARCHETYPE_APP:
+    if (has_large_runtime or has_framework_layout) and effective_main_count <= 2 and source_count >= 3 and primary == ARCHETYPE_APP:
         primary = ARCHETYPE_FRAMEWORK_LIBRARY
         confidence = "medium"
         workflow = "framework_library"
 
-    if not has_main_in_app_root and (has_api or has_src or has_large_runtime) and primary == ARCHETYPE_APP:
+    if not has_main_in_app_root and (has_api or has_src or has_large_runtime or has_framework_layout) and primary == ARCHETYPE_APP:
         primary = ARCHETYPE_FRAMEWORK_LIBRARY
         confidence = "medium"
+        workflow = "framework_library"
+
+    if has_framework_layout and not has_main_in_app_root and primary == ARCHETYPE_APP:
+        primary = ARCHETYPE_FRAMEWORK_LIBRARY
+        confidence = "high"
         workflow = "framework_library"
 
     if primary == ARCHETYPE_APP and not has_browser_signals and not tauri_main:
@@ -293,6 +311,12 @@ def _is_gen_name(name: str) -> bool:
 def _is_test_name(name: str, ext: str) -> bool:
     if ext == ".go" and name.endswith("_test.go"):
         return True
+    if ext in {".cc", ".cpp", ".cxx"} and name.endswith(("_test.cc", "_test.cpp", "_test.cxx")):
+        return True
+    if ext == ".py" and name.endswith("_test.py"):
+        return True
+    if ext == ".rs" and name.endswith("_test.rs"):
+        return True
     if ".test." in name or ".spec." in name:
         return True
     if name.startswith("test_") or name.startswith("spec_"):
@@ -322,7 +346,7 @@ def _is_generator_name(name: str, lower_path: str) -> bool:
     stem = Path(name).stem.lower()
     if stem.startswith("generate_") or stem.startswith("gen_"):
         return True
-    if "generator" in lower_path or "codegen" in lower_path:
+    if "generator" in lower_path or "codegen" in lower_path or "genop" in lower_path:
         return True
     if "asmintgen" in lower_path or "tiffgenerator" in lower_path:
         return True
@@ -526,6 +550,15 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
         fc.surface = "test_runner"
         fc.isTestRunner = True
         fc.manualEditPolicy = "Test runner / fuzzer infrastructure."
+        return fc
+
+    # 9a. Test by name (catches *_test.go, *_test.py, *_test.cc regardless of directory)
+    if _is_test_name(name, ext):
+        fc.role = "test"
+        fc.surface = "test"
+        fc.isTest = True
+        fc.manualEditPolicy = "Test suite / test infrastructure."
+        fc.largeFilePolicy = "Large test file; review test structure only if frequently edited or flaky."
         return fc
 
     # 10. Environment setup
@@ -964,6 +997,9 @@ def monorepo_component_key(path: str) -> str:
         return parts[0]
     if top in {"gen", "generated"}:
         return parts[0]
+    # For framework/library repos, split by second-level directory
+    if len(parts) >= 2 and lower_parts[1] in {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "cc", "c", "tools", "stream_executor", "tpu"}:
+        return "/".join(parts[:2])
     return parts[0]
 
 

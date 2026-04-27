@@ -1572,7 +1572,7 @@ class ProjectAuditor:
         # Split large top-level directories one level deeper if they have meaningful subdirectories
         split_components: List[Dict[str, Any]] = []
         for component in components:
-            if "/" in component["path"] or component["file_count"] <= 200:
+            if "/" in component["path"] or component["file_count"] <= 10:
                 split_components.append(component)
                 continue
             # Try to split by second-level directory
@@ -1597,7 +1597,7 @@ class ProjectAuditor:
                 sub_buckets[sub_key]["file_count"] += 1
                 sub_buckets[sub_key]["line_count"] += line_count
                 sub_buckets[sub_key]["representative_files"].append((filepath, line_count))
-            if sub_buckets:
+            if sub_buckets and len(sub_buckets) >= 1:
                 for sub in sub_buckets.values():
                     sub["representative_files"] = sorted(sub["representative_files"], key=lambda item: item[1], reverse=True)[:3]
                 split_components.extend(sorted(sub_buckets.values(), key=lambda item: (item["line_count"], item["file_count"]), reverse=True))
@@ -1740,13 +1740,15 @@ class ProjectAuditor:
         core_components = [component for component in components if component["path"] not in {"tests", "docs"}]
         if core_components:
             visible_roles = [c["role"] for c in core_components[:3]]
-            generic_label_count = sum(1 for r in visible_roles if "application logic" in r.lower())
-            if generic_label_count == len(visible_roles):
+            non_generic = [r for r in visible_roles if "application logic" not in r.lower() and "unknown" not in r.lower()]
+            if not non_generic:
+                non_generic = [r for r in visible_roles if "package" in r.lower() or "library" in r.lower() or "runtime" in r.lower() or "api" in r.lower()]
+            if not non_generic:
                 return "Purpose could not be confidently inferred from README."
-            if len(visible_roles) == 1:
-                purpose = f"It is organized around {visible_roles[0]}."
+            if len(non_generic) == 1:
+                purpose = f"It is organized around {non_generic[0]}."
             else:
-                purpose = f"It is organized around {', '.join(visible_roles[:-1])}, and {visible_roles[-1]}."
+                purpose = f"It is organized around {', '.join(non_generic[:-1])}, and {non_generic[-1]}."
 
             tech_hints = []
             has_react = any("react" in (c.get("role") or "").lower() for c in core_components)
