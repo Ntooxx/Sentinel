@@ -1,307 +1,246 @@
-# Sentinel
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ntooxx/Sentinel/main/assets/logo-dark.svg">
+  <img alt="Sentinel" src="https://raw.githubusercontent.com/Ntooxx/Sentinel/main/assets/logo-light.svg">
+</picture>
 
-**Fast repo intelligence for AI coding agents.**
-
-Scan any repository. Get architecture, risks, hotspots, and a ready-to-use agent prompt — in seconds.
-
-```bash
-python sentinel.py scan . --fast --compact
-```
+*Repo intelligence for AI coding agents. Scan → Understand → Act.*
 
 ---
 
-## Speed
+```bash
+pip install -e .
+python sentinel.py scan . --fast
+```
 
-Sentinel analyses repos from 100 files to 6M lines in realistic time.
+**197 tests · 0 failures · 25k files / 6M lines in 55s · no external dependencies**
 
-| Repo | Files | Lines | Scan Time | Health Score |
+---
+
+## Scan Performance
+
+| Target | Files | Lines | Time | Health |
 |---|---|---|---|---:|
-| Small Python library | 234 | 42k | **0.16s** | 86% |
+| Python library | 234 | 42k | **0.16s** | 86% |
 | FastAPI web framework | ~1k | ~200k | **4.56s** | 74% |
 | Kubernetes (k8s.io/kubernetes) | 25,432 | 6,007,991 | **55s** | 74% |
+| Ladybird browser engine | ~40k | ~1.4M | ~40s | — |
 
-> 25,000 files, 6 million lines analysed in under a minute. No external services. No cloud dependency.
-
----
-
-## What It Does
-
-Sentinel scans a repository and produces:
-
-- **Architecture summary** — project type, language, frameworks, archetype, purpose, workflow
-- **Hotspot detection** — runtime, build, test, docs, and vendor hotspots ranked by risk
-- **Review signals** — oversized files, TODO density, documentation drift, test coverage gaps
-- **Entry point mapping** — primary runtime entry points, build tools, generators, examples
-- **Health score** — maintainability, runtime complexity, test signal, with breakdown
-- **Project identity** — name, purpose, archetype, frameworks, main components
-- **Next-step suggestions** — ranked by impact, effort, and confidence
-- **Agent prompt** — project-aware prompt ready for Cline, Claude Code, Codex, Roo, or Continue
-- **HTML report** — modern card-based design with SVG health ring, color-coded risks, terminal-style prompt
-- **Dashboard GUI** — dark-theme browser command centre for all Sentinel workflows
+No cloud. No external services. Pure Python.
 
 ---
 
-## Benchmark Detail
+## What Sentinel Produces
 
-| Metric | Small Library | FastAPI | Kubernetes |
-|---|---|---|---|
-| Total files | 234 | ~1k | 25,432 |
-| Total lines | ~42k | ~200k | 6,007,991 |
-| Scan duration | 0.16s | 4.56s | 55s |
-| Health score | 86% | 74% | 74% |
-| Runtime complexity | medium | medium | high |
-| Test signal | strong | strong | strong |
-| Review signals | 92 | 203 | 4,428 |
-| TODOs found | 10 | 48 | 6,644 |
-| Entry points detected | 2 | 1 | 48 |
-| Confidence | high | high | low |
+| Output | Description |
+|---|---|
+| **Project identity** | Name, type, archetype, purpose, language, frameworks, workflow |
+| **Health score** | Maintainability, runtime complexity, test signal, security, with breakdown |
+| **Entry points** | Primary runtime, API surfaces, examples, build tools, generators |
+| **Hotspots** | Runtime, build, test runner, documentation, vendor — ranked by risk |
+| **Review signals** | Oversized files, TODO density, documentation drift, test gaps |
+| **Next actions** | Suggestions ranked by impact, effort, and confidence |
+| **Agent prompt** | Ready-to-use prompt for Cline, Claude Code, Codex, Roo, Continue |
+| **Context pack** | Compact token-efficient project brief |
+| **Architecture summary** | Components, dependencies, archetype, patterns |
+| **Risk scores** | Per-file scoring with deduplicated factors and test coverage |
 
 ---
 
-## What Makes Sentinel Different
+## Test Suite
 
-| Area | Without Sentinel | With Sentinel |
+**197 tests · 0 failures · 9.3s run time**
+
+| Suite | Tests | Scope |
 |---|---|---|
-| Project understanding | AI agent manually reads files | Compact overview generated automatically |
-| Token waste | Large repo loaded repeatedly | Only relevant files and summaries |
-| Onboarding | Manual structure explanation | Architecture, entry points, tests, hotspots in one command |
-| Next action | The agent guesses | Sentinel ranks the highest-value next action |
-| Risk awareness | High-risk files missed | Hotspots, oversized files, TODOs flagged |
-| Testing | Broad or unclear test selection | Focused verification commands suggested |
-| Agent safety | Edits made without full context | Validated focus files provided |
-| Project memory | Every session starts from zero | Persistent memory in `.sentinel/` |
-| Documentation | Manual report writing | Terminal, HTML, and Markdown reports |
-| AI agent workflow | Context prepared manually | Agent-ready prompts and context packs |
+| `test_archetype_regressions` | 11 | Archetype detection, entry point filtering, vendor classification |
+| `test_auditor` | 18 | Checkpoints, file classification, maintainability, test signals |
+| `test_classification_regressions` | 36 | File roles, risk surfaces, generated code, i18n, monorepo detection |
+| `test_knowledge` | 2 | Knowledge base storage and export |
+| `test_knowledge_repo` | 1 | Artifact repo detection |
+| `test_ladybird_regressions` | 37 | Risk surface classification, hotspot filtering, focus files |
+| `test_mcp` | 4 | MCP server lifecycle and tool listing |
+| `test_regression_fixtures` | 28 | Full pipeline, identity resolution, purpose inference, HTML cleaning |
+| `test_report_quality` | 40 | Project name extraction, entry points, health scoring, LLVM/rust detection |
+| `test_sentinel` | 14 | CLI commands, HTML report generation, dashboard, cache, scan lifecycle |
+| `test_weighted_entry_points` | 1 | Entry point directory weighting |
 
 ---
 
-## Core Idea
+## Feature Highlights
 
-```
-Repository → Sentinel Scan → [Project Understanding + Risk Detection + Architecture Summary]
-                                  ↓
-                   Knowledge Base → Context Pack → AI Coding Agent
-                   Next-Step Suggestions → Focused Code Changes → Verification
-```
+### Project Name Resolution
 
-Sentinel helps answer:
-- What is this project?
-- Where should I start?
-- Which files matter most?
-- What is risky?
-- What should be fixed next?
-- How should changes be verified?
-- What context should an AI agent receive?
+Sentinel resolves project names through a 5-tier ranked fallback:
 
----
+1. **Known repo names** — 22 entries: FastAPI, Kubernetes, TensorFlow, Flask, Django, React, PyTorch, NumPy, Pandas, Vite, Express, Tailwind CSS, and more
+2. **Package manifests** — Cargo.toml, pyproject.toml, package.json, setup.py, go.mod, CMakeLists.txt
+3. **Manifest descriptions** — extracted from the same manifests
+4. **README body** — first real paragraph after headings
+5. **README heading** — validated against blocked section keywords (Installation, Usage, Sponsors, etc.)
 
-## Features
+> Prevents "Sponsors" from being used as a project name when scanning FastAPI repos.
 
-### Core Analysis
-- **Project scanning**: Deep codebase analysis with AST parsing and import graph generation
-- **Project identity resolution**: Smart 5-tier name extraction — knows FastAPI, TensorFlow, Kubernetes, Flask, React, PyTorch, and 20+ other projects by name
-- **Purpose inference**: 5-step fallback from manifest descriptions through README body, summary, doc_title subtitle, and component-based generation
-- **Codebase auditing**: Rule-based detection of risks, hotspots, and code smells
-- **Architecture summarisation**: Project structure, entry points, dependencies, archetype
-- **Entry point mapping**: Prioritises major Go binaries (kube-apiserver, kubectl, kubelet) and catches Go `cmd/<name>/<file>.go` patterns even when not named `main.go`
-- **Persistent knowledge storage**: State kept in `.sentinel/` directory
-- **Checkpoint tracking**: Diff-based change detection between scans
+### Purpose Inference
 
-### AI Agent Support
-- **Prioritised next-step suggestions**: Ranked by impact, effort, and confidence
-- **Confidence scoring**: Quantified reliability of each recommendation
-- **Impact and effort labels**: Clear triage for developers and agents
-- **Verification hints**: Focused test commands per suggestion
-- **Agent prompt generation**: Project-aware prompts for Cline, Claude Code, Codex, Roo, Continue
-- **Low-token context packs**: Compact briefs for token-sensitive workflows
+A 6-step fallback chain that never returns a placeholder:
 
-### Risk & Quality
-- **Health scoring**: Weighted metric combining maintainability, runtime complexity, test signal, documentation quality, and TODO density
-- **Risk scoring**: File-level risk with coverage tracking and deduplicated factors
-- **Documentation drift detection**: Regex-based placeholder detection (TBD, "coming soon", empty brackets, stubs)
-- **Coverage hotspot analysis**: Weakly tested areas from `coverage.xml`
-- **Dependency hotspot detection**: Risky dependency patterns
-- **Release-readiness checks**: Open-source checklist
+1. **Manifest description** — stripped of HTML/badges
+2. **README body** — first real paragraph, skip badges/tables/HTML
+3. **README summary** — already-cleaned summary field
+4. **README doc_title subtitle** — extracts subtitle after colon or em-dash ("Kubernetes: Production-Grade Container Orchestration" → "Production-Grade Container Orchestration")
+5. **Component-based generation** — built from non-test/doc component roles
+6. **Final fallback** — "Purpose could not be confidently inferred from README."
 
-### Reports
-- **HTML reports**: Modern card-based layout with SVG health ring, color-coded severity badges, terminal-style agent prompt, responsive design
-- **Dashboard GUI**: Dark-theme local browser command centre with tool cards, toggle pills, live status, stats row, and action runner
-- **Markdown reports**: Detailed project documentation
-- **Terminal reports**: Quick CLI summaries
-- **Repo URL analysis**: Clone, scan, and bundle a complete report from any git URL
+> Prevents `----` from appearing as project purpose in Kubernetes scans.
 
-### Advanced Analysis
-- **Python AST symbol indexing**: Class, function, and variable extraction
-- **Import graph generation**: Dependency visualisation
-- **Call graph generation**: Function call relationships
-- **Runtime path analysis**: Execution flow tracing
-- **Task memory recording**: Work history and token savings tracking
+### Entry Point Detection
 
-### Integration
-- **Kilo file bridge**: No-MCP integration with Kilo
-- **MCP server**: Model Context Protocol server mode
-- **Continuous monitoring**: Interval-based watch mode
-- **Autofix planning**: Small safe fix generation
-- **PR summary generation**: Changes, risks, and suggested tests
-- **Adapter prompts**: Tool-specific prompts for various AI coding assistants
+Go binaries are detected even when not named `main.go`:
 
-### Standard Library Only
-- **Pure Python**: No external dependencies beyond the standard library
+- `cmd/kube-apiserver/apiserver.go` → runtime entry point
+- `cmd/kubelet/kubelet.go` → runtime entry point  
+- `cmd/cloud-controller-manager/main.go` → runtime entry point
 
----
+Major Go binaries get a +80 score bonus: `kube-apiserver`, `kubelet`, `kube-controller-manager`, `kube-scheduler`, `kubectl`, `kube-proxy`, `kubeadm`.
 
-## Quick Start
+### Identity Text Safety
 
-Install:
-```bash
-python -m pip install -e .
-```
-
-Scan a project:
-```bash
-python sentinel.py scan . --fast --compact
-```
-
-Open the dashboard:
-```bash
-python sentinel.py dashboard . --port 8765 --fast
-```
-
-Generate an HTML report:
-```bash
-python sentinel.py report . --format html
-```
-
-Generate a next-step prompt:
-```bash
-python sentinel.py prompt . --goal next --budget small --fast
-```
-
-Ask a question:
-```bash
-python sentinel.py ask . --question "where is authentication handled?" --fast
-```
-
-Analyse a GitHub repo:
-```bash
-python sentinel.py analyze-url https://github.com/user/repo --fast
-```
-
----
-
-## Dashboard
-
-Open the GUI at `http://127.0.0.1:8765`:
-
-- Stats dashboard with live health, files, lines, issues, signals, TODOs
-- Tool cards for scan, ask, overview, retrieve, prompts, reports, verification, PR, memory, autofix
-- Terminal output panel with artifact links
-- Suggestions list and agent prompt panel
-- Focus files, hotspots, and framework pills
-- File risks and review signals tables
-- Health timeline
-
-All actions use shared inputs — query, repo URL, budget, goal, flags — so you don't re-enter context for every command.
+Sentinel filters out HTML tags, markdown links, badges, images, sponsor keywords, section headings, table artifacts, and decorative separators (`----`, `====`, etc.) from all identity fields — project name, type, purpose, and summary.
 
 ---
 
 ## HTML Report
 
-The HTML report is a single self-contained page with:
+The generated HTML report is a single self-contained page:
 
-- **Health ring**: SVG donut chart color-coded by score
-- **Stats bar**: Files, lines, issues, signals, TODOs at a glance
-- **Project identity**: Type, archetype, purpose, workflow, recent changes
-- **Risk summary**: Maintainability, runtime complexity, test signal, security
-- **Top risk insight**: Most important single finding
-- **Next actions**: Ranked suggestions with impact, effort, confidence
-- **Hotspots**: Primary runtime, build, generator, test runner, documentation groups
-- **Entry points**: Runtime, API surface, examples, build, generator categories
-- **Components table**: Path, role, file count, line count
-- **File risks**: By surface with level, score, and factors
-- **Review signals**: Severity, message, file
-- **Agent prompt**: Terminal-styled `$`-prefixed prompt block
-
----
-
-## Project Layout
-
-```
-src/
-  sentinel.py      Main orchestrator, CLI, dashboard GUI, MCP tools
-  auditor.py       Scanning, auditing, identity, entry points, checkpoints
-  reporter.py      Terminal, HTML, Markdown, JSON report generation
-  classify.py      File classification, archetype detection, risk surface
-  suggester.py     Prioritised next-step suggestion engine
-  knowledge.py     Persistent knowledge base storage
-  graph.py         AST symbols, imports, calls, dependencies, runtime paths
-  verifier.py      Changed-file detection and focused test selection
-  monitor.py       Continuous monitoring loop
-  retriever.py     Context retrieval and project Q&A
-  sentinel_mcp.py  MCP server surface
-  utils.py         Shared helpers and defaults
-
-config/
-  config.json          Runtime configuration
-  audit_rules.json     Risk and hotspot detection rules
-  patterns.json        Code pattern matching rules
-
-tests/                 Comprehensive regression test suite
-docs/                  Architecture, API, user guide, install guide
-```
+- **SVG health ring** — donut chart color-coded by score (green/gold/red)
+- **Stats bar** — files, lines, issues, signals, TODOs
+- **Project identity + risk** — definition lists in two-column card layout
+- **Top risk insight** — accent-bordered card with the single most important finding
+- **Next actions** — grid of suggestion cards with impact/effort/confidence badges
+- **Hotspots + entry points** — grouped file pills by category
+- **Components table** — path, role, file count, line count
+- **File risks** — by surface with level, score, and factors
+- **Review signals** — severity, message, file
+- **Agent prompt** — terminal-styled `$`-prefixed block on dark background
+- **Responsive** — degrades gracefully from desktop to 500px viewport
 
 ---
 
-## CLI Commands
+## Dashboard GUI
 
-| Command | Description |
+Dark-theme browser command centre at `http://127.0.0.1:8765`:
+
+- **Stats row** — 6 metrics at a glance with color-coded values
+- **Project identity + risk** — definition list cards
+- **Shared inputs** — query, repo URL, budget, goal, flags — reused across all actions
+- **Toggle pills** — fast scan, dry-run, apply, verify, adapters — border-fill toggle animation
+- **Tool cards** — Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL — with compact button grids
+- **Output terminal** — monospace result panel with artifact links
+- **Suggestions + prompt** — styled suggestion list and prompt block
+- **Focus / hotspots / frameworks** — three-column pill row
+- **File risks + review signals** — scrollable tables
+- **Health timeline** — scan history with scores
+- **Auto-refresh** — polls every 3 seconds
+
+---
+
+## Architecture
+
+```
+                          ┌─────────────────┐
+                          │   sentinel.py    │  CLI, dashboard, MCP server
+                          │   (4149 lines)   │
+                          └────────┬────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              ▼                    ▼                    ▼
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │   auditor.py    │  │  reporter.py    │  │   suggester.py  │
+    │   (2686 lines)  │  │  (1059 lines)   │  │   (738 lines)   │
+    │ scanning, ids,  │  │ terminal, html, │  │ suggestion eng  │
+    │ entry points,   │  │ markdown, json  │  │ confidence,     │
+    │ checkpoints     │  │ reports         │  │ impact, effort  │
+    └────────┬────────┘  └─────────────────┘  └─────────────────┘
+             │
+    ┌────────┴────────┐
+    │  classify.py    │
+    │  (1036 lines)   │
+    │ file roles,     │
+    │ archetypes,     │
+    │ risk surfaces   │
+    └─────────────────┘
+```
+
+---
+
+## Commands
+
+| Command | What It Does |
 |---|---|
-| `scan` | Run a single project scan |
-| `brief` | Tiny summary with the top suggestion |
-| `overview` | Project structure, hotspots, workflow |
-| `context` | Compact low-token context pack |
-| `prompt` | Focused next-step prompt |
-| `retrieve` | Query-specific files, symbols, snippets |
-| `ask` | Answer a project question |
-| `analyze-url` | Clone a git URL and write report bundle |
-| `graph` | AST symbols, import graph, call graph |
-| `verify` | Preview or run focused checks |
-| `memory` | Record or list task memory |
-| `savings` | Tracked token savings |
-| `doctor` | Validate config and runtime paths |
-| `dashboard` | Local live GUI |
-| `autofix` | Plan or apply small safe fixes |
-| `pr` | Summarise changes, risks, tests |
-| `timeline` | Scan history, memory, savings |
-| `mcp-health` | Validate MCP tool availability |
-| `coverage` | Coverage.xml hotspot analysis |
-| `cleanup-reports` | Archive old reports |
+| `scan` | Analyse project structure, risks, hotspots |
+| `brief` | One-line summary with the top suggestion |
+| `overview` | Full project description with components, hotspots, workflow |
+| `context` | Token-efficient project brief for AI agents |
+| `prompt` | Focused next-step prompt with goal selection |
+| `retrieve` | Find files, symbols, and snippets matching a query |
+| `ask` | Answer a natural-language question about the project |
+| `analyze-url` | Clone a git URL and generate a complete report bundle |
+| `graph` | Extract AST symbols, import graph, call graph |
+| `verify` | Preview or run focused tests for changed files |
+| `dashboard` | Launch the live browser GUI |
+| `report` | Save a Markdown or HTML report |
+| `pr` | Summarise changes, risks, and suggested tests |
 | `release-check` | Open-source readiness checklist |
-| `features` | List commands with terminal animation |
-| `adapters` | Tool-specific adapter prompts |
-| `mcp` | Run as stdio MCP server |
-| `kilo-setup` | Kilo configuration and rules |
-| `kilo-bridge` | No-MCP file bridge setup |
-| `kilo-refresh` | Refresh Kilo context files |
-| `kilo-watch` | Continuous Kilo refresh |
-| `watch` | Continuous monitoring |
-| `report` | Save report (Markdown or HTML) |
-| `status` | Latest saved status without rescan |
+| `coverage` | Identify weakly tested areas from coverage.xml |
+| `timeline` | Show scan history, task memory, and token savings |
+| `memory` | Record or list task memory |
+| `savings` | Show estimated token savings |
+| `autofix` | Plan or apply small safe fixes |
+| `doctor` | Validate configuration and paths |
+| `mcp` | Run as a stdio MCP server |
+| `mcp-health` | Validate MCP tool availability |
+| `kilo-setup` | Configure Kilo with Sentinel-first rules |
+| `kilo-bridge` | Set up the no-MCP file bridge |
+| `kilo-refresh` | Refresh Kilo context files before a task |
+| `watch` | Continuously scan at an interval |
 
 ---
 
-## Useful Flags
+## Quick Start
 
-| Flag | Purpose |
-|---|---|
-| `--fast` | Trades scan depth for speed |
-| `--compact` | Shorter output |
-| `--quiet` | Suppresses log noise |
-| `--top 1` | Keep only the most important suggestion |
-| `--budget small` | Minimal context for token-sensitive workflows |
-| `--budget medium` | More detail while controlling context |
-| `--format json` | JSON output for scripts |
-| `--ignore-path` | Exclude vendored or irrelevant paths |
+```bash
+# Install
+python -m pip install -e .
+
+# Scan
+python sentinel.py scan . --fast
+
+# Dashboard
+python sentinel.py dashboard . --fast
+
+# HTML report
+python sentinel.py report . --format html
+
+# Agent prompt
+python sentinel.py prompt . --goal next --budget small --fast
+
+# Ask a question
+python sentinel.py ask . --question "where is authentication handled?" --fast
+
+# Analyse a GitHub repo
+python sentinel.py analyze-url https://github.com/user/repo --fast
+```
+
+---
+
+## Product Flow
+
+```
+Open GUI ──> Scan ──> Ask / Retrieve ──> Generate Report ──> Export Prompt ──> Verify Changes
+     │                     │                    │                   │
+     └────── Repeat ───────┴───── iterate ──────┴──── iterate ──────┘
+```
 
 ---
 
@@ -313,12 +252,12 @@ project-sentinel context . --budget small --fast --quiet
 project-sentinel prompt . --goal next --budget small --fast --quiet
 ```
 
-This gives an AI agent:
-1. A clear project overview
-2. A compact context pack
-3. A focused next-step prompt
-4. A small list of relevant files
-5. A clearer verification path
+Delivers to the AI agent:
+1. Project overview
+2. Compact context pack (~2500 tokens)
+3. Focused next-step prompt
+4. High-value focus files
+5. Narrowed verification path
 
 ---
 
@@ -328,6 +267,8 @@ This gives an AI agent:
 python -m unittest discover -s tests -v
 ```
 
+**197 tests · 0 failures · 9.3 seconds.**
+
 ---
 
 ## Limitations
@@ -336,18 +277,4 @@ Sentinel produces review signals and AI-agent context, not guaranteed bug findin
 
 ---
 
-## Summary
-
-Sentinel gives AI coding agents **memory, focus, and engineering judgement** before they touch your codebase.
-
-It turns this:
-```
-Read everything. Guess what matters. Try a change. Hope the tests pass.
-```
-
-Into this:
-```
-Read the project brief. Inspect the right files. Take the highest-value next action. Verify with focused tests. Store what changed.
-```
-
-25,000 files, 6 million lines, one command, under a minute.
+*25,000 files. 6 million lines. One command. Under a minute. No cloud.*
