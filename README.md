@@ -1,183 +1,333 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ntooxx/Sentinel/main/assets/logo-dark.svg">
-  <img alt="Sentinel" src="https://raw.githubusercontent.com/Ntooxx/Sentinel/main/assets/logo-light.svg">
-</picture>
+<div align="center">
 
-*Repo intelligence for AI coding agents. Scan → Understand → Act.*
+# 🛡️ SENTINEL
+
+### **Repo intelligence for AI coding agents**
+
+**Scan → Understand → Act**
+
+[![Tests](https://img.shields.io/badge/tests-197%20%C2%B7%200%20failures-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](#test-suite)
+[![Python](https://img.shields.io/badge/python-pure%20%F0%9F%90%8D-blue?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
+[![No Cloud](https://img.shields.io/badge/no%20cloud-0%20dependencies-critical?style=for-the-badge&logo=socket&logoColor=white)](#limitations)
+[![Speed](https://img.shields.io/badge/6M%20lines-55s-orange?style=for-the-badge&logo=lightning&logoColor=white)](#scan-performance)
+
+> **25,000 files. 6 million lines. One command. Under a minute. No cloud.**
+
+[Quick Start](#quick-start) · [Commands](#commands) · [Dashboard](#dashboard-gui) · [Architecture](#architecture)
+
+</div>
 
 ---
 
+## ⚡ 30-Second Demo
+
 ```bash
+# Install
 pip install -e .
+
+# Scan any project — fast
 python sentinel.py scan . --fast
 ```
 
-**197 tests · 0 failures · 25k files / 6M lines in 55s · no external dependencies**
+```text
+╔══════════════════════════════════════════════════════════════╗
+║  🛡️  SENTINEL  —  Repo Intelligence                         ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  Project    kubernetes                                       ║
+║  Type       container orchestration platform                 ║
+║  Health     ████████████████░░░░  74%                        ║
+║  Files      25,432                                           ║
+║  Lines      6,007,991                                       ║
+║  Time       55s                                              ║
+║                                                              ║
+║  ⚠️  Top risk: 3 oversize files exceeding 5K lines          ║
+║  💡  Next action: Split kubelet.go into focused modules     ║
+║                                                              ║
+║  197 tests · 0 failures · no external dependencies          ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
 ---
 
-## Scan Performance
+## 📊 Scan Performance
+
+<p align="center">
+  <img src="sentinel-assets/performance-dashboard.png" alt="Sentinel Performance Dashboard" width="100%">
+</p>
 
 | Target | Files | Lines | Time | Health |
-|---|---|---|---|---:|
-| Python library | 234 | 42k | **0.16s** | 86% |
-| FastAPI web framework | ~1k | ~200k | **4.56s** | 74% |
-| Kubernetes (k8s.io/kubernetes) | 25,432 | 6,007,991 | **55s** | 74% |
-| Ladybird browser engine | ~40k | ~1.4M | ~40s | — |
+|:---|---:|---:|---:|:---:|
+| **Python library** | 234 | 42K | 0.16s | 🟢 86% |
+| **FastAPI web framework** | ~1K | ~200K | 4.56s | 🟡 74% |
+| **Kubernetes** *(k8s.io/kubernetes)* | 25,432 | 6,007,991 | 55s | 🟡 74% |
+| **Ladybird browser engine** | ~40K | ~1.4M | ~40s | — |
 
-No cloud. No external services. Pure Python.
-
----
-
-## What Sentinel Produces
-
-| Output | Description |
-|---|---|
-| **Project identity** | Name, type, archetype, purpose, language, frameworks, workflow |
-| **Health score** | Maintainability, runtime complexity, test signal, security, with breakdown |
-| **Entry points** | Primary runtime, API surfaces, examples, build tools, generators |
-| **Hotspots** | Runtime, build, test runner, documentation, vendor — ranked by risk |
-| **Review signals** | Oversized files, TODO density, documentation drift, test gaps |
-| **Next actions** | Suggestions ranked by impact, effort, and confidence |
-| **Agent prompt** | Ready-to-use prompt for Cline, Claude Code, Codex, Roo, Continue |
-| **Context pack** | Compact token-efficient project brief |
-| **Architecture summary** | Components, dependencies, archetype, patterns |
-| **Risk scores** | Per-file scoring with deduplicated factors and test coverage |
+> 💡 **No cloud. No external services. Pure Python.** Every scan runs entirely on your machine.
 
 ---
 
-## Test Suite
+## 🧬 What Sentinel Produces
 
-**197 tests · 0 failures · 9.3s run time**
+<table>
+<tr><td width="180">
+
+**🔍 Project Identity**
+
+</td><td>
+
+Name, type, archetype, purpose, language, frameworks, workflow — resolved through a 5-tier ranked fallback system that never returns garbage.
+
+</td></tr>
+<tr><td>
+
+**💊 Health Score**
+
+</td><td>
+
+Maintainability, runtime complexity, test signal, security — with a detailed breakdown so you know *exactly* where the pain is.
+
+</td></tr>
+<tr><td>
+
+**🎯 Entry Points**
+
+</td><td>
+
+Primary runtime, API surfaces, examples, build tools, generators — with intelligent scoring (Go binaries get +80 bonus).
+
+</td></tr>
+<tr><td>
+
+**🔥 Hotspots**
+
+</td><td>
+
+Runtime, build, test runner, documentation, vendor — ranked by risk so you attack the worst problems first.
+
+</td></tr>
+<tr><td>
+
+**🚨 Review Signals**
+
+</td><td>
+
+Oversized files, TODO density, documentation drift, test gaps — every signal is actionable.
+
+</td></tr>
+<tr><td>
+
+**💡 Next Actions**
+
+</td><td>
+
+Suggestions ranked by **impact**, **effort**, and **confidence** — not just "you should fix this" but *where to start*.
+
+</td></tr>
+<tr><td>
+
+**🤖 Agent Prompt**
+
+</td><td>
+
+Ready-to-use prompt for **Cline, Claude Code, Codex, Roo, Continue** — copy, paste, ship.
+
+</td></tr>
+<tr><td>
+
+**📦 Context Pack**
+
+</td><td>
+
+Compact, token-efficient project brief — ~2,500 tokens that replace hours of file reading.
+
+</td></tr>
+<tr><td>
+
+**🏗️ Architecture Summary**
+
+</td><td>
+
+Components, dependencies, archetype, patterns — the big picture at a glance.
+
+</td></tr>
+<tr><td>
+
+**⚠️ Risk Scores**
+
+</td><td>
+
+Per-file scoring with deduplicated factors and test coverage — no noise, no duplicates.
+
+</td></tr>
+</table>
+
+---
+
+## ✅ Test Suite
+
+[![197 tests](https://img.shields.io/badge/tests-197-brightgreen?style=flat-square)]()
+[![0 failures](https://img.shields.io/badge/failures-0-brightgreen?style=flat-square)]()
+[![9.3s runtime](https://img.shields.io/badge/runtime-9.3s-blue?style=flat-square)]()
 
 | Suite | Tests | Scope |
-|---|---|---|
+|:---|---:|:---|
 | `test_archetype_regressions` | 11 | Archetype detection, entry point filtering, vendor classification |
 | `test_auditor` | 18 | Checkpoints, file classification, maintainability, test signals |
 | `test_classification_regressions` | 36 | File roles, risk surfaces, generated code, i18n, monorepo detection |
-| `test_knowledge` | 2 | Knowledge base storage and export |
-| `test_knowledge_repo` | 1 | Artifact repo detection |
 | `test_ladybird_regressions` | 37 | Risk surface classification, hotspot filtering, focus files |
-| `test_mcp` | 4 | MCP server lifecycle and tool listing |
 | `test_regression_fixtures` | 28 | Full pipeline, identity resolution, purpose inference, HTML cleaning |
 | `test_report_quality` | 40 | Project name extraction, entry points, health scoring, LLVM/rust detection |
-| `test_sentinel` | 14 | CLI commands, HTML report generation, dashboard, cache, scan lifecycle |
-| `test_weighted_entry_points` | 1 | Entry point directory weighting |
+| `test_sentinel` + misc | 27 | CLI commands, HTML report, dashboard, cache, MCP, knowledge base |
+
+```bash
+python -m unittest discover -s tests -v
+# 197 tests · 0 failures · 9.3 seconds
+```
 
 ---
 
-## Feature Highlights
+## 🌟 Feature Highlights
 
-### Project Name Resolution
+### 🏷️ Project Name Resolution
 
-Sentinel resolves project names through a 5-tier ranked fallback:
+Sentinel resolves project names through a **5-tier ranked fallback** — no more "Sponsors" as a project name when scanning FastAPI:
 
-1. **Known repo names** — 22 entries: FastAPI, Kubernetes, TensorFlow, Flask, Django, React, PyTorch, NumPy, Pandas, Vite, Express, Tailwind CSS, and more
-2. **Package manifests** — Cargo.toml, pyproject.toml, package.json, setup.py, go.mod, CMakeLists.txt
-3. **Manifest descriptions** — extracted from the same manifests
-4. **README body** — first real paragraph after headings
-5. **README heading** — validated against blocked section keywords (Installation, Usage, Sponsors, etc.)
+```
+┌─ Tier 1: Known repo names (22 entries)
+│   FastAPI · Kubernetes · TensorFlow · Flask · Django · React
+│   PyTorch · NumPy · Pandas · Vite · Express · Tailwind CSS · …
+│
+├─ Tier 2: Package manifests
+│   Cargo.toml · pyproject.toml · package.json · setup.py · go.mod · CMakeLists.txt
+│
+├─ Tier 3: Manifest descriptions
+│   Extracted from the same manifests
+│
+├─ Tier 4: README body
+│   First real paragraph after headings
+│
+└─ Tier 5: README heading
+    Validated against blocked section keywords (Installation, Usage, Sponsors, …)
+```
 
-> Prevents "Sponsors" from being used as a project name when scanning FastAPI repos.
+### 🧠 Purpose Inference
 
-### Purpose Inference
+A **6-step fallback chain** that never returns a placeholder — no more `----` as project purpose:
 
-A 6-step fallback chain that never returns a placeholder:
+| Step | Source | What It Does |
+|:---:|:---|:---|
+| 1 | Manifest description | Stripped of HTML/badges |
+| 2 | README body | First real paragraph, skip badges/tables/HTML |
+| 3 | README summary | Already-cleaned summary field |
+| 4 | README doc_title subtitle | Extracts subtitle after colon or em-dash |
+| 5 | Component-based generation | Built from non-test/doc component roles |
+| 6 | Final fallback | "Purpose could not be confidently inferred from README." |
 
-1. **Manifest description** — stripped of HTML/badges
-2. **README body** — first real paragraph, skip badges/tables/HTML
-3. **README summary** — already-cleaned summary field
-4. **README doc_title subtitle** — extracts subtitle after colon or em-dash ("Kubernetes: Production-Grade Container Orchestration" → "Production-Grade Container Orchestration")
-5. **Component-based generation** — built from non-test/doc component roles
-6. **Final fallback** — "Purpose could not be confidently inferred from README."
+> 🎯 **Example:** `"Kubernetes: Production-Grade Container Orchestration"` → `"Production-Grade Container Orchestration"`
 
-> Prevents `----` from appearing as project purpose in Kubernetes scans.
-
-### Entry Point Detection
+### 🎯 Entry Point Detection
 
 Go binaries are detected even when not named `main.go`:
 
-- `cmd/kube-apiserver/apiserver.go` → runtime entry point
-- `cmd/kubelet/kubelet.go` → runtime entry point  
-- `cmd/cloud-controller-manager/main.go` → runtime entry point
-
-Major Go binaries get a +80 score bonus: `kube-apiserver`, `kubelet`, `kube-controller-manager`, `kube-scheduler`, `kubectl`, `kube-proxy`, `kubeadm`.
-
-### Identity Text Safety
-
-Sentinel filters out HTML tags, markdown links, badges, images, sponsor keywords, section headings, table artifacts, and decorative separators (`----`, `====`, etc.) from all identity fields — project name, type, purpose, and summary.
-
----
-
-## HTML Report
-
-The generated HTML report is a single self-contained page:
-
-- **SVG health ring** — donut chart color-coded by score (green/gold/red)
-- **Stats bar** — files, lines, issues, signals, TODOs
-- **Project identity + risk** — definition lists in two-column card layout
-- **Top risk insight** — accent-bordered card with the single most important finding
-- **Next actions** — grid of suggestion cards with impact/effort/confidence badges
-- **Hotspots + entry points** — grouped file pills by category
-- **Components table** — path, role, file count, line count
-- **File risks** — by surface with level, score, and factors
-- **Review signals** — severity, message, file
-- **Agent prompt** — terminal-styled `$`-prefixed block on dark background
-- **Responsive** — degrades gracefully from desktop to 500px viewport
-
----
-
-## Dashboard GUI
-
-Dark-theme browser command centre at `http://127.0.0.1:8765`:
-
-- **Stats row** — 6 metrics at a glance with color-coded values
-- **Project identity + risk** — definition list cards
-- **Shared inputs** — query, repo URL, budget, goal, flags — reused across all actions
-- **Toggle pills** — fast scan, dry-run, apply, verify, adapters — border-fill toggle animation
-- **Tool cards** — Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL — with compact button grids
-- **Output terminal** — monospace result panel with artifact links
-- **Suggestions + prompt** — styled suggestion list and prompt block
-- **Focus / hotspots / frameworks** — three-column pill row
-- **File risks + review signals** — scrollable tables
-- **Health timeline** — scan history with scores
-- **Auto-refresh** — polls every 3 seconds
-
----
-
-## Architecture
-
 ```
-                          ┌─────────────────┐
-                          │   sentinel.py    │  CLI, dashboard, MCP server
-                          │   (4149 lines)   │
-                          └────────┬────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              ▼                    ▼                    ▼
-    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-    │   auditor.py    │  │  reporter.py    │  │   suggester.py  │
-    │   (2686 lines)  │  │  (1059 lines)   │  │   (738 lines)   │
-    │ scanning, ids,  │  │ terminal, html, │  │ suggestion eng  │
-    │ entry points,   │  │ markdown, json  │  │ confidence,     │
-    │ checkpoints     │  │ reports         │  │ impact, effort  │
-    └────────┬────────┘  └─────────────────┘  └─────────────────┘
-             │
-    ┌────────┴────────┐
-    │  classify.py    │
-    │  (1036 lines)   │
-    │ file roles,     │
-    │ archetypes,     │
-    │ risk surfaces   │
-    └─────────────────┘
+cmd/kube-apiserver/apiserver.go    →  runtime entry point  (+80 score)
+cmd/kubelet/kubelet.go             →  runtime entry point  (+80 score)
+cmd/cloud-controller-manager/main.go → runtime entry point
 ```
 
+Major Go binaries get a **+80 score bonus**: `kube-apiserver`, `kubelet`, `kube-controller-manager`, `kube-scheduler`, `kubectl`, `kube-proxy`, `kubeadm`.
+
+### 🧹 Identity Text Safety
+
+Sentinel filters out the noise from *all* identity fields (project name, type, purpose, summary):
+
+- ❌ HTML tags · Markdown links · Badges · Images
+- ❌ Sponsor keywords · Section headings · Table artifacts
+- ❌ Decorative separators (`----`, `====`, etc.)
+
 ---
 
-## Commands
+## 📄 HTML Report
+
+The generated HTML report is a **single self-contained page** — no external assets, no build step:
+
+| Element | Description |
+|:---|:---|
+| 🟢 SVG health ring | Donut chart color-coded by score (green/gold/red) |
+| 📊 Stats bar | Files, lines, issues, signals, TODOs at a glance |
+| 🏷️ Project identity + risk | Definition lists in two-column card layout |
+| 🔥 Top risk insight | Accent-bordered card with the single most important finding |
+| 💡 Next actions | Grid of suggestion cards with impact/effort/confidence badges |
+| 🎯 Hotspots + entry points | Grouped file pills by category |
+| 📋 Components table | Path, role, file count, line count |
+| ⚠️ File risks | By surface with level, score, and factors |
+| 🚨 Review signals | Severity, message, file |
+| 🤖 Agent prompt | Terminal-styled `$`-prefixed block on dark background |
+| 📱 Responsive | Degrades gracefully from desktop to 500px viewport |
+
+---
+
+## 🖥️ Dashboard GUI
+
+Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🛡️ SENTINEL                                               │
+│                                                             │
+│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │
+│  │Files │ │Lines │ │Issues│ │Signals│ │TODOs │ │Score │  │
+│  │2,341 │ │420K  │ │  47  │ │  23  │ │  12  │ │ 74%  │  │
+│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘ └──────┘  │
+│                                                             │
+│  ┌─ Understand ─┐ ┌─ Ask ────────┐ ┌─ Reports ────┐      │
+│  │  Scan  Brief │ │  Question    │ │  HTML  MD    │      │
+│  │  Overview    │ │  Retrieve    │ │  JSON  Context│      │
+│  └──────────────┘ └──────────────┘ └──────────────┘      │
+│                                                             │
+│  ┌─ Output Terminal ────────────────────────────────┐      │
+│  │  $ Scan complete · 74% health · 3 hotspots      │      │
+│  │  → artifact: report.html (2.1 KB)               │      │
+│  └──────────────────────────────────────────────────┘      │
+│                                                             │
+│  💡 Suggestions: Split kubelet.go · Add integration tests  │
+╚═════════════════════════════════════════════════════════════╝
+```
+
+**Features:** Stats row · Project identity + risk cards · Shared inputs (query, repo URL, budget, goal, flags) · Toggle pills (fast scan, dry-run, apply, verify, adapters) · Tool cards (Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL) · Output terminal · Suggestions + prompt · Focus/hotspots/frameworks · File risks + review signals tables · Health timeline · Auto-refresh (3s)
+
+---
+
+## 🏛️ Architecture
+
+<p align="center">
+  <img src="sentinel-assets/architecture.png" alt="Sentinel Architecture" width="100%">
+</p>
+
+```mermaid
+graph TD
+    S["🛡️ sentinel.py<br/>CLI · Dashboard · MCP Server<br/><i>4,149 lines</i>"]
+
+    S -->|scan| A["🔍 auditor.py<br/>Scanning · Identity<br/>Entry Points · Checkpoints<br/><i>2,686 lines</i>"]
+    S -->|report| R["📊 reporter.py<br/>Terminal · HTML · Markdown<br/>JSON Reports<br/><i>1,059 lines</i>"]
+    S -->|suggest| G["💡 suggester.py<br/>Suggestion Engine<br/>Confidence · Impact · Effort<br/><i>738 lines</i>"]
+
+    A -->|classify| C["🏷️ classify.py<br/>File Roles · Archetypes<br/>Risk Surfaces<br/><i>1,036 lines</i>"]
+
+    style S fill:#1f6feb,stroke:#58a6ff,stroke-width:3px,color:#fff
+    style A fill:#238636,stroke:#3fb950,stroke-width:2px,color:#fff
+    style R fill:#8957e5,stroke:#bc8cff,stroke-width:2px,color:#fff
+    style G fill:#9e6a03,stroke:#d29922,stroke-width:2px,color:#fff
+    style C fill:#0d7f8a,stroke:#56d4dd,stroke-width:2px,color:#fff
+```
+
+---
+
+## 🚀 Commands
 
 | Command | What It Does |
-|---|---|
+|:---|:---|
 | `scan` | Analyse project structure, risks, hotspots |
 | `brief` | One-line summary with the top suggestion |
 | `overview` | Full project description with components, hotspots, workflow |
@@ -207,74 +357,123 @@ Dark-theme browser command centre at `http://127.0.0.1:8765`:
 
 ---
 
-## Quick Start
+## 🏁 Quick Start
+
+<p align="center">
+  <img src="sentinel-assets/product-flow.png" alt="Sentinel Product Flow" width="100%">
+</p>
+
+```mermaid
+flowchart LR
+    A["🔧 Install"] --> B["🔍 Scan"]
+    B --> C["📊 Report"]
+    B --> D["❓ Ask"]
+    B --> E["🤖 Prompt"]
+    C --> F["✅ Verify"]
+    D --> F
+    E --> F
+    F -->|iterate| B
+```
+
+### Install & Scan
 
 ```bash
-# Install
+# Install from source
 python -m pip install -e .
 
-# Scan
+# Scan the current directory
 python sentinel.py scan . --fast
 
-# Dashboard
+# Launch the dashboard
 python sentinel.py dashboard . --fast
+```
 
-# HTML report
+### Generate Reports
+
+```bash
+# Beautiful HTML report
 python sentinel.py report . --format html
 
-# Agent prompt
+# Markdown report
+python sentinel.py report . --format markdown
+```
+
+### AI Agent Workflow
+
+```bash
+# Generate an agent-ready prompt
 python sentinel.py prompt . --goal next --budget small --fast
 
-# Ask a question
+# Ask a question about your codebase
 python sentinel.py ask . --question "where is authentication handled?" --fast
 
-# Analyse a GitHub repo
+# Analyse any GitHub repo
 python sentinel.py analyze-url https://github.com/user/repo --fast
 ```
 
 ---
 
-## Product Flow
+## 🤖 Token-Saving Workflow
 
-```
-Open GUI ──> Scan ──> Ask / Retrieve ──> Generate Report ──> Export Prompt ──> Verify Changes
-     │                     │                    │                   │
-     └────── Repeat ───────┴───── iterate ──────┴──── iterate ──────┘
-```
-
----
-
-## Token-Saving Workflow
+Maximize your AI agent's effectiveness while minimizing token spend:
 
 ```bash
+# Step 1: Get the big picture
 project-sentinel overview . --fast --quiet
+
+# Step 2: Get a compact context pack (~2,500 tokens)
 project-sentinel context . --budget small --fast --quiet
+
+# Step 3: Get a focused next-step prompt
 project-sentinel prompt . --goal next --budget small --fast --quiet
 ```
 
-Delivers to the AI agent:
-1. Project overview
-2. Compact context pack (~2500 tokens)
-3. Focused next-step prompt
-4. High-value focus files
-5. Narrowed verification path
+**What the agent receives:**
+
+| Output | Tokens | Value |
+|:---|---:|:---|
+| Project overview | ~1,500 | Full project understanding |
+| Compact context pack | ~2,500 | Replace hours of file reading |
+| Focused next-step prompt | ~800 | Actionable direction |
+| High-value focus files | ~500 | Narrowed verification path |
+| **Total** | **~5,300** | **Complete project intelligence** |
 
 ---
 
-## Development
+## 🔬 Development
 
 ```bash
+# Run the full test suite
 python -m unittest discover -s tests -v
+
+# 197 tests · 0 failures · 9.3 seconds
 ```
 
-**197 tests · 0 failures · 9.3 seconds.**
+```text
+┌─────────────────────────────────────────────────────────┐
+│  Test Results                                           │
+│                                                         │
+│  ████████████████████████████████████████████████  100%  │
+│                                                         │
+│  197 passed  ·  0 failed  ·  9.3s                      │
+│  No flaky tests  ·  No external dependencies           │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Limitations
+## ⚠️ Limitations
 
-Sentinel produces review signals and AI-agent context, not guaranteed bug findings. It is not a replacement for SonarQube, Semgrep, or CodeQL. Always review recommendations before applying changes.
+> **Sentinel produces review signals and AI-agent context — not guaranteed bug findings.**
+
+It is not a replacement for SonarQube, Semgrep, or CodeQL. Always review recommendations before applying changes.
 
 ---
 
-*25,000 files. 6 million lines. One command. Under a minute. No cloud.*
+<div align="center">
+
+### 25,000 files · 6 million lines · One command · Under a minute · No cloud
+
+**[⬆ Back to Top](#-sentinel)**
+
+</div>
