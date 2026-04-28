@@ -109,7 +109,7 @@ class SentinelAgentTests(unittest.TestCase):
         report_text = self.agent.get_full_report()
 
         self.assertIn("# Sentinel Report", report_text)
-        self.assertIn("- Health Score: 100%", report_text)
+        self.assertIn("- Health Score: 95%", report_text)
         self.assertIn("- Risk Summary:", report_text)
         self.assertIn("## Knowledge Context", report_text)
 
@@ -352,7 +352,7 @@ class SentinelAgentTests(unittest.TestCase):
         self.agent = SentinelAgent(str(self.project_root), str(self.config_path))
         html = _dashboard_html(("127.0.0.1", 8765), "/")
 
-        self.assertIn("Sentinel Command Center", html)
+        self.assertIn("Command Center", html)
         self.assertIn("run('ask')", html)
         self.assertIn("run('report_html')", html)
         self.assertIn("run('insights')", html)

@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import re
@@ -39,6 +40,129 @@ from classify import (
 from utils import DEFAULT_AUDIT_RULES, DEFAULT_PATTERNS, merge_dicts, now_iso, read_json, write_json
 
 SCAN_CACHE_VERSION = 1
+
+HTML_TAG_RE = re.compile(r"<[^>]*>")
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
+
+_BAD_IDENTITY_TEXT = {
+    "application logic, application logic",
+    "application logic.",
+    "application logic and",
+    "it is organized around application logic",
+    "appears to be c++ project and a test suite",
+    "appears to be c++ project",
+}
+
+_BAD_SECTION_HEADINGS = {
+    "install", "installation", "getting started", "quickstart", "quick start",
+    "usage", "api", "api reference", "overview", "introduction",
+    "contributing", "contributor", "license", "licensing",
+    "documentation", "references", "resources", "support",
+    "roadmap", "changelog", "release notes", "faq",
+    "architecture", "design", "configuration", "setup",
+    "development", "building", "build", "testing", "deploy",
+    "sponsor", "sponsors", "sponsorship", "funding", "donate",
+    "why", "why?", "getting help", "help", "support",
+    "features", "requirements", "prerequisites", "dependencies",
+    "screenshots", "showcase",
+}
+
+_BAD_IDENTITY_STARTS = {
+    "<div", "<p ", "<p>", "<img", "<a ", "<a>", "<picture", "<svg",
+    "<h1", "<table", "<span", "<section", "<br", "<hr",
+}
+
+_BLOCKED_README_TITLE_WORDS = {
+    "sponsor", "sponsors", "sponsorship", "funding", "donate", "donation",
+    "badge", "badges", "build status", "coverage", "downloads",
+    "why", "why?", "getting started", "quick start", "installation",
+    "contributing", "documentation", "overview", "introduction",
+    "license", "licensing", "changelog", "release notes", "roadmap",
+    "support", "usage", "api", "faq", "help", "community",
+}
+
+_KNOWN_REPO_NAMES = {
+    "tensorflow": "TensorFlow",
+    "ollama": "Ollama",
+    "ladybird": "Ladybird",
+    "rust": "Rust",
+    "llvm": "LLVM",
+    "llvm-project": "LLVM",
+    "fastapi": "FastAPI",
+    "kubernetes": "Kubernetes",
+    "k8s.io": "Kubernetes",
+    "flask": "Flask",
+    "django": "Django",
+    "spring": "Spring",
+    "react": "React",
+    "next.js": "Next.js",
+    "pytorch": "PyTorch",
+    "numpy": "NumPy",
+    "pandas": "Pandas",
+    "scikit-learn": "scikit-learn",
+    "home-assistant": "Home Assistant",
+    "home-assistant.io": "Home Assistant",
+    "vite": "Vite",
+    "express": "Express",
+    "tailwindcss": "Tailwind CSS",
+}
+
+def _strip_html(text: str) -> str:
+    if not text:
+        return ""
+    return HTML_TAG_RE.sub("", text).strip()
+
+def _strip_markdown(text: str) -> str:
+    """Strip markdown link/image/formatting syntax for identity purposes."""
+    if not text:
+        return ""
+    # Remove markdown links: [text](url) -> text
+    text = MARKDOWN_LINK_RE.sub(r"\1", text)
+    # Remove bold/italic markers
+    text = text.replace("**", "").replace("__", "").replace("*", "").replace("_", "")
+    # Remove inline code backticks
+    text = text.replace("`", "")
+    return text.strip()
+
+def _is_bad_identity_text(value: str) -> bool:
+    if not value or not value.strip():
+        return True
+    v = value.strip()
+    vl = v.lower()
+    if vl.startswith("<"):
+        return True
+    if vl.startswith("[![") or vl.startswith("!["):
+        return True
+    if vl.startswith("`") and vl.endswith("`"):
+        return True
+    if "|" in vl and ("--" in vl or "**" in vl or "[" in vl):
+        return True
+    if "align=\"center\"" in vl or "align='center'" in vl:
+        return True
+    if 'src="http' in vl or "src='http" in vl:
+        return True
+    if "raw.githubusercontent.com" in vl:
+        return True
+    if "shields.io" in vl:
+        return True
+    if "travis-ci." in vl or "github-ci" in vl or "codecov" in vl:
+        return True
+    if "badge" in vl and (".svg" in vl or ".png" in vl):
+        return True
+    for bad in _BAD_IDENTITY_TEXT:
+        if bad in vl:
+            return True
+    for prefix in _BAD_IDENTITY_STARTS:
+        if vl.startswith(prefix):
+            return True
+    if vl.startswith("<!--") and "-->" in vl:
+        return True
+    if vl in _BAD_SECTION_HEADINGS:
+        return True
+    # Reject decorative dash/separator-only text
+    if all(c in "-_=~*#." for c in vl):
+        return True
+    return False
 
 
 @dataclass
@@ -428,6 +552,14 @@ class ProjectAuditor:
             return "tooling"
         if any(part in {"demo-vault", "demo-vault-v2", "demo", "samples", "examples"} for part in parts):
             return "test_data"
+        # Framework/library repo second-level subdirectory recognition
+        framework_sdk_dirs = {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "cc", "c", "tools"}
+        if len(parts) >= 2 and parts[1] in framework_sdk_dirs:
+            if parts[1] == "python":
+                return "python_api"
+            if parts[1] in {"core", "compiler", "lite", "runtime"}:
+                return "runtime_source"
+            return "first_party_source"
         return "application"
 
     def _component_key_for_path(self, filepath: str) -> Optional[str]:
@@ -494,13 +626,19 @@ class ProjectAuditor:
 
         if any(part == ".devcontainer" for part in parts) or ".devcontainer" in lower_path:
             return "environment"
-        if any(part in {"tests", "test", "spec", "e2e"} for part in parts) or "libtest" in lower_path:
+        if any(part in {"tests", "test", "spec", "e2e", "unittests", "unit"} for part in parts) or "libtest" in lower_path:
             return "test"
         if parts and parts[0] == "meta":
             if len(parts) > 1 and parts[1] == "generators":
                 return "generator"
             return "build"
 
+        # Assets, examples, and docs are NOT runtime entry points
+        if any(part in {"assets", "asset", "static"} for part in parts):
+            return "documentation"
+        # Catch docs_src/, docs/, doc/ paths — these are doc examples, not runtime
+        if any(part in {"docs", "doc", "documentation", "docs_src"} for part in parts):
+            return "documentation"
         # Examples are example entry points, not primary runtime
         if any(part in {"examples", "example", "samples", "sample", "demo", "demos"} for part in parts):
             return "example"
@@ -514,6 +652,20 @@ class ProjectAuditor:
 
         if name == "build.rs" or name.startswith("build.") or name.startswith("install."):
             return "build"
+
+        # Compiler/toolchain driver detection — LLVM-style clang/tools, llvm/tools
+        if re.search(r"/tools/.+/main\.(cpp|cc|c)$", lower_path):
+            return "build"
+        if re.search(r"/tools/.+\.(cpp|cc|c)$", lower_path) and name.startswith(("clang", "llvm-", "lld", "llc", "opt", "bugpoint")):
+            return "build"
+        # Rust bootstrap, cargo, rustc drivers
+        if "bootstrap/" in lower_path and name.startswith(("bootstrap", "configure")):
+            return "build"
+        if "src/tools/" in lower_path and name in {"cargo.rs", "rustc.rs", "rustdoc.rs"}:
+            return "build"
+        if "src/bootstrap/" in lower_path:
+            return "build"
+
         if parts and parts[0] == "libraries" and len(parts) > 1 and parts[1] == "libmain":
             return "runtime"
         if parts and parts[0] in {"services", "ui"}:
@@ -528,6 +680,12 @@ class ProjectAuditor:
             return "runtime"
         if any(part in {"src", "source", "app", "cmd"} for part in parts) and name.startswith("main."):
             return "runtime"
+        # Go pattern: cmd/<binary>/<binary>.go is also a runtime entry point
+        if re.search(r"/([^/]+)/(\1)\.go$", lower_path):
+            return "runtime"
+        # Go pattern: any .go file with func main() in a cmd/ directory
+        if re.search(r"/cmd/[^/]+/[^/]+\.go$", lower_path) and (info or {}).get("has_main", False):
+            return "runtime"
         if parts and parts[0] == "utilities":
             return "tooling"
         return "tooling"
@@ -540,6 +698,7 @@ class ProjectAuditor:
             "generator": "generator",
             "test_runner": "test_runner",
             "test_data": "test_data",
+            "test": "test_runner",
             "documentation": "documentation",
             "vendor": "vendor",
             "generated": "build_tooling",
@@ -626,17 +785,43 @@ class ProjectAuditor:
 
     def _extract_summary(self, content: str, ext: str, filename: str) -> str:
         if ext in {".md", ".txt"}:
-            heading = ""
+            found_title = False
             for raw_line in content.splitlines():
                 line = raw_line.strip()
                 if not line or line == "```":
                     continue
                 if line.startswith("#"):
-                    if not heading:
-                        heading = line.lstrip("#").strip()[:160]
+                    found_title = True
                     continue
-                return line[:160]
-            return heading
+                if not found_title:
+                    continue
+                # Skip raw HTML lines (badges, div align blocks, etc.)
+                if _is_bad_identity_text(line):
+                    continue
+                # Skip lines that look like image URLs or markdown images
+                if line.startswith("![") or line.startswith("[!"):
+                    continue
+                if 'src="http' in line.lower() or "src='http" in line.lower():
+                    continue
+                if "raw.githubusercontent.com" in line.lower():
+                    continue
+                if "shields.io" in line.lower():
+                    continue
+                # Skip markdown table rows (contain pipe + formatting chars)
+                if "|" in line and ("--" in line or "**" in line or "[!" in line):
+                    continue
+                # Skip backtick-only or bold-only lines that are table artifacts
+                if line.startswith("`") and line.endswith("`"):
+                    continue
+                # Skip short lines that are likely navigation/sidebar artifacts
+                if len(line) < 15 and not line.endswith("."):
+                    continue
+                # Clean markdown link artifacts before returning
+                cleaned = MARKDOWN_LINK_RE.sub(r"\1", line)
+                cleaned = re.sub(r'\[([^\]]*)\]\([^)]*\)?', r'\1', cleaned)
+                if cleaned.strip():
+                    return cleaned[:160]
+            return ""
 
         if ext == ".py":
             doc_match = re.search(r'^\s*(?:"""|\'\'\')\s*(.+?)\s*(?:"""|\'\'\')', content, re.DOTALL)
@@ -725,6 +910,13 @@ class ProjectAuditor:
             name_match = re.search(r'project\s*\(\s*([A-Za-z0-9_-]+)', content, re.IGNORECASE)
             if name_match:
                 metadata["name"] = name_match.group(1).strip()
+        elif lower_name == "cargo.toml":
+            name_match = re.search(r'^\s*name\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+            desc_match = re.search(r'^\s*description\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+            if name_match:
+                metadata["name"] = name_match.group(1).strip()
+            if desc_match:
+                metadata["description"] = desc_match.group(1).strip()
 
         return metadata
 
@@ -735,25 +927,33 @@ class ProjectAuditor:
             return {}
 
         metadata: Dict[str, Any] = {}
-        title_match = re.search(r"^\s*#\s+(.+)$", content, re.MULTILINE)
+        title_match = re.search(r"^\s*#{1,6}\s+(.+)$", content, re.MULTILINE)
         if title_match:
             metadata["doc_title"] = title_match.group(1).strip()[:160]
 
         lowered = content.lower()
-        placeholder_patterns = [
-            r"\btbd\b",
-            r"\bcoming soon\b",
-            r"\bplaceholder\s*[:\-]",
-            r"\bnot implemented yet\b",
-            r"\bstub\b",
-            r"\bfill me\b",
-            r"\[\s*\]",
-            r"^\s*-\s*$",
+        placeholder_patterns: list[tuple[str, str]] = [
+            (r"\btbd\b", "TBD"),
+            (r"\bcoming soon\b", "coming soon"),
+            (r"\bplaceholder\s*[:\-]", "placeholder label"),
+            (r"\bnot implemented yet\b", "not implemented"),
+            (r"\bstub\b", "stub"),
+            (r"\bfill me\b", "fill me"),
+            (r"\[\s*\]", "empty bracket"),
+            (r"^\s*-\s*$", "empty bullet"),
         ]
         hits: list[str] = []
-        for pattern in placeholder_patterns:
-            if re.search(pattern, lowered, re.MULTILINE):
+        matched_lines: list[tuple[str, str, int]] = []
+        for pattern, label in placeholder_patterns:
+            for m in re.finditer(pattern, lowered, re.MULTILINE):
                 hits.append(pattern)
+                # Find the actual line content
+                line_no = content[:m.start()].count("\n")
+                raw_lines = content.splitlines()
+                if line_no < len(raw_lines):
+                    matched_line = raw_lines[line_no].strip()[:100]
+                    matched_lines.append((label, matched_line, line_no + 1))
+                break  # one match per pattern is enough
 
         empty_headings = 0
         lines = content.splitlines()
@@ -771,6 +971,7 @@ class ProjectAuditor:
         if hits or empty_headings:
             metadata["doc_drift_flags"] = hits[:6]
             metadata["empty_heading_count"] = empty_headings
+            metadata["doc_drift_matches"] = matched_lines[:3]
 
         return metadata
 
@@ -819,6 +1020,24 @@ class ProjectAuditor:
             risk_scores,
             scan_coverage,
         )
+
+        # Second normalization gate — catch any identity leaks from _build_project_understanding
+        raw_name = str(understanding.get("project_name") or self.root_dir.name)
+        raw_type = str(understanding.get("project_type") or "Software project")
+        raw_purpose = str(understanding.get("purpose") or "")
+        raw_summary = str(understanding.get("summary") or "")
+        identity = self._normalize_identity(
+            project_name=raw_name,
+            project_type=raw_type,
+            purpose=raw_purpose,
+            summary=raw_summary,
+            description="",
+        )
+        understanding["project_name"] = identity["project_name"]
+        understanding["project_type"] = identity["project_type"]
+        understanding["purpose"] = identity["purpose"]
+        understanding["summary"] = identity["summary"]
+
         health_score_data = self._calculate_health_score(issues, metrics, {})
         maintainability_pct = health_score_data.get("breakdown", {}).get("maintainability_percent", 85)
         risk_summary = self._summarize_risk_categories(issues, risk_scores, structure, maintainability_pct)
@@ -912,17 +1131,31 @@ class ProjectAuditor:
             "largest_files": largest_files,
         }
 
+    _KNOWN_MAJOR_GO_BINARIES = {
+        "kube-apiserver", "kubelet", "kube-controller-manager",
+        "kube-scheduler", "kubectl", "kube-proxy", "kubeadm",
+    }
+
     def _calculate_entry_point_score(self, filepath: str, parts: tuple[str, ...], info: Any = None) -> int:
         """Calculate a score for an entry point based on its directory."""
         score = 100  # Base score
 
         # Check directory patterns
         lower_parts = tuple(part.lower() for part in parts)
+        fp = Path(filepath)
+        name_lower = fp.stem.lower()
+        # For Go cmd/<binary>/main.go and similar patterns, use parent dir as binary name
+        parent_name = fp.parent.name.lower() if fp.parent and fp.parent.name.lower() != name_lower else name_lower
         category = self._categorize_entry_point(filepath)
 
         # High weight for source directories
         if any(part in {"src", "source", "app", "cmd", "main"} for part in lower_parts):
             score += 50
+
+        # Boost known major binaries (kube-apiserver, kubectl, etc.)
+        binary_name = parent_name if parent_name != name_lower else name_lower
+        if binary_name in self._KNOWN_MAJOR_GO_BINARIES:
+            score += 80
 
         # High weight for Libraries directories
         if any(part == "libraries" for part in lower_parts):
@@ -967,7 +1200,11 @@ class ProjectAuditor:
 
         # Penalize examples and generators more strongly
         if any(part in {"examples", "example", "samples", "sample", "demo", "demos"} for part in lower_parts):
-            score -= 40
+            score -= 60
+
+        # Penalize assets/static directories — never real entry points
+        if any(part in {"assets", "asset", "static"} for part in lower_parts):
+            score -= 80
 
         return max(0, score)
 
@@ -1002,7 +1239,7 @@ class ProjectAuditor:
             lower_name = Path(filepath).name.lower()
             ext = Path(filepath).suffix.lower()
             is_test_file = not hidden_dir_path and (
-                any(part.lower() in {"tests", "test", "spec"} for part in parts[:-1])
+                any(part.lower() in {"tests", "test", "spec", "unittests", "unit"} for part in parts[:-1])
                 or lower_name.startswith("test_")
                 or lower_name.endswith("_test.py")
                 or (ext == ".go" and lower_name.endswith("_test.go"))
@@ -1316,6 +1553,67 @@ class ProjectAuditor:
             },
         }
 
+    def _normalize_identity(
+        self,
+        project_name: str,
+        project_type: str,
+        purpose: str,
+        summary: str,
+        description: str,
+    ) -> dict:
+        """Single normalization layer. Guarantees no HTML/filler leaks into identity fields."""
+        cleaned_name = _strip_html(str(project_name))
+        cleaned_name = _strip_markdown(cleaned_name)
+        if _is_bad_identity_text(cleaned_name) or not cleaned_name:
+            cleaned_name = self.root_dir.name
+
+        # Known repo name mapping (case-insensitive lookup)
+        name_lower = cleaned_name.lower()
+        if name_lower in _KNOWN_REPO_NAMES:
+            cleaned_name = _KNOWN_REPO_NAMES[name_lower]
+
+        # Truncate project name to first sentence, but preserve module/path-style names
+        if "." in cleaned_name and not cleaned_name.endswith("."):
+            if "/" not in cleaned_name and "\\" not in cleaned_name:
+                cleaned_name = cleaned_name.split(".")[0].strip()
+        elif cleaned_name.endswith("."):
+            cleaning = cleaned_name[:-1].strip()
+            if cleaning and not _is_bad_identity_text(cleaning):
+                cleaned_name = cleaning
+        # Enforce max length for project name
+        if len(cleaned_name) > 48:
+            # Try to find shorter form: first markdown link text or first word
+            words = cleaned_name.split()
+            if len(words) > 4:
+                cleaned_name = " ".join(words[:4])
+            else:
+                cleaned_name = self.root_dir.name
+
+        cleaned_type = _strip_html(str(project_type))
+        cleaned_type = _strip_markdown(cleaned_type)
+        if _is_bad_identity_text(cleaned_type):
+            cleaned_type = "Software project"
+
+        cleaned_purpose = _strip_html(str(purpose))
+        cleaned_purpose = _strip_markdown(cleaned_purpose)
+        if _is_bad_identity_text(cleaned_purpose) or not cleaned_purpose:
+            cleaned_purpose = "Purpose could not be confidently inferred from README."
+
+        cleaned_summary = _strip_html(str(summary))
+        cleaned_summary = _strip_markdown(cleaned_summary)
+        if _is_bad_identity_text(cleaned_summary) or not cleaned_summary:
+            cleaned_summary = f"{cleaned_name} appears to be {cleaned_type}."
+            if cleaned_purpose and "confidently inferred" not in cleaned_purpose.lower():
+                cleaned_summary = f"{cleaned_summary} {cleaned_purpose}"
+
+        return {
+            "project_name": cleaned_name,
+            "project_type": cleaned_type,
+            "purpose": cleaned_purpose,
+            "summary": cleaned_summary,
+            "description": _strip_html(str(description)),
+        }
+
     def _build_project_understanding(
         self,
         files: Dict[str, Dict[str, Any]],
@@ -1345,24 +1643,31 @@ class ProjectAuditor:
             project_name, description, primary_language, languages, files, structure, primary_hotspots
         )
 
-        summary_bits = [project_name or self.root_dir.name, "appears to be", project_type]
+        raw_name = project_name or self.root_dir.name
+        summary_bits = [raw_name, "appears to be", project_type]
         summary = " ".join(bit for bit in summary_bits if bit).strip()
         if purpose:
             summary = f"{summary}. {purpose}"
-        if project_name and summary.lower().startswith(project_name.lower() + " appears to be " + project_name.lower()):
-            summary = summary[len(project_name) + 1:].strip()
-            summary = summary[0].upper() + summary[1:] if summary else ""
+
+        # Single normalization layer — never let dirty values escape
+        identity = self._normalize_identity(
+            project_name=raw_name,
+            project_type=project_type,
+            purpose=purpose,
+            summary=summary,
+            description=description or "",
+        )
 
         return {
-            "project_name": project_name or self.root_dir.name,
-            "project_type": project_type,
+            "project_name": identity["project_name"],
+            "project_type": identity["project_type"],
             "archetype": archetype,
             "archetype_secondary": secondary_archetypes,
             "primary_language": primary_language,
             "languages": languages,
             "frameworks": frameworks,
-            "purpose": purpose,
-            "summary": summary,
+            "purpose": identity["purpose"],
+            "summary": identity["summary"],
             "main_components": components[:12],
             "important_files": important_files[:8],
             "hotspots": primary_hotspots[:5],
@@ -1374,83 +1679,125 @@ class ProjectAuditor:
             "scan_coverage": scan_coverage,
         }
 
+    def _validate_readme_title(self, title: str) -> bool:
+        """Return True if title is usable as a project name."""
+        if not title:
+            return False
+        t = title.strip()
+        tl = t.lower()
+        if len(t) < 2:
+            return False
+        # Reject HTML, badges, images
+        if _is_bad_identity_text(t):
+            return False
+        if t.startswith("<"):
+            return False
+        if "align=" in tl:
+            return False
+        if "src=" in tl:
+            return False
+        if "badge" in tl or "shield" in tl:
+            return False
+        if "sponsor" in tl or "funding" in tl or "donate" in tl:
+            return False
+        # Reject question headings: "Why Rust?", "What is FastAPI?"
+        if "?" in tl:
+            return False
+        if tl.startswith(("why ", "what ", "how ", "who ", "where ", "when ")):
+            return False
+        # Reject section/heading keywords
+        words = set(tl.split())
+        if words & _BLOCKED_README_TITLE_WORDS:
+            return False
+        if tl in _BAD_SECTION_HEADINGS:
+            return False
+        # Reject overly long titles (> 6 words) unless they match a common pattern
+        if len(t.split()) > 6:
+            return False
+        return True
+
     def _detect_project_identity(self, files: Dict[str, Dict[str, Any]]) -> tuple[str | None, str]:
-        candidates = ["pyproject.toml", "package.json", "setup.py", "go.mod", "CMakeLists.txt", "README.md", "readme.md"]
+        """Ranked identity resolver.
+
+        Priority:
+          1. Known repo name from directory name (_KNOWN_REPO_NAMES)
+          2. Package metadata: Cargo.toml > pyproject.toml > package.json > setup.py > go.mod > CMakeLists.txt
+          3. Validated README heading
+          4. Directory name fallback
+        """
         project_name = None
         description = ""
 
-        BAD_TITLE_PREFIXES = ("<div", "<p", "<img", "<a", "<picture", "<svg", "<h1", "<table", "<span", "<section")
+        # Tier 0: Known repo name from directory
+        dir_name = self.root_dir.name
+        dir_lower = dir_name.lower()
+        if dir_lower in _KNOWN_REPO_NAMES:
+            project_name = _KNOWN_REPO_NAMES[dir_lower]
 
-        def _is_bad_project_name(value: str) -> bool:
-            if not value:
-                return True
-            v = value.strip().lower()
-            if v.startswith(BAD_TITLE_PREFIXES):
-                return True
-            if "align=\"center\"" in v:
-                return True
-            if v.startswith("<"):
-                return True
-            if v.startswith("[![") or v.startswith("!["):
-                return True
-            if v.startswith("<!--") and "-->" in v:
-                return True
-            if "application logic" in v:
-                return True
-            return False
-
-        def _clean_readme_text(text: str) -> str:
-            if not text:
-                return ""
-            lines = text.splitlines()
-            cleaned = []
-            for line in lines:
-                stripped = line.strip()
-                if _is_bad_project_name(stripped):
-                    continue
-                cleaned.append(line)
-            result = "\n".join(cleaned).strip()
-            if result.startswith("#"):
-                first_newline = result.find("\n")
-                if first_newline != -1:
-                    after_heading = result[first_newline + 1:].strip()
-                    if after_heading:
-                        return after_heading
-                    return ""
-            return result
-
-        for candidate in candidates:
+        # Tier 1: Package manifests (ordered by reliability)
+        manifest_priority = ["Cargo.toml", "pyproject.toml", "package.json", "setup.py", "go.mod", "CMakeLists.txt"]
+        for candidate in manifest_priority:
             info = files.get(candidate)
             if not info:
                 continue
             metadata = info.get("metadata", {})
-            if not project_name and metadata.get("name"):
-                raw = metadata["name"]
-                if not _is_bad_project_name(raw):
-                    project_name = raw
-                    if project_name.startswith("@") or project_name.startswith("com."):
-                        project_name = project_name.split("/")[-1] if "/" in project_name else project_name
+            raw_name = metadata.get("name", "")
+            if raw_name:
+                cleaned = raw_name.strip()
+                if cleaned:
+                    if cleaned.startswith("@") or cleaned.startswith("com."):
+                        cleaned = cleaned.split("/")[-1] if "/" in cleaned else cleaned
+                    # Use first valid manifest name found
+                    if not project_name or project_name == dir_name:
+                        project_name = cleaned
+                        break
+
+        # Tier 2: Description from package metadata
+        for candidate in manifest_priority:
+            info = files.get(candidate)
+            if not info:
+                continue
+            metadata = info.get("metadata", {})
             if not description and metadata.get("description"):
                 raw = metadata["description"]
-                if not _is_bad_project_name(raw):
+                if raw and not _is_bad_identity_text(raw):
                     description = raw
-            if not description and info.get("summary"):
-                raw = info["summary"]
-                cleaned = _clean_readme_text(raw)
-                if cleaned and not _is_bad_project_name(cleaned):
-                    description = cleaned
-            if candidate.lower() in {"readme.md", "readme"}:
-                raw_title = metadata.get("doc_title")
-                if raw_title and not _is_bad_project_name(raw_title):
-                    if not project_name or project_name == project_name.lower():
-                        project_name = raw_title
-                elif not project_name:
-                    candidate_name = info.get("summary", "").strip()
-                    if candidate_name and not _is_bad_project_name(candidate_name):
-                        project_name = candidate_name
+                    break
 
-        if not project_name or _is_bad_project_name(project_name):
-            project_name = self.root_dir.name
+        # Tier 3: Description from README summary
+        if not description:
+            for rname in ("README.md", "readme.md"):
+                info = files.get(rname)
+                if info and info.get("summary"):
+                    raw = info["summary"]
+                    cleaned = HTML_TAG_RE.sub("", raw)
+                    cleaned = MARKDOWN_LINK_RE.sub(r"\1", cleaned)
+                    cleaned = re.sub(r'\[([^\]]*)\]\([^)]*\)?', r'\1', cleaned)
+                    cleaned = re.sub(r'src="[^"]*"', "", cleaned)
+                    cleaned = re.sub(r"src='[^']*'", "", cleaned)
+                    cleaned = re.sub(r'https?://[^\s]+', "", cleaned).strip()
+                    if cleaned and not _is_bad_identity_text(cleaned):
+                        description = cleaned
+                        break
+
+        # Tier 4: README heading as project name (only if no better name found)
+        if not project_name or project_name == dir_name:
+            for rname in ("README.md", "readme.md"):
+                info = files.get(rname)
+                if not info:
+                    continue
+                metadata = info.get("metadata", {})
+                raw_title = metadata.get("doc_title", "")
+                if raw_title:
+                    cleaned_title = _strip_html(raw_title)
+                    cleaned_title = _strip_markdown(cleaned_title)
+                    if self._validate_readme_title(cleaned_title):
+                        project_name = cleaned_title
+                        break
+
+        # Tier 5: Directory name fallback
+        if not project_name:
+            project_name = dir_name
 
         return project_name, description
 
@@ -1507,8 +1854,39 @@ class ProjectAuditor:
         frameworks = [
             label
             for label, score in framework_scores.items()
-            if score >= 1.0 and (framework_primary_support[label] >= 0.5 or label in {"pytest", "unittest"})
+            if score >= 1.0 and (framework_primary_support[label] >= 1.0 or label in {"pytest", "unittest"})
         ]
+
+        # Suppress redundant test labels: unittest is implied by test_suite
+        if "unittest" in frameworks and "test_suite" in frameworks:
+            frameworks.remove("unittest")
+
+        # Next.js detection: require strong structural evidence
+        # Import-based "next" token matches are too noisy (can match unrelated tokens)
+        # Only flag nextjs if next.config.*, pages/ or app/ dir, or next in package.json deps
+        def _check_nextjs_evidence(files) -> bool:
+            if any(Path(fname).name.lower().startswith("next.config") for fname in files):
+                return True
+            if any(fname.lower().startswith("pages/") or fname.lower().startswith("app/") for fname in files):
+                return True
+            if "package.json" in files:
+                pkg_path = self.root_dir / "package.json"
+                try:
+                    pkg_text = pkg_path.read_text(encoding="utf-8", errors="ignore")
+                    pkg_data = json.loads(pkg_text)
+                    deps = set(pkg_data.get("dependencies", {}))
+                    dev_deps = set(pkg_data.get("devDependencies", {}))
+                    if "next" in deps or "next" in dev_deps:
+                        return True
+                except (OSError, json.JSONDecodeError):
+                    pass
+            return False
+
+        has_nextjs_evidence = _check_nextjs_evidence(files)
+        if "nextjs" in frameworks and not has_nextjs_evidence:
+            frameworks.remove("nextjs")
+        elif has_nextjs_evidence and "nextjs" not in frameworks:
+            frameworks.append("nextjs")
 
         if any(path.endswith("pyproject.toml") for path in files):
             frameworks.append("python_packaging")
@@ -1575,7 +1953,7 @@ class ProjectAuditor:
         # Split large top-level directories one level deeper if they have meaningful subdirectories
         split_components: List[Dict[str, Any]] = []
         for component in components:
-            if "/" in component["path"] or component["file_count"] <= 10:
+            if "/" in component["path"] or component["file_count"] <= 3:
                 split_components.append(component)
                 continue
             # Try to split by second-level directory
@@ -1636,6 +2014,15 @@ class ProjectAuditor:
         archetype_data = detectRepoArchetype(files, components, primary_language, frameworks)
         archetype = archetype_data["primaryArchetype"]
 
+        # Detect framework subdirectory structure (applies to framework_library AND app archetypes)
+        framework_subdir_roots = {"core", "python", "compiler", "lite", "runtime", "api", "go", "java", "c", "cc", "tools"}
+        second_level_dirs = set()
+        for p in files:
+            parts = p.split("/")
+            if len(parts) >= 2:
+                second_level_dirs.add(parts[1].lower())
+        framework_matches = second_level_dirs & framework_subdir_roots
+
         if archetype == ARCHETYPE_BROWSER_ENGINE:
             descriptors.append("C++ browser engine / web browser project")
         elif archetype == ARCHETYPE_DESKTOP_APP:
@@ -1645,14 +2032,31 @@ class ProjectAuditor:
         elif archetype == ARCHETYPE_MONOREPO:
             descriptors.append("Monorepo")
         elif archetype == ARCHETYPE_FRAMEWORK_LIBRARY:
-            if primary_language in {"python", "c++"}:
-                descriptors.append(f"Python/C++ framework/library" if primary_language == "python" else "C++ framework/library")
+            # ML framework / compiler detection
+            ml_framework_signals = {"python", "compiler", "lite", "core"} & framework_matches
+            if len(ml_framework_signals) >= 2:
+                if "python" in framework_matches and "core" in framework_matches:
+                    descriptors.append(f"{primary_language} machine learning framework with compiler, runtime, API, and extensive test infrastructure")
+                else:
+                    descriptors.append("mixed-language framework with compiler, runtime, API, and test infrastructure")
+            elif len(framework_matches) >= 2:
+                descriptors.append("mixed-language framework with compiler, runtime, API, and test infrastructure")
+            elif primary_language in {"python", "c++"}:
+                descriptors.append(f"{primary_language} framework/library" if primary_language == "python" else "C++ framework/library")
             elif primary_language == "go":
                 descriptors.append("Go framework/library")
             else:
                 descriptors.append(f"{primary_language} framework/library" if primary_language != "unknown" else "Framework/library")
         elif archetype == ARCHETYPE_APP:
-            descriptors.append(f"{primary_language} application" if primary_language != "unknown" else "Application")
+            # Even for "app" archetype, check for framework subdirectory signals
+            ml_framework_signals = {"python", "compiler", "lite", "core"} & framework_matches
+            if len(ml_framework_signals) >= 2:
+                if "python" in framework_matches and "core" in framework_matches:
+                    descriptors.append(f"{primary_language} machine learning framework with compiler, runtime, API, and extensive test infrastructure")
+                else:
+                    descriptors.append(f"{primary_language} framework with compiler, runtime, API, and test infrastructure")
+            else:
+                descriptors.append(f"{primary_language} application" if primary_language != "unknown" else "Application")
         else:
             descriptors.append(f"{primary_language} project" if primary_language != "unknown" else "Software project")
 
@@ -1663,9 +2067,13 @@ class ProjectAuditor:
             if ext in {".py", ".js", ".ts", ".rs", ".go", ".cpp", ".c", ".h", ".hpp", ".cc", ".java", ".kt", ".rb", ".cs"}:
                 languages.add(ext)
         if len(languages) >= 2 and archetype not in {ARCHETYPE_BROWSER_ENGINE, ARCHETYPE_DESKTOP_APP}:
-            lang_names = sorted({{".py": "Python", ".js": "JavaScript", ".ts": "TypeScript", ".rs": "Rust", ".go": "Go", ".cpp": "C++", ".c": "C", ".java": "Java", ".kt": "Kotlin"}.get(e, e) for e in languages})
+            ext_to_name = {".py": "Python", ".js": "JavaScript", ".ts": "TypeScript", ".rs": "Rust", ".go": "Go", ".cpp": "C++", ".c": "C", ".cc": "C++", ".java": "Java", ".kt": "Kotlin"}
+            lang_names = sorted({ext_to_name.get(e, e.lstrip(".")) for e in languages})
             if len(lang_names) <= 3 and primary_language not in {"unknown"}:
-                descriptors[0] = f"{'/'.join(lang_names)} project"
+                if archetype == ARCHETYPE_FRAMEWORK_LIBRARY:
+                    descriptors.append(f"multi-language: {'/'.join(lang_names)}")
+                else:
+                    descriptors[0] = f"{'/'.join(lang_names)} project"
 
         tooling = []
         if "python_packaging" in frameworks or any(path.startswith("Meta/") for path in structure.get("entry_points", [])):
@@ -1684,7 +2092,10 @@ class ProjectAuditor:
         if has_js_tests and "libraries/libweb" in component_paths:
             descriptors.append("and a large JavaScript/Web Platform test suite")
         elif structure.get("has_tests"):
-            descriptors.append("and a test suite")
+            # Check if test infrastructure is already mentioned in the type descriptor
+            type_desc = " ".join(descriptors).lower()
+            if "test infrastructure" not in type_desc and "test suite" not in type_desc:
+                descriptors.append("with extensive test infrastructure")
 
         has_frontend = any(path in component_paths for path in {"src", "ui", "web", "frontend", "app/ui"})
         has_backend = any(path in component_paths for path in {"src-tauri", "api", "backend", "server"})
@@ -1697,13 +2108,30 @@ class ProjectAuditor:
 
         return " ".join(descriptors)
 
+    _GENERIC_WELCOME_PHRASES = {
+        "welcome to", "welcome!", "hello!", "hi there",
+        "getting started", "this project is", "the project is",
+        "this repository", "the repository",
+    }
+
     def _infer_project_purpose(
         self,
         description: str,
         files: Dict[str, Dict[str, Any]],
         components: List[Dict[str, Any]],
     ) -> str:
-        lowered_description = description.strip().lower()
+        # Strip image/URL pollution before processing
+        desc = description.strip()
+        desc = HTML_TAG_RE.sub("", desc)
+        desc = MARKDOWN_LINK_RE.sub(r"\1", desc)
+        # Strip broken/cross-line markdown links: [text]( or [text](
+        desc = re.sub(r'\[([^\]]*)\]\([^)]*\)?', r'\1', desc)
+        desc = re.sub(r'src="[^"]*"', "", desc)
+        desc = re.sub(r"src='[^']*'", "", desc)
+        desc = re.sub(r'https?://[^\s]+', "", desc).strip()
+        # Skip decorative separators (dashes, underscores, etc.)
+        if desc and all(c in "-_=~*#." for c in desc):
+            desc = ""
 
         html_or_build_patterns = [
             "cmake_minimum_required",
@@ -1713,7 +2141,9 @@ class ProjectAuditor:
             "[![", "![",
             "<!--",
         ]
+        lowered_description = desc.lower()
         if any(pattern in lowered_description for pattern in html_or_build_patterns):
+            desc = ""
             lowered_description = ""
 
         low_signal_descriptions = {
@@ -1722,47 +2152,113 @@ class ProjectAuditor:
             "sample project",
             "application logic, application logic, application logic",
             "application logic",
+            "----",
+            "---",
         }
         if lowered_description and lowered_description not in low_signal_descriptions:
-            result = description.rstrip(".") + "."
-            if "application logic" in result.lower() and result.lower().count("application logic") > 1:
+            result = desc.rstrip(".") + "."
+            if "application logic" in result.lower():
                 return "Purpose could not be confidently inferred from README."
-            return result
+            # Skip generic welcome/greeting phrases as project purpose
+            if any(result.lower().startswith(p) for p in self._GENERIC_WELCOME_PHRASES):
+                desc = ""
+                lowered_description = ""
+            else:
+                return result
 
+        # Try README body extraction — look for first real paragraph after heading
+        for rname in ("README.md", "readme.md"):
+            info = files.get(rname)
+            if not info:
+                continue
+            raw = info.get("raw_content", "")
+            if not raw:
+                # Use the original file content if available
+                filepath = self.root_dir / rname
+                if filepath.exists():
+                    try:
+                        raw = filepath.read_text(encoding="utf-8", errors="ignore")
+                    except OSError:
+                        pass
+            if raw:
+                for raw_line in raw.splitlines():
+                    line = raw_line.strip()
+                    if not line or line.startswith(("#", "<", "!", "`", "-", "|", "[")):
+                        continue
+                    if len(line) < 20:
+                        continue
+                    if any(p in line.lower() for p in ("http://", "https://", "src=", "badge", "sponsor", "donate")):
+                        continue
+                    cleaned = HTML_TAG_RE.sub("", line).strip()
+                    cleaned = MARKDOWN_LINK_RE.sub(r"\1", cleaned)
+                    # Skip lines that are only dashes, underscores, or decorative chars
+                    if cleaned and all(c in "-_=~*#." for c in cleaned):
+                        continue
+                    if len(cleaned) >= 20 and not _is_bad_identity_text(cleaned):
+                        result = cleaned.rstrip(".") + "."
+                        if "application logic" not in result.lower() and not any(result.lower().startswith(p) for p in self._GENERIC_WELCOME_PHRASES):
+                            return result
+                break
+
+        # Fallback: use summary (already cleaned)
         readme = files.get("README.md") or files.get("readme.md")
         summary = readme.get("summary", "") if readme else ""
         if summary:
-            summary_lower = summary.lower()
-            if not any(pattern in summary_lower for pattern in html_or_build_patterns) and summary_lower not in {"readme"} and "application logic" not in summary_lower:
-                return summary.rstrip(".") + "."
+            summary_clean = HTML_TAG_RE.sub("", summary)
+            summary_clean = MARKDOWN_LINK_RE.sub(r"\1", summary_clean)
+            summary_clean = re.sub(r'\[([^\]]*)\]\([^)]*\)?', r'\1', summary_clean)
+            summary_clean = re.sub(r'src="[^"]*"', "", summary_clean)
+            summary_clean = re.sub(r"src='[^']*'", "", summary_clean)
+            summary_clean = re.sub(r'https?://[^\s]+', "", summary_clean).strip()
+            summary_lower = summary_clean.lower()
+            if summary_lower in {"", "---", "----", "---.", "----."}:
+                pass  # Skip decorative separators
+            elif not any(pattern in summary_lower for pattern in html_or_build_patterns) and summary_lower not in {"readme"} and "application logic" not in summary_lower and not any(summary_lower.startswith(p) for p in self._GENERIC_WELCOME_PHRASES):
+                return summary_clean.rstrip(".") + "."
+
+        # Fallback: use README doc_title as purpose signal (only if title has a subtitle/tagline)
+        if readme:
+            metadata = readme.get("metadata", {})
+            doc_title = metadata.get("doc_title", "")
+            if doc_title:
+                cleaned_title = _strip_html(doc_title)
+                cleaned_title = _strip_markdown(cleaned_title)
+                if cleaned_title and not _is_bad_identity_text(cleaned_title):
+                    # Only use title with a subtitle via colon or em-dash (e.g. "Kubernetes: Production-Grade Container Orchestration")
+                    subtitle_match = re.match(r'^[^:]+:\s*(.+)$', cleaned_title)
+                    if not subtitle_match:
+                        subtitle_match = re.match(r'^[^—–-]+[—–-]\s*(.+)$', cleaned_title)
+                    if subtitle_match:
+                        subtitle = subtitle_match.group(1).strip()
+                        if len(subtitle) >= 15 and not _is_bad_identity_text(subtitle):
+                            return subtitle.rstrip(".") + "."
 
         component_paths = {component["path"].lower() for component in components}
         if "libraries/libweb" in component_paths and "libraries/libjs" in component_paths:
             return "Browser engine and web platform runtime with build tooling and extensive standards tests."
 
+        # Build purpose from project type and components
         core_components = [component for component in components if component["path"] not in {"tests", "docs"}]
         if core_components:
-            visible_roles = [c["role"] for c in core_components[:3]]
+            visible_roles = [c["role"] for c in core_components[:4]]
             non_generic = [r for r in visible_roles if "application logic" not in r.lower() and "unknown" not in r.lower()]
-            if not non_generic:
-                non_generic = [r for r in visible_roles if "package" in r.lower() or "library" in r.lower() or "runtime" in r.lower() or "api" in r.lower()]
-            if not non_generic:
-                return "Purpose could not be confidently inferred from README."
-            if len(non_generic) == 1:
-                purpose = f"It is organized around {non_generic[0]}."
-            else:
-                purpose = f"It is organized around {', '.join(non_generic[:-1])}, and {non_generic[-1]}."
-
-            tech_hints = []
-            has_react = any("react" in (c.get("role") or "").lower() for c in core_components)
-            has_rust = any("rust" in (c.get("role") or "").lower() for c in core_components)
-            if has_react:
-                tech_hints.append("React frontend")
-            if has_rust:
-                tech_hints.append("Rust backend")
-            if tech_hints:
-                purpose += f" Built with {' and '.join(tech_hints)}."
-            return purpose
+            if non_generic:
+                if len(non_generic) == 1:
+                    purpose = f"It is organized around {non_generic[0]}."
+                else:
+                    purpose = f"It is organized around {', '.join(non_generic[:-1])}, and {non_generic[-1]}."
+                if "application logic" in purpose.lower():
+                    return "Purpose could not be confidently inferred from README."
+                tech_hints = []
+                has_react = any("react" in (c.get("role") or "").lower() for c in core_components)
+                has_rust = any("rust" in (c.get("role") or "").lower() for c in core_components)
+                if has_react:
+                    tech_hints.append("React frontend")
+                if has_rust:
+                    tech_hints.append("Rust backend")
+                if tech_hints:
+                    purpose += f" Built with {' and '.join(tech_hints)}."
+                return purpose
 
         return "Purpose could not be confidently inferred from README."
 
@@ -1844,7 +2340,7 @@ class ProjectAuditor:
                 if fc.isTest or fc.isTestRunner or fc.isFixture or fc.isGenerator or fc.isBuildTooling or fc.isEnvironmentSetup or fc.isDocumentation or fc.isSpecification or fc.isConfig:
                     continue
                 lower_path = path.replace("\\", "/").lower()
-                if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/", "/tests/", "/test/", "/e2e/", "/integration/", "/smoke/", "/fixtures/", "/testdata/", "/wpt-import/"}):
+                if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/", "/tests/", "/test/", "/e2e/", "/integration/", "/smoke/", "/fixtures/", "/testdata/", "/wpt-import/", "/assets/", "/asset/", "/static/", "/docs_src/"}):
                     continue
             reasons = []
             if path in entry_point_scores:
@@ -1917,6 +2413,8 @@ class ProjectAuditor:
                 hints.append("For compiler/lowering changes, start from the compiler directories.")
             if any("lite" in d or "mobile" in d for d in dirs_lower):
                 hints.append("For mobile/lite runtime changes, start from the lite/mobile directories.")
+            if any("go" in d for d in dirs_lower):
+                hints.append("For Go bindings/tools, start from the go/ directory.")
             if any("tools" in d or "build" in d for d in dirs_lower):
                 hints.append("For tooling/build changes, start from the tools/build directories.")
         elif archetype == ARCHETYPE_MONOREPO:
@@ -1927,9 +2425,9 @@ class ProjectAuditor:
                 hints.append(f"Packages detected: {', '.join(packages[:4])}")
         elif archetype in (ARCHETYPE_BROWSER_ENGINE,):
             hints.append("Browser engine: start from the real runtime/browser entry point.")
-        elif runtime_entries:
-            hints.append(f"Start runtime tracing from {runtime_entries[0]}")
-        elif build_entries:
+        elif runtime_entries and archetype != ARCHETYPE_FRAMEWORK_LIBRARY:
+            hints.append(f"Start runtime tracing from {runtime_entries[0]} (primary detected runtime entry point)")
+        elif build_entries and archetype != ARCHETYPE_FRAMEWORK_LIBRARY:
             hints.append(f"Start build or generator tracing from {build_entries[0]}")
         if structure.get("has_tests"):
             if "pytest" in frameworks or any("pytest" in path for path in files):
@@ -2020,7 +2518,7 @@ class ProjectAuditor:
                     weight = 0.25
                 elif context == "environment":
                     weight = 0.2
-                elif context in {"browser_engine", "javascript_engine", "runtime_entry", "first_party_source", "core_utility", "runtime_source"}:
+                elif context in {"browser_engine", "javascript_engine", "runtime_entry", "first_party_source", "core_utility", "runtime_source", "python_api"}:
                     weight = 2.2
                 elif context in {"build_tooling", "generator", "lint_tooling", "tooling"}:
                     weight = 0.75
@@ -2039,7 +2537,26 @@ class ProjectAuditor:
                 weighted_scores["go"] = weighted_scores.get("go", 0) + 60
 
             if weighted_scores:
-                return max(weighted_scores.items(), key=lambda x: x[1])[0]
+                sorted_langs = sorted(weighted_scores.items(), key=lambda x: x[1], reverse=True)
+                top_lang, top_score = sorted_langs[0]
+
+                if len(sorted_langs) >= 2:
+                    second_lang, second_score = sorted_langs[1]
+
+                    # Special case: Python + C++ polyglot repos (e.g. TensorFlow)
+                    py = weighted_scores.get("python", 0)
+                    cpp = weighted_scores.get("c++", 0)
+                    if py > 0 and cpp > 0 and {top_lang, second_lang} == {"python", "c++"}:
+                        min_count = min(py, cpp)
+                        if min_count >= 2000:  # meaningful Python+C++ repo like TensorFlow
+                            return "Python/C++"
+
+                    if second_score >= top_score * 0.30 and second_score > 0:
+                        lang_display = {"python": "Python", "c++": "C++", "go": "Go", "rust": "Rust", "typescript": "TypeScript", "javascript": "JavaScript", "java": "Java", "kotlin": "Kotlin", "ruby": "Ruby", "csharp": "C#"}
+                        d1 = lang_display.get(top_lang, top_lang)
+                        d2 = lang_display.get(second_lang, second_lang)
+                        return f"{d1}/{d2}"
+                return top_lang
 
         # Fallback to old logic if no files provided
         ranked = []
@@ -2153,10 +2670,18 @@ class ProjectAuditor:
             metadata = info.get("metadata", {})
             drift_flags = metadata.get("doc_drift_flags") or []
             empty_headings = int(metadata.get("empty_heading_count", 0) or 0)
+            doc_matches = metadata.get("doc_drift_matches") or []
             if drift_flags or empty_headings >= 3:
                 details = []
+                confidence = "medium"
                 if drift_flags:
-                    details.append("placeholder language")
+                    # Include evidence: matched phrase and line
+                    if doc_matches:
+                        evidence = "; ".join(f'"{label}" at line {ln}' for label, _, ln in doc_matches[:2])
+                        details.append(f"possible drift indicator: {evidence}")
+                        confidence = "low"  # placeholder text could be intentional in some contexts
+                    else:
+                        details.append("placeholder-like patterns")
                 if empty_headings:
                     details.append(f"{empty_headings} empty-looking headings")
                 fc = classifyFile(filepath, info)
@@ -2165,11 +2690,14 @@ class ProjectAuditor:
                     detail = "Large generated sdk/localization file; review for readability and drift: " + ", ".join(details)
                 else:
                     category = "maintainability"
-                    detail = "Documentation may be stale or scaffold-like: " + ", ".join(details)
+                    if any("possible drift indicator" in d for d in details):
+                        detail = "Documentation may contain drift: " + "; ".join(details)
+                    else:
+                        detail = "Documentation may be stale or scaffold-like: " + ", ".join(details)
                 issues.append(
                     {
                         "type": "doc_code_drift",
-                        "severity": "medium",
+                        "severity": "low" if confidence == "low" else "medium",
                         "category": category,
                         "file": filepath,
                         "message": detail,
@@ -2257,9 +2785,26 @@ class ProjectAuditor:
                 continue
             if fc.isBuildTooling:
                 continue
-            # Exclude examples
+            # Exclude examples and assets
             lower_path = path.replace("\\", "/").lower()
-            if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/"}):
+            if any(part in lower_path for part in {"/examples/", "/example/", "/samples/", "/sample/", "/demo/", "/demos/", "/assets/", "/asset/", "/static/"}):
+                continue
+            # Strict name-based exclusions — bypass classification gaps
+            name_lower = Path(path).name.lower()
+            ext_lower = Path(path).suffix.lower()
+            if ext_lower in {".cc", ".cpp", ".cxx"} and name_lower.endswith(("_test.cc", "_test.cpp", "_test.cxx")):
+                continue
+            if ext_lower in {".cc", ".cpp", ".cxx"} and name_lower.endswith(("_gen.cc", "_gen.cpp", "_gen.cxx")):
+                continue
+            if ext_lower == ".go" and name_lower.endswith("_test.go"):
+                continue
+            if ext_lower == ".py" and name_lower.endswith("_test.py"):
+                continue
+            if name_lower.startswith("gen_") or "/gen_" in lower_path:
+                continue
+            if "/genop/" in lower_path:
+                continue
+            if name_lower.startswith("requirements") and name_lower.endswith(".txt"):
                 continue
 
             risk_surface = classifyRiskSurface(path, info)
@@ -2541,30 +3086,41 @@ class ProjectAuditor:
         # Check if security was assessed
         security_assessed = any(issue.get("category") == "security" for issue in issues)
 
+        # Determine maturity — used for penalty discounts and scoring
+        total_lines = max(1, metrics.get("total_lines", 0))
+        total_files = max(1, metrics.get("total_files", 0))
+        is_mature = total_lines >= 50000 or total_files >= 2000
+
+        # Group issues by type to avoid over-penalizing many low-severity items
+        issue_type_counts: Dict[str, int] = {}
         for issue in issues:
-            issue_type = issue.get("type", "")
-            if issue_type in type_penalties:
-                # Skip security penalties if security was not assessed
-                if issue.get("category") == "security" and not security_assessed:
-                    continue
-                score -= float(type_penalties[issue_type])
+            itype = issue.get("type", "")
+            if itype == "todo":
+                continue  # TODOs are handled via maintainability score
+            issue_type_counts[itype] = issue_type_counts.get(itype, 0) + 1
+
+        # Apply penalties per issue TYPE (not per file) to avoid over-penalization
+        for itype, count in issue_type_counts.items():
+            if itype in type_penalties:
+                penalty = float(type_penalties[itype]) * min(count, 10)  # cap per-type at 10x
+                # Reduce large_file penalties for mature repos (50k+ lines or 2k+ files)
+                if itype in {"large_file", "large_file_size"} and is_mature:
+                    penalty *= 0.5
             else:
-                score -= float(severity_penalties.get(issue.get("severity", "low"), 0))
+                # Use the median severity of this type
+                sevs = [issue.get("severity", "low") for issue in issues if issue.get("type") == itype]
+                median_sev = "medium" if len(sevs) > 5 else (sevs[0] if sevs else "low")
+                penalty = float(severity_penalties.get(median_sev, 1)) * min(count, 5)
+            score -= penalty
 
-        if issues:
-            blocking_categories = {"runtime", "test", "security"}
-            blocking_types = {"no_tests", "no_entry_point"}
-            has_blocking_issue = any(
-                issue.get("category") in blocking_categories or issue.get("type") in blocking_types
-                for issue in issues
-            )
-            if not has_blocking_issue:
-                score = max(score, float(floors.get("maintainability_only", 70)))
-            elif any(issue.get("type") == "no_tests" for issue in issues):
-                score = max(score, 45)
-
+        # Use maintainability as the primary health anchor
         todo_categories = metrics.get("todo_categories", {})
-        maintainability = max(55, min(100, round(100 - min(35, metrics.get("open_todos", 0) / 120) - min(20, len(issues) / 60))))
+
+        # TODO density: TODOs per 1000 lines — penalize by density, not raw count
+        todo_density = metrics.get("open_todos", 0) / total_lines * 1000
+        density_penalty = min(35, todo_density * 6) if not is_mature else min(25, todo_density * 4)
+
+        maintainability = max(55, min(100, round(100 - density_penalty - min(20, len(issues) / 60))))
         documentation_todos = int(todo_categories.get("docs", 0) or 0)
         documentation_drift = sum(1 for issue in issues if issue.get("type") == "doc_code_drift")
         large_docs = sum(
@@ -2576,6 +3132,27 @@ class ProjectAuditor:
         runtime_level = risk_summary.get("runtime", {}).get("level", "unknown")
         test_signal = risk_summary.get("test", {}).get("level", "unknown")
 
+        # Compute health from maintainability + modifiers
+        modifiers = 0
+        if test_signal == "strong":
+            modifiers += 5
+        elif test_signal in ("missing", "none", "low"):
+            modifiers -= 10
+        if runtime_level == "high":
+            modifiers -= 5
+        elif runtime_level == "medium":
+            modifiers -= 2
+        if documentation <= 30:
+            modifiers -= 5
+        if not security_assessed:
+            modifiers -= 5
+
+        # Mature repos with strong tests get a small bonus
+        if is_mature and test_signal == "strong":
+            modifiers += 3
+
+        final_score = max(30, min(100, round(maintainability + modifiers)))
+
         has_scan_coverage_warning = any(issue.get("type") == "scan_coverage" for issue in issues)
         if has_scan_coverage_warning:
             explanation = (
@@ -2584,33 +3161,65 @@ class ProjectAuditor:
                 "could not be fully assessed."
             )
         else:
-            explanation = (
-                "Strong test and architecture signals improve the score, while TODO volume, oversized files, "
-                "runtime complexity, and unassessed security reduce confidence."
-            )
+            if final_score >= 70:
+                explanation = (
+                    "Score reflects repo maintenance risk, not project quality. "
+                    "Strong test and architecture signals improve confidence, while TODO volume, oversized files, "
+                    "runtime complexity, and unassessed security reduce it."
+                )
+            elif final_score >= 50:
+                explanation = (
+                    "Score reflects repo maintenance risk, not project quality. "
+                    "TODO density and runtime complexity weigh on the score, "
+                    "while test infrastructure and documentation quality provide some confidence."
+                )
+            else:
+                explanation = (
+                    "Score reflects repo maintenance risk, not project quality. "
+                    "Significant TODO volume, runtime complexity, or documentation gaps "
+                    "reduce confidence. Review the highest-risk areas before broad changes."
+                )
 
         maintainability_risk_level = riskFromScore(maintainability)
 
-        # Ensure health score is never below maintainability - 30 to avoid contradiction
-        final_score = max(0, min(100, round(score)))
-        if maintainability - final_score > 40:
-            final_score = max(final_score, maintainability - 40)
+        # Add confidence label for huge repos
+        confidence_label = None
+        confidence_reason = ""
+        if total_lines >= 100000 or total_files >= 10000:
+            confidence_label = "low_confidence"
+            confidence_reason = "large repo — scan samples, does not read every file fully"
+        elif total_lines >= 50000:
+            confidence_label = "moderate_confidence"
+            confidence_reason = "large repo — scan samples may miss some patterns"
+
+        # Check if entry point detection was uncertain
+        has_confidence_reasons = any(
+            reason.get("level") == "medium"
+            for reason in (risk_summary.get("entry_points_confidence", {}) or {}).values()
+        )
+        if has_confidence_reasons and not confidence_reason:
+            confidence_reason = "entry-point uncertainty"
+            confidence_label = confidence_label or "moderate_confidence"
 
         return {
             "score": final_score,
             "security_assessed": security_assessed,
             "reason": f"Security {'was assessed' if security_assessed else 'was not assessed'}",
             "explanation": explanation,
+            "confidence_label": confidence_label or "normal",
+            "confidence_reason": confidence_reason,
             "breakdown": {
                 "maintainability_percent": maintainability,
                 "maintainability_risk": maintainability_risk_level,
                 "runtime_complexity": runtime_level,
                 "test_signal": test_signal,
+                "todo_density": round(todo_density, 2),
+                "lines_scanned": total_lines,
                 "documentation_percent": documentation,
                 "documentation_reason": (
-                    f"{documentation_drift} documentation file(s) contain drift indicators or placeholder-like patterns; "
+                    f"{documentation_drift} documentation file(s) show heuristic drift indicators; "
                     f"sample matches before treating them as stale. "
-                    f"{large_docs} large documentation file(s) need review; {documentation_todos} documentation TODO(s)"
+                    f"{large_docs} large documentation file(s) may need review; {documentation_todos} documentation TODO(s)"
                 ),
                 "security": "assessed" if security_assessed else "not_assessed",
             },

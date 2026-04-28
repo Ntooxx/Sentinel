@@ -43,6 +43,14 @@ class ReportGenerator:
         health_text = f"Health: {self._health_bar(health)} {health}%"
         if health_data.get("security_assessed") is False:
             health_text += " (excluding security review)"
+        confidence = health_data.get("confidence_label", "")
+        if confidence in ("low_confidence", "moderate_confidence"):
+            label = "low" if confidence == "low_confidence" else "moderate"
+            reason = health_data.get("confidence_reason", "")
+            if reason:
+                health_text += f" [confidence: {label} ({reason})]"
+            else:
+                health_text += f" [confidence: {label}]"
         lines.append(health_text)
         risk_summary = result["audit"].get("risk_summary", {})
         if risk_summary:
@@ -51,7 +59,7 @@ class ReportGenerator:
                 f"Maintainability risk: {risk_summary.get('maintainability', {}).get('level', 'unknown')} | "
                 f"Runtime complexity: {risk_summary.get('runtime', {}).get('level', 'unknown')} | "
                 f"Test signal: {self._test_signal_label(risk_summary)} | "
-                f"Security review: {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+                f"Security review: {self._security_label(risk_summary)}"
             )
         if health_data.get("breakdown"):
             lines.append("Why this score:")
@@ -254,7 +262,16 @@ class ReportGenerator:
         lines.append(f"- Timestamp: {result['timestamp']}")
         lines.append(f"- Scan Mode: {self._scan_mode_label(result)}")
         lines.append(f"- Duration: {result.get('performance', {}).get('duration_seconds', 0)}s")
-        lines.append(f"- Health Score: {health_text}")
+        confidence_label = health_data.get("confidence_label", "")
+        confidence_reason = health_data.get("confidence_reason", "")
+        if confidence_label == "low_confidence":
+            reason_text = f" ({confidence_reason})" if confidence_reason else ""
+            lines.append(f"- Health Score: {health_text} (confidence: low{reason_text})")
+        elif confidence_label == "moderate_confidence":
+            reason_text = f" ({confidence_reason})" if confidence_reason else ""
+            lines.append(f"- Health Score: {health_text} (confidence: moderate{reason_text})")
+        else:
+            lines.append(f"- Health Score: {health_text}")
         risk_summary = result["audit"].get("risk_summary", {})
         if risk_summary:
             lines.append(
@@ -262,7 +279,7 @@ class ReportGenerator:
                 f"Maintainability risk: {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
                 f"Runtime complexity: {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
                 f"Test signal: {self._test_signal_label(risk_summary)}; "
-                f"Security review: {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+                f"Security review: {self._security_label(risk_summary)}"
             )
         if health_data.get("breakdown"):
             lines.append("- Why this score: " + health_data.get("explanation", ""))
@@ -557,114 +574,212 @@ class ReportGenerator:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sentinel Report - {esc(project_name)}</title>
+<title>Sentinel Report – {esc(project_name)}</title>
 <style>
-:root{{color-scheme:light;--ink:#18212b;--muted:#607080;--line:#d9e1e8;--soft:#f4f7f9;--panel:#ffffff;--accent:#146c94;--accent2:#8a5a12;--good:#157347;--warn:#9a6700;--bad:#b42318}}
+:root{{color-scheme:light;--bg:#f0f4f8;--surface:#ffffff;--ink:#0b1b2b;--muted:#5d6f83;--line:#d8e2ec;--accent:#0f6b9e;--accent-glow:#0f6b9e0f;--good:#1a7f4c;--warn:#a86800;--bad:#c62828;--shadow:0 1px 3px #0000000d,0 1px 2px #0000000a;--shadow-lg:0 4px 16px #00000012;--radius:10px;--radius-sm:6px}}
 *{{box-sizing:border-box}}
-body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#eef3f6;color:var(--ink);line-height:1.45}}
-main{{max-width:1180px;margin:0 auto;padding:28px}}
-header{{padding:28px 0 18px;border-bottom:1px solid var(--line)}}
-h1{{font-size:34px;line-height:1.1;margin:0 0 10px;letter-spacing:0}}
-h2{{font-size:21px;margin:0 0 14px}}
-h3{{font-size:16px;margin:4px 0 8px}}
-p{{margin:0 0 10px}}
-.muted{{color:var(--muted)}}
-.hero{{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr);gap:22px;align-items:end}}
-.summary{{font-size:16px;max-width:820px;color:#354654}}
-.stats{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}}
-.stat,.section,.item{{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}}
-.stat .label,.item-kicker{{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}}
-.stat .value{{font-size:27px;font-weight:800;margin-top:4px}}
+body{{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}}
+main{{max-width:1160px;margin:0 auto;padding:32px 28px}}
+h1{{font-size:30px;line-height:1.2;margin:0 0 6px;font-weight:700;letter-spacing:-.02em}}
+h2{{font-size:18px;margin:0 0 12px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}}
+h3{{font-size:14px;margin:0 0 6px;font-weight:600;color:var(--ink)}}
+p{{margin:0 0 8px}}
+a{{color:var(--accent);text-decoration:none}}
+.muted{{color:var(--muted);font-size:13px}}
 .good{{color:var(--good)}}.warn{{color:var(--warn)}}.bad{{color:var(--bad)}}
-.grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}}
-.suggestions{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
-.meta{{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;color:var(--muted);font-size:13px}}
-.meta span,.pill,.badge{{border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:var(--soft)}}
-.badge{{font-size:12px;font-weight:800;border-radius:6px}}
-.file-list{{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}}
-table{{width:100%;border-collapse:collapse;font-size:14px}}
-th,td{{text-align:left;border-bottom:1px solid var(--line);padding:9px;vertical-align:top}}
-th{{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}}
-code,pre{{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}}
-pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-radius:8px;padding:14px;max-height:420px}}
-.progress{{height:10px;background:#dbe4ea;border-radius:999px;overflow:hidden;margin-top:10px}}
-.progress span{{display:block;height:100%;background:var(--accent);width:{health}%}}
-@media(max-width:820px){{main{{padding:18px}}.hero,.grid,.suggestions{{grid-template-columns:1fr}}.stats{{grid-template-columns:repeat(2,minmax(0,1fr))}}}}
+.cap{{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted)}}
+
+/* header hero */
+.hero{{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start;padding:32px 0 28px;border-bottom:1px solid var(--line);margin-bottom:24px}}
+.hero-info h1{{font-size:32px}}.hero-tagline{{font-size:15px;color:var(--ink);opacity:.75;max-width:680px;line-height:1.5;margin:8px 0 12px}}
+.health-card{{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}}
+.health-score{{display:flex;align-items:center;gap:16px;margin-bottom:10px}}
+.health-ring{{position:relative;width:64px;height:64px;flex-shrink:0}}
+.health-ring svg{{transform:rotate(-90deg);width:64px;height:64px}}
+.health-ring .bg{{fill:none;stroke:#e8edf2;stroke-width:5}}
+.health-ring .fg{{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-dasharray:{{max(0.5, health * 1.88)}} 188.5}}
+.health-ring .label{{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800}}
+.health-meta{{font-size:12px;color:var(--muted);line-height:1.6}}
+
+/* stats bar */
+.stats{{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}}
+.stat{{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}}
+.stat .label{{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}}
+.stat .value{{font-size:22px;font-weight:800;margin-top:2px;letter-spacing:-.02em}}
+
+/* cards */
+.card{{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}}
+.card-accent{{border-left:3px solid var(--accent)}}
+.grid-2{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}}
+.grid-3{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}}
+
+/* suggestion cards */
+.suggestions{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}}
+.item{{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column}}
+.item-kicker{{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:2px}}
+.item h3{{font-size:15px;margin:2px 0 8px;font-weight:600}}
+.item p{{font-size:14px;color:var(--ink);opacity:.8}}
+.meta{{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px}}
+.meta span{{font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--muted);font-weight:600}}
+
+/* pills & badges */
+.pill,.badge{{display:inline-block;font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font-weight:500;white-space:nowrap}}
+.badge{{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:var(--radius-sm);padding:2px 8px;white-space:nowrap}}
+.badge.high{{background:#fef2f2;border-color:#fecaca;color:#b91c1c}}
+.badge.medium{{background:#fffbeb;border-color:#fde68a;color:#92400e}}
+.badge.low{{background:#f0f9ff;border-color:#bae6fd;color:#0369a1}}
+.pill.high{{}}.pill.medium{{}}.pill.low{{}}
+.file-list{{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}}
+
+/* table */
+table{{width:100%;border-collapse:collapse;font-size:13.5px}}
+th,td{{text-align:left;padding:9px 10px;vertical-align:top;border-bottom:1px solid var(--line)}}
+th{{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--bg)}}
+tr:last-child td{{border-bottom:none}}
+
+/* code */
+code{{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;background:var(--bg);padding:1px 5px;border-radius:4px;word-break:break-all}}
+pre{{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow:auto;background:#0e1a2b;color:#e2ecf9;border-radius:var(--radius);padding:18px;max-height:440px;box-shadow:var(--shadow-lg);margin:4px 0 0}}
+pre::before{{content:"$";color:#5a7a9a;margin-right:10px;user-select:none}}
+
+/* insight block */
+.insight{{font-size:17px;font-weight:600;margin:4px 0;line-height:1.45;padding:4px 0}}
+.insight-block{{padding:2px 0 0}}
+
+/* sections */
+.section{{margin-bottom:22px}}
+.section-header{{margin-bottom:14px}}
+
+/* prompt section */
+.prompt-wrap{{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}}
+
+/* divider */
+.divider{{border:none;border-top:1px solid var(--line);margin:18px 0}}
+
+/* scan coverage callout */
+.callout{{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:14px 16px;margin-bottom:18px}}
+
+/* repo desc list */
+.dl dt{{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-top:10px}}
+.dl dt:first-child{{margin-top:0}}
+.dl dd{{margin:1px 0 0 0;font-size:14px;line-height:1.45}}
+
+/* badges row */
+.badge-row{{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}}
+
+@media(max-width:820px){{
+main{{padding:20px 16px}}
+.hero{{grid-template-columns:1fr;gap:16px}}
+.stats{{grid-template-columns:repeat(3,1fr)}}
+.grid-2,.grid-3,.suggestions{{grid-template-columns:1fr}}
+}}
+@media(max-width:500px){{
+.stats{{grid-template-columns:repeat(2,1fr)}}
+}}
 </style>
 </head>
 <body>
 <main>
+
+<!-- header -->
 <header class="hero">
-  <div>
-    <p class="muted">Sentinel report</p>
+  <div class="hero-info">
+    <p class="cap" style="margin-bottom:4px">Sentinel report</p>
     <h1>{esc(project_name)}</h1>
-    <p class="summary">{esc(understanding.get('summary') or understanding.get('purpose') or understanding.get('project_type') or 'Project scan and engineering guidance.')}</p>
-    <div class="file-list">{pills(understanding.get('frameworks', [])[:8])}</div>
+    <p class="hero-tagline">{esc(understanding.get('summary') or understanding.get('purpose') or understanding.get('project_type') or 'Project scan and engineering guidance.')}</p>
+    <div class="badge-row">{pills(understanding.get('frameworks', [])[:8])}</div>
   </div>
-  <div class="section">
-    <div class="muted">Health score</div>
-    <div class="stat-value {health_class}" style="font-size:42px;font-weight:900">{health}%</div>
-    <div class="progress"><span></span></div>
-    {f'<p class="muted" style="margin-top:10px">(excluding security review)</p>' if result['audit'].get('health_score_data', {}).get('security_assessed') is False else ''}
-    {f'<p style="margin-top:10px">{esc(health_data.get("explanation", ""))}</p>' if health_data.get("explanation") else ''}
-    {f'<p class="muted" style="margin-top:10px">{health_breakdown}</p>' if health_breakdown else ''}
-    <p class="muted" style="margin-top:10px">Scan mode: {esc(scan_mode)}<br>Duration: {esc(perf.get('duration_seconds', 0))}s</p>
-    <p class="muted" style="margin-top:10px">Scan #{esc(result.get('scan_number'))} at {esc(result.get('timestamp'))}</p>
+  <div class="health-card">
+    <div class="health-score">
+      <div class="health-ring {health_class}">
+        <svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="30"/><circle class="fg" cx="32" cy="32" r="30"/></svg>
+        <div class="label">{health}%</div>
+      </div>
+      <div>
+        <div class="cap">Health score</div>
+        {f'<p class="muted" style="margin:2px 0 0">(excluding security review)</p>' if result['audit'].get('health_score_data', {}).get('security_assessed') is False else ''}
+        <p class="muted" style="margin:2px 0 0">Scan #{esc(result.get('scan_number'))}</p>
+      </div>
+    </div>
+    <div class="health-meta">
+      {f'<p>confidence: {esc(health_data.get("confidence_label", "normal"))}{" (" + esc(health_data.get("confidence_reason", "")) + ")" if health_data.get("confidence_reason") else ""}</p>' if health_data.get("confidence_label") in ("low_confidence", "moderate_confidence") else ''}
+      {f'<p>{esc(health_data.get("explanation", ""))}</p>' if health_data.get("explanation") else ''}
+      {health_breakdown}
+    </div>
+    <div class="health-meta" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+      <p>{esc(scan_mode)} &middot; {esc(perf.get('duration_seconds', 0))}s</p>
+      <p>{esc(result.get('timestamp'))}</p>
+    </div>
   </div>
 </header>
 
-  <section class="stats">
-    <div class="stat"><div class="label">Files</div><div class="value">{esc(metrics.get('total_files', 0))}</div></div>
-    <div class="stat"><div class="label">Lines</div><div class="value">{esc(metrics.get('total_lines', 0))}</div></div>
-    <div class="stat"><div class="label">Confirmed Issues</div><div class="value">{esc(confirmed_issues)}</div></div>
-    <div class="stat"><div class="label">Review Signals</div><div class="value">{esc(len(issues))}</div></div>
-    <div class="stat"><div class="label">TODOs</div><div class="value">{esc(metrics.get('open_todos', 0))}</div></div>
-  </section>
+<!-- stats row -->
+<section class="stats">
+  <div class="stat"><div class="label">Files</div><div class="value">{esc(metrics.get('total_files', 0))}</div></div>
+  <div class="stat"><div class="label">Lines</div><div class="value">{esc(metrics.get('total_lines', 0))}</div></div>
+  <div class="stat"><div class="label">Issues Found</div><div class="value">{esc(confirmed_issues)}</div></div>
+  <div class="stat"><div class="label">Review Signals</div><div class="value">{esc(len(issues))}</div></div>
+  <div class="stat"><div class="label">TODOs</div><div class="value">{esc(metrics.get('open_todos', 0))}</div></div>
+</section>
 
-<section class="grid">
-  <div class="section">
+<!-- identity + risk -->
+<section class="grid-2">
+  <div class="card">
     <h2>Project Identity</h2>
-    <p><strong>Type:</strong> {esc(understanding.get('project_type', 'unknown'))}</p>
-    <p><strong>Archetype:</strong> {esc(understanding.get('archetype', 'unknown'))}</p>
-    <p><strong>Purpose:</strong> {esc(understanding.get('purpose', 'unknown'))}</p>
-    <p><strong>Workflow:</strong> {esc(', '.join(understanding.get('workflow_hints', [])[:6]) or 'not detected')}</p>
-    <p><strong>Recent changes:</strong> {esc(timeline_hint)}</p>
+    <dl class="dl">
+      <dt>Type</dt><dd>{esc(understanding.get('project_type', 'unknown'))}</dd>
+      <dt>Archetype</dt><dd>{esc(understanding.get('archetype', 'unknown'))}</dd>
+      <dt>Purpose</dt><dd>{esc(understanding.get('purpose', 'unknown'))}</dd>
+      <dt>Workflow</dt><dd>{esc(', '.join(understanding.get('workflow_hints', [])[:6]) or 'not detected')}</dd>
+      <dt>Recent changes</dt><dd>{esc(timeline_hint)}</dd>
+    </dl>
   </div>
-  <div class="section">
+  <div class="card">
     <h2>Risk Summary</h2>
-    <p><strong>Maintainability risk:</strong> {esc(risk_summary.get('maintainability', {}).get('level', 'unknown'))}</p>
-    <p><strong>Runtime complexity:</strong> {esc(risk_summary.get('runtime', {}).get('level', 'unknown'))}</p>
-    <p><strong>Test signal:</strong> {esc(self._test_signal_label(risk_summary))}</p>
-    <p><strong>Security review:</strong> {esc(risk_summary.get('security', {}).get('level', 'not assessed'))}</p>
+    <dl class="dl">
+      <dt>Maintainability risk</dt><dd>{esc(risk_summary.get('maintainability', {}).get('level', 'unknown'))}</dd>
+      <dt>Runtime complexity</dt><dd>{esc(risk_summary.get('runtime', {}).get('level', 'unknown'))}</dd>
+      <dt>Test signal</dt><dd>{esc(self._test_signal_label(risk_summary))}</dd>
+      <dt>Security review</dt><dd>{esc(self._security_label(risk_summary))}</dd>
+    </dl>
   </div>
 </section>
 
-{f'''<section class="section">
-  <h2>Scan Coverage</h2>
-  <p><strong>Warning:</strong> {esc(coverage.get("warning", ""))}</p>
-  <p><strong>Source lines:</strong> {esc(coverage.get("category_lines", {}).get("source", 0))}</p>
-  <p><strong>Test lines:</strong> {esc(coverage.get("category_lines", {}).get("tests", 0))}</p>
+<!-- top risk insight -->
+<section class="card card-accent">
+  <h2>Top Risk Insight</h2>
+  <p class="insight">{esc(self._build_killer_insight(result))}</p>
+  <p class="muted" style="margin-top:2px">Generated by Sentinel from scan signals. Covers the most important single finding.</p>
+</section>
+
+<!-- scan coverage warning -->
+{f'''<section class="callout">
+  <p><strong>Scan Coverage Warning:</strong> {esc(coverage.get("warning", ""))}</p>
+  <p><strong>Source lines:</strong> {esc(coverage.get("category_lines", {}).get("source", 0))} &middot; <strong>Test lines:</strong> {esc(coverage.get("category_lines", {}).get("tests", 0))}</p>
   <div class="file-list">{pills(coverage.get("underrepresented_directories", [])[:8])}</div>
 </section>''' if coverage.get("warning") else ''}
 
+<!-- next actions -->
 <section class="section">
   <h2>Recommended Next Actions</h2>
   <div class="suggestions">{suggestion_cards()}</div>
 </section>
 
-<section class="grid">
-  <div class="section">
+<!-- focus + hotspots -->
+<section class="grid-2">
+  <div class="card">
     <h2>Focus Files</h2>
-    <div class="file-list">{pills(focus_files[:10])}</div>
+    <div class="file-list">{pills(focus_files[:12])}</div>
   </div>
-  <div class="section">
+  <div class="card">
     <h2>Primary Hotspots</h2>
-    <div class="file-list">{pills([item.get('path', '') for item in hotspots[:10]])}</div>
+    <div class="file-list">{pills([item.get('path', '') for item in hotspots[:12]])}</div>
   </div>
 </section>
 
-<section class="grid">
-  <div class="section">
+<!-- entry points + hotspot groups -->
+<section class="grid-2">
+  <div class="card">
     <h2>Entry Points</h2>
     {grouped_pills(
         entry_points_by_category,
@@ -680,7 +795,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
         },
     )}
   </div>
-  <div class="section">
+  <div class="card">
     <h2>Other Hotspots</h2>
     {grouped_pills(
         hotspot_groups,
@@ -690,7 +805,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
             "build_tooling": "Build/tooling hotspots",
             "generator": "Generator hotspots",
             "test_runner": "Test runner hotspots",
-            "vendor": "Vendor/third-party hotspots — track only, do not refactor by default",
+            "vendor": "Vendor/third-party hotspots",
             "generated_sdk": "Generated SDK/client code",
             "dependency_lock": "Dependency/lockfile signals",
             "test_data": "Test/data hotspots",
@@ -703,34 +818,42 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
   </div>
 </section>
 
+<!-- components table -->
 <section class="section">
   <h2>Main Components</h2>
+  <div class="card" style="padding:0;overflow:hidden">
   <table><thead><tr><th>Path</th><th>Role</th><th>Files</th><th>Lines</th></tr></thead><tbody>{component_rows()}</tbody></table>
+  </div>
 </section>
 
+<!-- file risks -->
 <section class="section">
   <h2>Top File Risks By Surface</h2>
   {grouped_risk_sections()}
 </section>
 
+<!-- review signals -->
 <section class="section">
   <h2>Review Signals</h2>
-  <p><strong>Confirmed issues:</strong> {esc(confirmed_issues)}</p>
-  <p><strong>Review signals:</strong> {esc(len(issues))}</p>
+  <p class="muted" style="margin-bottom:10px"><strong>Confirmed issues:</strong> {esc(confirmed_issues)} &middot; <strong>Total signals:</strong> {esc(len(issues))}</p>
+  <div class="card" style="padding:0;overflow:hidden">
   <table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody>{issue_rows()}</tbody></table>
+  </div>
 </section>
 
+<!-- agent prompt -->
 <section class="section">
-  <h2>Agent Prompt</h2>
-  <pre>{esc(markdown_prompt or 'No prompt generated.')}</pre>
+  <div class="prompt-wrap">
+    <h2 style="margin-bottom:4px">Agent Prompt</h2>
+    <p class="muted" style="margin-bottom:8px">Recommended prompt for an AI agent working on this codebase.</p>
+    <pre>{esc(markdown_prompt or 'No prompt generated — run a full scan to generate one.')}</pre>
+  </div>
 </section>
 
-<section class="section">
-  <h2>Knowledge Context</h2>
-  <pre>{esc(knowledge_context.strip() or 'No knowledge context exported.')}</pre>
-</section>
+<!-- footer -->
+<hr class="divider">
+<footer class="muted" style="font-size:12px;padding-bottom:12px;text-align:center">Generated by Sentinel &middot; {esc(scan_mode)} &middot; {esc(perf.get('duration_seconds', 0))}s</footer>
 
-<footer class="muted" style="padding:24px 0">Generated by Sentinel. Scan mode: {esc(scan_mode)}. Duration: {esc(perf.get('duration_seconds', 0))}s.</footer>
 </main>
 </body>
 </html>
@@ -827,7 +950,7 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
                 f"Maintainability {risk_summary.get('maintainability', {}).get('level', 'unknown')}; "
                 f"Runtime {risk_summary.get('runtime', {}).get('level', 'unknown')}; "
                 f"Tests {self._test_signal_label(risk_summary)}; "
-                f"Security {risk_summary.get('security', {}).get('level', 'not_assessed')}"
+                f"Security {self._security_label(risk_summary)}"
             )
         lines.append("")
 
@@ -1041,8 +1164,79 @@ pre{{white-space:pre-wrap;overflow:auto;background:#101820;color:#eef6ff;border-
             f"Runtime complexity: {breakdown.get('runtime_complexity', 'unknown')}",
             f"Test signal: {breakdown.get('test_signal', 'unknown')}",
             documentation,
-            f"Security: {str(breakdown.get('security', 'unknown')).replace('_', ' ')}",
+            f"Security: {'not assessed (planned module)' if str(breakdown.get('security', 'unknown')) in ('not_assessed', 'none') else str(breakdown.get('security', 'unknown')).replace('_', ' ')}",
         ]
+
+    def _build_killer_insight(self, result: Dict[str, Any]) -> str:
+        audit = result.get("audit", {})
+        understanding = audit.get("understanding", {})
+        risk_summary = audit.get("risk_summary", {})
+        health_data = audit.get("health_score_data", {})
+        breakdown = health_data.get("breakdown", {})
+        suggestions = result.get("suggestions", [])
+        metrics = audit.get("metrics", {})
+        issues = audit.get("issues", [])
+
+        test_level = str(risk_summary.get("test", {}).get("level", "unknown"))
+        runtime_level = str(risk_summary.get("runtime", {}).get("level", "unknown"))
+        maintainability = str(breakdown.get("maintainability_risk", "unknown"))
+        todos = metrics.get("open_todos", 0)
+        high_risks = [i for i in audit.get("risk_scores", []) if i.get("level") == "high"]
+        files_scanned = metrics.get("total_files", 0)
+
+        scenarios = []
+
+        # Strong tests + high complexity
+        if test_level in ("strong", "high") and runtime_level in ("high", "medium"):
+            scenarios.append(
+                f"Strong test infrastructure but high runtime complexity — tests are your safety net, "
+                f"but complexity in core paths increases regression risk"
+            )
+
+        # Many TODOs + high risk
+        if todos > 100 and high_risks:
+            scenarios.append(
+                f"{todos} TODO/FIXME markers and {len(high_risks)} high-risk files suggest "
+                f"accumulated technical debt in critical areas"
+            )
+
+        # Large repo + limited docs
+        doc_issues = sum(1 for i in issues if i.get("type") == "doc_code_drift")
+        if files_scanned > 1000 and doc_issues > 10:
+            scenarios.append(
+                f"Large project with {doc_issues} documentation drift signals — "
+                f"docs may lag behind the actual code in several places"
+            )
+
+        # Simple repo, strong test signal
+        if test_level == "strong" and runtime_level in ("low", "unknown") and not high_risks:
+            scenarios.append(
+                f"Well-structured project with good test coverage and low hotspot density — "
+                f"ideal for safe, incremental changes"
+            )
+
+        # No tests
+        if test_level in ("missing", "none", "low") and files_scanned > 50:
+            scenarios.append(
+                f"Limited test infrastructure for a project of this size — "
+                f"regression risk is higher than necessary"
+            )
+
+        if scenarios:
+            return scenarios[0]
+
+        # Fallback
+        return (
+            f"Project has {files_scanned} files across "
+            f"{len(understanding.get('main_components', []))} main components. "
+            f"Focus on the highest-risk files before broad changes."
+        )
+
+    def _security_label(self, risk_summary: Dict[str, Any]) -> str:
+        level = str(risk_summary.get("security", {}).get("level", "not_assessed"))
+        if level in ("not_assessed", "none"):
+            return "not assessed (planned module)"
+        return level.replace("_", " ")
 
     def _confirmed_issue_count(self, issues: Iterable[Dict[str, Any]]) -> int:
         return sum(1 for issue in issues if issue.get("severity") in {"critical", "high"} and issue.get("type") not in {"todo", "large_file", "large_file_size", "doc_code_drift"})

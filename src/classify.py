@@ -333,7 +333,7 @@ def _is_test_name(name: str, ext: str) -> bool:
         return True
     if ext == ".py" and name.endswith("_test.py"):
         return True
-    if ext == ".rs" and name.endswith("_test.rs"):
+    if ext == ".rs" and (name.endswith("_test.rs") or name.endswith(".tests.rs") or name == "tests.rs"):
         return True
     if ".test." in name or ".spec." in name:
         return True
@@ -397,7 +397,7 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
         fc.role = "dependency_lock"
         fc.surface = "dependency_lock"
         fc.isDependencyLock = True
-        fc.manualEditPolicy = "Dependency lockfile — validate dependency changes, do not refactor manually."
+        fc.manualEditPolicy = "Dependency lockfile \u2014 validate dependency changes, do not refactor manually."
         fc.largeFilePolicy = "Large dependency/requirements file; review only when dependency generation or upgrade process changes."
         return fc
 
@@ -405,7 +405,7 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
         fc.role = "dependency_lock"
         fc.surface = "dependency_lock"
         fc.isDependencyLock = True
-        fc.manualEditPolicy = "Dependency/requirements file — validate dependency changes, do not refactor manually."
+        fc.manualEditPolicy = "Dependency/requirements file \u2014 validate dependency changes, do not refactor manually."
         fc.largeFilePolicy = "Large dependency/requirements file; review only when dependency generation or upgrade process changes."
         return fc
 
@@ -413,7 +413,15 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
         fc.role = "dependency_lock"
         fc.surface = "dependency_lock"
         fc.isDependencyLock = True
-        fc.manualEditPolicy = "Locked requirements file — regenerate from source instead of editing manually."
+        fc.manualEditPolicy = "Locked requirements file \u2014 regenerate from source instead of editing manually."
+        fc.largeFilePolicy = "Large dependency/requirements file; review only when dependency generation or upgrade process changes."
+        return fc
+
+    if name.endswith("requirements.txt"):
+        fc.role = "dependency_lock"
+        fc.surface = "dependency_lock"
+        fc.isDependencyLock = True
+        fc.manualEditPolicy = "Dependency/requirements file \u2014 validate dependency changes, do not refactor manually."
         fc.largeFilePolicy = "Large dependency/requirements file; review only when dependency generation or upgrade process changes."
         return fc
 
@@ -680,6 +688,23 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
 
     # 16. Source code
     if ext in {".py", ".js", ".ts", ".rs", ".go", ".cpp", ".c", ".h", ".hpp", ".cc", ".cxx", ".hh", ".hxx", ".java", ".kt", ".rb", ".cs", ".swift", ".zig", ".scala", ".ex", ".exs", ".ml", ".mli", ".fs", ".fsx"}:
+        # Re-check for generator patterns that may be missed by earlier checks
+        if _is_generator_name(name, lower_path):
+            fc.role = "generator"
+            fc.surface = "generator"
+            fc.isGenerator = True
+            fc.manualEditPolicy = "Code generator \u2014 run to regenerate outputs, do not edit outputs manually by default."
+            return fc
+
+        if _is_gen_name(name):
+            fc.role = "generated_sdk"
+            fc.surface = "generated_sdk"
+            fc.isGenerated = True
+            fc.isGeneratedSdk = True
+            fc.manualEditPolicy = "Generated SDK/client code \u2014 regenerate from schema/source instead of editing manually."
+            fc.largeFilePolicy = "Generated SDK/client file; regenerate from schema/source instead of editing manually."
+            return fc
+
         fc.role = "source"
         fc.surface = "runtime"
         fc.isRuntimeSource = True
@@ -689,6 +714,8 @@ def classifyFile(path: str, info: Optional[Dict[str, Any]] = None) -> FileClassi
         elif stem in RUNTIME_HOTSPOT_NAMES:
             fc.isRuntimeHotspotCandidate = True
         elif re.search(r"/cmd/[^/]+/main\.(go|rs)$", lower_path):
+            fc.isRuntimeEntryCandidate = True
+        elif re.search(r"/cmd/[^/]+/[^/]+\.go$", lower_path):
             fc.isRuntimeEntryCandidate = True
         elif "src-tauri/src/main.rs" in lower_path:
             fc.isRuntimeEntryCandidate = True
@@ -847,6 +874,10 @@ def classifyComponentRole(key: str) -> str:
         "i18n": "internationalization/localization",
         "locales": "localization resources",
         "translations": "translation files",
+        "security": "security/policy documentation and review files",
+        "stream_executor": "GPU/accelerator runtime abstraction",
+        "dtensor": "distributed tensor computing",
+        "tpu": "TPU runtime and compilation support",
     }
 
     if lower_key in specific_roles:
@@ -903,6 +934,14 @@ def classifyComponentRole(key: str) -> str:
             if sub_lower.startswith("libjs"):
                 return "JavaScript engine tests"
             return "test suite / test infrastructure"
+        # Handle third_party/<sub>, vendor/<sub>, external/<sub>
+        vendor_roots = {"third_party", "vendor", "external", "3rdparty"}
+        if pkg_root in vendor_roots:
+            if sub in specific_roles:
+                return f"bundled {specific_roles[sub]}"
+            if sub:
+                return f"bundled {sub} library/dependency"
+            return specific_roles.get(pkg_root, "vendor dependency")
 
     if lower_key.startswith("libraries/lib"):
         lib_name = lower_key.split("/")[1][3:]
@@ -1028,6 +1067,8 @@ def is_runtime_entry_candidate_by_name(path: str) -> bool:
     if name in {"main.rs", "main.go", "main.ts", "index.ts", "index.js", "app.ts", "app.js", "server.ts", "server.js", "main.py", "server.py", "app.py", "cli.py", "cli.ts", "main.cpp", "main.cc"}:
         return True
     if re.search(r"/cmd/[^/]+/main\.(go|rs)$", lower_path):
+        return True
+    if re.search(r"/cmd/[^/]+/[^/]+\.go$", lower_path):
         return True
     if "src-tauri/src/main.rs" in lower_path:
         return True

@@ -19,6 +19,11 @@ from pathlib import Path
 from time import perf_counter, sleep
 from typing import Any, Dict, Optional
 
+# Ensure local src/ takes priority over PYTHONPATH or other installations
+_self_dir = Path(__file__).resolve().parent
+if str(_self_dir) not in sys.path:
+    sys.path.insert(0, str(_self_dir))
+
 from adapters import build_adapter_docs
 from auditor import ProjectAuditor
 from graph import build_python_graph
@@ -1075,20 +1080,29 @@ class SentinelAgent:
                 return
 
             def do_GET(self) -> None:  # noqa: N802
-                if self.path == "/api/status":
-                    payload = json.dumps(state, indent=2, default=str).encode("utf-8")
+                try:
+                    if self.path == "/api/status":
+                        payload = json.dumps(state, indent=2, default=str).encode("utf-8")
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(payload)))
+                        self.end_headers()
+                        self.wfile.write(payload)
+                        return
+                    html = _dashboard_html(self.server.server_address, self.path).encode("utf-8")
                     self.send_response(200)
-                    self.send_header("Content-Type", "application/json")
-                    self.send_header("Content-Length", str(len(payload)))
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(html)))
                     self.end_headers()
-                    self.wfile.write(payload)
-                    return
-                html = _dashboard_html(self.server.server_address, self.path).encode("utf-8")
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(html)))
-                self.end_headers()
-                self.wfile.write(html)
+                    self.wfile.write(html)
+                except Exception:
+                    try:
+                        self.send_response(500)
+                        self.send_header("Content-Type", "text/plain")
+                        self.end_headers()
+                        self.wfile.write(b"Internal server error")
+                    except Exception:
+                        pass
 
             def do_POST(self) -> None:  # noqa: N802
                 if self.path != "/api/run":
@@ -1107,12 +1121,15 @@ class SentinelAgent:
                     self.end_headers()
                     self.wfile.write(payload)
                 except Exception as exc:  # pragma: no cover - dashboard resilience
-                    payload = json.dumps({"ok": False, "error": str(exc)}, indent=2).encode("utf-8")
-                    self.send_response(500)
-                    self.send_header("Content-Type", "application/json")
-                    self.send_header("Content-Length", str(len(payload)))
-                    self.end_headers()
-                    self.wfile.write(payload)
+                    try:
+                        payload = json.dumps({"ok": False, "error": str(exc)}, indent=2).encode("utf-8")
+                        self.send_response(500)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(payload)))
+                        self.end_headers()
+                        self.wfile.write(payload)
+                    except Exception:
+                        pass
 
         worker = threading.Thread(target=scan_loop, daemon=True)
         worker.start()
@@ -1609,175 +1626,248 @@ def _dashboard_html(_: tuple[str, int], __: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sentinel GUI</title>
+<title>Sentinel</title>
 <style>
-:root{color-scheme:dark;--bg:#0b0f14;--panel:#131a22;--panel2:#0f151d;--line:#273442;--ink:#edf3f8;--muted:#93a4b4;--accent:#69b7ff;--accent2:#8bd7c7;--good:#67d781;--warn:#e7bb54;--bad:#ff817a}
+:root{color-scheme:dark;--bg:#080c14;--surface:#101826;--surface2:#161f2f;--line:#1e2a3d;--ink:#e6edf5;--muted:#7b8fa8;--accent:#4b9eff;--accent-dim:#4b9eff22;--good:#3dd68c;--warn:#f0b429;--bad:#f56565;--radius:10px;--radius-sm:6px;--shadow:0 2px 8px #00000020}
 *{box-sizing:border-box}
-body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.4}
-main{max-width:1380px;margin:0 auto;padding:22px}
-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:16px}
-h1{font-size:30px;margin:0;letter-spacing:0}
-h2{font-size:16px;margin:0 0 12px}
-h3{font-size:14px;margin:0 0 8px}
-.muted,.label{color:var(--muted);font-size:13px}
-.label{text-transform:uppercase;letter-spacing:.04em;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.card,.tool,.output{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
-.tool{display:flex;flex-direction:column;gap:10px;min-height:160px}
-.tool p{margin:0;color:var(--muted);font-size:13px}
-.value{font-size:27px;font-weight:800;margin-top:4px}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+main{max-width:1400px;margin:0 auto;padding:24px 22px}
+h1{font-size:26px;font-weight:700;margin:0;letter-spacing:-.02em}
+h2{font-size:15px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em}
+h3{font-size:13px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+p{margin:0 0 8px}
+.muted{color:var(--muted);font-size:13px}
 .good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-ul{padding-left:18px;margin:0}
-li{margin:0 0 10px}
-pre{white-space:pre-wrap;overflow:auto;background:var(--panel2);border:1px solid var(--line);padding:12px;border-radius:6px;max-height:430px}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:0 0 16px;border-bottom:1px solid var(--line)}
+.top-left{display:flex;align-items:center;gap:12px}
+.top-left .logo{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#080c14;flex-shrink:0}
+.top-right{display:flex;align-items:center;gap:10px}
+.badge-pulse{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.badge-pulse::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* stats row */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.stat .val{font-size:20px;font-weight:800;margin-top:1px;letter-spacing:-.02em}
+.stat .val small{font-size:13px;font-weight:600;color:var(--muted)}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card-accent{border-left:3px solid var(--accent)}
+
+/* dl grid */
+.dl{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;font-size:13.5px}
+.dt{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:8px}
+.dt:first-of-type{margin-top:0}
+.dd{margin:0;word-break:break-word}
+
+/* shared inputs */
+.inputs{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.input-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.input-grid.lg{grid-template-columns:repeat(2,1fr)}
+.input-grid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.input-grid label.double{grid-column:span 2}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--ink);padding:7px 10px;font:inherit;font-size:13px;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:68px;resize:vertical}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.toggles label{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:12.5px;cursor:pointer;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);transition:all .15s}
+.toggles label:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.toggles input{width:auto;accent-color:var(--accent)}
+
+/* tool cards */
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px}
+.tool p{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.tool .btns{display:flex;flex-wrap:wrap;gap:5px}
+.tool.wide{grid-column:span 2}
+
+/* buttons */
+button{background:var(--accent-dim);color:var(--accent);border:1px solid transparent;border-radius:var(--radius-sm);font-weight:600;font-size:12px;padding:6px 11px;cursor:pointer;transition:all .12s;white-space:nowrap}
+button:hover{background:var(--accent);color:#080c14}
+button.primary{background:var(--accent);color:#080c14}
+button.primary:hover{opacity:.85}
+button.danger{color:var(--bad);background:#f5656515}
+button.danger:hover{background:var(--bad);color:#080c14}
+button:disabled{opacity:.5;cursor:wait}
+
+/* layout cols */
+.cols{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:14px}
+.cols-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+
+/* output */
+.output{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column}
+.term{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow:auto;min-height:260px;max-height:460px;margin:6px 0 0}
+.artifact{display:block;color:var(--good);font-size:13px;margin:4px 0;word-break:break-all}
+
+/* suggestions list */
+.suggest-list{list-style:none;padding:0;margin:0}
+.suggest-list li{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.4}
+.suggest-list li:last-child{border-bottom:none}
+.suggest-list li .tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:4px;margin-right:5px}
+
+/* pills */
+.pills{display:flex;flex-wrap:wrap;gap:5px}
+.pill,.badge{display:inline-flex;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:2px 8px;font-size:12px}
+.badge{border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.badge.high{background:#f5656515;border-color:#f5656533;color:var(--bad)}
+.badge.medium{background:#f0b42915;border-color:#f0b42933;color:var(--warn)}
+.badge.low{background:#4b9eff15;border-color:#4b9eff33;color:var(--accent)}
+
+/* table */
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
-th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-.pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill,.badge{display:inline-flex;border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:3px 8px;font-size:12px;color:var(--ink)}
-.badge{border-radius:6px;font-weight:800}
-.toolbar{display:flex;gap:8px;align-items:center}
-button{background:var(--accent);color:#07111f;border:0;border-radius:6px;font-weight:800;padding:8px 10px;cursor:pointer}
-button.secondary{background:#1d2834;color:var(--ink);border:1px solid var(--line)}
-button.danger{background:#ff817a;color:#1b0c0b}
-button:disabled{opacity:.6;cursor:wait}
-input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--ink);padding:8px;font:inherit;font-size:13px}
-textarea{min-height:76px;resize:vertical}
-.row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
-.switches{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 0}
-.switches label{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
-.switches input{width:auto}
-.section-title{margin:18px 0 10px;display:flex;justify-content:space-between;align-items:center}
-.artifact{display:block;color:var(--accent2);word-break:break-all;margin:4px 0}
-.terminal{min-height:300px}
-.span2{grid-column:span 2}
-.span3{grid-column:span 3}
-@media(max-width:1100px){.layout,.cards{grid-template-columns:1fr}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.row{grid-template-columns:1fr 1fr}}
-@media(max-width:720px){main{padding:14px}header{display:block}.grid,.row{grid-template-columns:1fr}.span2,.span3{grid-column:auto}}
+th,td{text-align:left;padding:7px 8px;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:none}
+.table-wrap{overflow-x:auto;margin-top:6px}
+
+/* code */
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;word-break:break-all}
+pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow:auto;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;max-height:380px;margin:6px 0 0}
+
+/* divider */
+hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+
+@media(max-width:1200px){.tools{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:860px){.tools{grid-template-columns:repeat(2,1fr)}.cols,.cols-3{grid-template-columns:1fr}.input-grid,.input-grid.lg{grid-template-columns:1fr 1fr}.input-grid label.double{grid-column:span 1}}
+@media(max-width:550px){main{padding:16px 14px}.stats{grid-template-columns:repeat(2,1fr)}.tools{grid-template-columns:1fr}.input-grid,.input-grid.lg{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
 <body>
 <main>
-<header>
-  <div>
-    <div class="muted">Local GUI for every Sentinel workflow</div>
-    <h1>Sentinel Command Center</h1>
+
+<!-- top bar -->
+<div class="top">
+  <div class="top-left">
+    <div class="logo">S</div>
+    <h1>Sentinel</h1>
+    <span class="muted" style="font-size:13px">Command Center</span>
   </div>
-  <div class="toolbar">
+  <div class="top-right">
     <span class="muted" id="updated">Loading...</span>
-    <button onclick="load()">Refresh</button>
+    <button class="primary" onclick="load()">Refresh</button>
   </div>
-</header>
-<div class="grid" id="stats"></div>
-
-<section class="layout">
-  <div class="card"><h2>Project Identity</h2><div id="identity"></div></div>
-  <div class="card"><h2>Risk Summary</h2><div id="risk"></div></div>
-</section>
-
-<div class="section-title">
-  <h2>Run Sentinel</h2>
-  <span class="muted">Most actions use the shared inputs below.</span>
 </div>
-<section class="card">
-  <div class="row">
-    <label>Question or query<input id="question" placeholder="where is authentication handled?"></label>
-    <label>Repo URL or git source<input id="repoUrl" placeholder="https://github.com/user/repo"></label>
-    <label>Output path or directory<input id="outputPath" placeholder="optional report path / output directory"></label>
-    <label>Workspace / scan root<input id="workspaceDir" placeholder="optional workspace"><input id="scanRoot" style="margin-top:6px" placeholder="scan root, default ."></label>
+
+<!-- stats -->
+<div class="stats" id="stats"></div>
+
+<!-- identity + risk -->
+<div class="cols">
+  <div class="card"><h2>Project Identity</h2><div class="dl" id="identity"></div></div>
+  <div class="card card-accent"><h2>Risk Summary</h2><div class="dl" id="risk"></div></div>
+</div>
+
+<!-- shared inputs -->
+<div class="inputs">
+  <div class="input-grid">
+    <label>Query<input id="question" placeholder="where is auth handled?"></label>
+    <label>Repo URL<input id="repoUrl" placeholder="https://github.com/user/repo"></label>
+    <label>Output path<input id="outputPath" placeholder="report path / output dir"></label>
+    <label>Scan root<input id="scanRoot" placeholder="."></label>
+    <label>Workspace<input id="workspaceDir" placeholder="optional workspace dir"></label>
   </div>
-  <div class="row">
+  <div class="input-grid" style="margin-top:8px">
     <label>Goal<select id="goal"><option>next</option><option>debug</option><option>review</option><option>plan</option><option>document</option><option>test</option></select></label>
     <label>Budget<select id="budget"><option>small</option><option>tiny</option><option>medium</option><option>large</option></select></label>
     <label>Limit<input id="limit" type="number" value="6" min="1"></label>
     <label>Timeout<input id="timeout" type="number" value="120" min="1"></label>
   </div>
-  <div class="row">
-    <label class="span2">Changed files / tests / risks<textarea id="changedFiles" placeholder="app.py&#10;tests/test_app.py"></textarea></label>
-    <label class="span2">Memory note<textarea id="memoryGoal" placeholder="what changed, decision, or task note"></textarea></label>
+  <div class="input-grid lg" style="margin-top:8px">
+    <label class="double">Changed files / tests<textarea id="changedFiles" placeholder="app.py&#10;tests/test_app.py"></textarea></label>
+    <label class="double">Memory note<textarea id="memoryGoal" placeholder="what changed, decision, or task note"></textarea></label>
   </div>
-  <div class="switches">
-    <label><input id="fast" type="checkbox" checked> fast scan</label>
-    <label><input id="dryRun" type="checkbox" checked> dry-run verification</label>
-    <label><input id="apply" type="checkbox"> apply maintenance actions</label>
-    <label><input id="verify" type="checkbox"> run PR verification</label>
-    <label><input id="write" type="checkbox"> write adapter files</label>
-    <label><input id="keepClone" type="checkbox"> keep URL clone</label>
-    <label><input id="force" type="checkbox"> force setup</label>
+  <div class="toggles">
+    <label><input id="fast" type="checkbox" checked> fast</label>
+    <label><input id="dryRun" type="checkbox" checked> dry-run</label>
+    <label><input id="apply" type="checkbox"> apply</label>
+    <label><input id="verify" type="checkbox"> verify</label>
+    <label><input id="write" type="checkbox"> adapters</label>
+    <label><input id="keepClone" type="checkbox"> keep clone</label>
+    <label><input id="force" type="checkbox"> force</label>
   </div>
-</section>
+</div>
 
-<section class="cards" style="margin-top:12px">
+<!-- tool cards -->
+<div class="tools">
   <div class="tool">
     <h3>Understand</h3>
-    <p>Scan, summarize, retrieve context, and generate agent prompts.</p>
-    <div class="toolbar"><button onclick="run('scan')">Scan</button><button onclick="run('overview')">Overview</button><button onclick="run('brief')">Brief</button></div>
-    <div class="toolbar"><button onclick="run('context')">Context</button><button onclick="run('prompt')">Prompt</button><button onclick="run('graph')">Graph</button></div>
-    <div class="toolbar"><button onclick="run('insights')">Insights</button><button onclick="run('alerts')">Alerts</button></div>
+    <p>Scan, summarize, retrieve, and generate prompts.</p>
+    <div class="btns"><button onclick="run('scan')">Scan</button><button onclick="run('overview')">Overview</button><button onclick="run('brief')">Brief</button><button onclick="run('context')">Context</button><button onclick="run('prompt')">Prompt</button><button onclick="run('graph')">Graph</button><button onclick="run('insights')">Insights</button><button onclick="run('alerts')">Alerts</button></div>
   </div>
   <div class="tool">
     <h3>Ask</h3>
-    <p>Use local retrieval, symbols, snippets, and project memory.</p>
-    <div class="toolbar"><button onclick="run('ask')">Ask Sentinel</button><button onclick="run('retrieve')">Retrieve</button><button class="secondary" onclick="run('features')">Features</button></div>
+    <p>Local retrieval, symbols, snippets, and project memory.</p>
+    <div class="btns"><button onclick="run('ask')">Ask</button><button onclick="run('retrieve')">Retrieve</button><button onclick="run('features')">Features</button></div>
   </div>
   <div class="tool">
     <h3>Reports</h3>
-    <p>Generate shareable markdown and HTML reports.</p>
-    <div class="toolbar"><button onclick="run('report_html')">HTML</button><button onclick="run('report_markdown')">Markdown</button><button onclick="run('report_both')">Both</button></div>
-    <div class="toolbar"><button onclick="run('bundle')">Static Bundle</button></div>
+    <p>Shareable markdown and HTML reports.</p>
+    <div class="btns"><button onclick="run('report_html')">HTML</button><button onclick="run('report_markdown')">Markdown</button><button onclick="run('report_both')">Both</button><button onclick="run('bundle')">Bundle</button></div>
   </div>
   <div class="tool">
     <h3>Quality</h3>
-    <p>Verification, PR summary, release readiness, coverage, and health checks.</p>
-    <div class="toolbar"><button onclick="run('verify')">Verify</button><button onclick="run('pr')">PR</button><button onclick="run('coverage')">Coverage</button></div>
-    <div class="toolbar"><button onclick="run('release_check')">Release</button><button onclick="run('doctor')">Doctor</button><button onclick="run('mcp_health')">MCP</button></div>
+    <p>Verification, PR, release readiness, coverage, health.</p>
+    <div class="btns"><button onclick="run('verify')">Verify</button><button onclick="run('pr')">PR</button><button onclick="run('coverage')">Coverage</button><button onclick="run('release_check')">Release</button><button onclick="run('doctor')">Doctor</button><button onclick="run('mcp_health')">MCP</button></div>
   </div>
   <div class="tool">
     <h3>Memory</h3>
-    <p>Inspect history, token savings, and record lightweight task memory.</p>
-    <div class="toolbar"><button onclick="run('timeline')">Timeline</button><button onclick="run('savings')">Savings</button><button onclick="run('memory_list')">Memory</button></div>
-    <div class="toolbar"><button onclick="run('memory_record')">Record Note</button><button onclick="run('ledger')">Ledger</button><button onclick="run('speed_plan')">Speed Plan</button></div>
+    <p>History, token savings, lightweight task memory.</p>
+    <div class="btns"><button onclick="run('timeline')">Timeline</button><button onclick="run('savings')">Savings</button><button onclick="run('memory_list')">List</button><button onclick="run('memory_record')">Record</button><button onclick="run('ledger')">Ledger</button><button onclick="run('speed_plan')">Speed</button></div>
   </div>
   <div class="tool">
     <h3>Maintenance</h3>
-    <p>Plan safe fixes, clean reports, write adapters, and refresh Kilo files.</p>
-    <div class="toolbar"><button onclick="run('autofix')">Autofix</button><button onclick="run('cleanup_reports')">Cleanup</button><button onclick="run('adapters')">Adapters</button></div>
-    <div class="toolbar"><button onclick="run('kilo_refresh')">Kilo Refresh</button><button onclick="run('kilo_setup')">Kilo Setup</button></div>
+    <p>Fix plans, clean reports, adapters, Kilo refresh.</p>
+    <div class="btns"><button onclick="run('autofix')">Autofix</button><button onclick="run('cleanup_reports')">Cleanup</button><button onclick="run('adapters')">Adapters</button><button onclick="run('kilo_refresh')">Kilo Refresh</button><button onclick="run('kilo_setup')">Kilo Setup</button></div>
   </div>
-  <div class="tool span3">
-    <h3>Analyze A Repository URL</h3>
-    <p>Paste a git URL or local git source. Sentinel clones it, scans it, and writes a report bundle.</p>
-    <div class="toolbar"><button onclick="run('analyze_url')">Analyze URL</button></div>
+  <div class="tool wide">
+    <h3>Analyze Repository URL</h3>
+    <p>Paste a git URL or local git source. Sentinel clones, scans, and bundles a report.</p>
+    <div class="btns"><button class="primary" onclick="run('analyze_url')">Analyze URL</button></div>
   </div>
-</section>
+</div>
 
-<section class="layout">
+<!-- output + suggestions -->
+<div class="cols">
   <div class="output">
-    <h2>Output</h2>
-    <pre class="terminal" id="runOutput">Choose an action above.</pre>
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Output</h2><span class="muted" style="font-size:11px">terminal</span></div>
+    <pre class="term" id="runOutput">Choose an action above.</pre>
     <div id="artifacts"></div>
   </div>
-  <div class="card">
-    <h2>Live Suggestions</h2>
-    <ul id="suggestions"></ul>
-    <h2 style="margin-top:16px">Agent Prompt</h2>
-    <pre id="prompt">Loading...</pre>
+  <div class="card" style="display:flex;flex-direction:column">
+    <h2>Suggestions</h2>
+    <ul class="suggest-list" id="suggestions"></ul>
+    <hr>
+    <h2>Agent Prompt</h2>
+    <pre id="prompt" style="flex:1;min-height:80px">Loading...</pre>
   </div>
-</section>
+</div>
 
-<section class="cards" style="margin-top:12px">
+<!-- focus + hotspots + frameworks -->
+<div class="cols-3">
   <div class="card"><h2>Focus Files</h2><div class="pills" id="focus"></div></div>
   <div class="card"><h2>Hotspots</h2><div class="pills" id="hotspots"></div></div>
   <div class="card"><h2>Frameworks</h2><div class="pills" id="frameworks"></div></div>
-</section>
-<section class="layout">
-  <div class="card"><h2>Top File Risks</h2><table><thead><tr><th>Level</th><th>File</th><th>Score</th></tr></thead><tbody id="fileRisks"></tbody></table></div>
-  <div class="card"><h2>Review Signals</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody id="issues"></tbody></table></div>
-</section>
-<section class="card" style="margin-top:12px"><h2>Health Timeline</h2><pre id="timeline">Loading...</pre></section>
+</div>
+
+<!-- risks + signals -->
+<div class="cols">
+  <div class="card">
+    <h2>File Risks</h2>
+    <div class="table-wrap"><table><thead><tr><th>Level</th><th>File</th><th>Score</th></tr></thead><tbody id="fileRisks"></tbody></table></div>
+  </div>
+  <div class="card">
+    <h2>Review Signals</h2>
+    <div class="table-wrap"><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody id="issues"></tbody></table></div>
+  </div>
+</div>
+
+<!-- timeline -->
+<div class="card" style="margin-top:4px"><h2>Health Timeline</h2><pre id="timeline">Loading...</pre></div>
 </main>
 <script>
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -1856,7 +1946,13 @@ async function run(action){
   }
 }
 async function load(){
-  const data = await fetch('/api/status').then(r=>r.json());
+  let data;
+  try{
+    data = await fetch('/api/status').then(r=>r.json());
+  }catch(error){
+    document.getElementById('updated').textContent = 'Connection error: ' + String(error);
+    return;
+  }
   const latest = data.latest || {};
   const audit = latest.audit || {};
   const perf = latest.performance || {};
