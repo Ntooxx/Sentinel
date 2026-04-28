@@ -19,6 +19,24 @@
 
 ---
 
+## 🧭 What is Sentinel?
+
+**Sentinel is a local, zero-dependency codebase scanner that turns any repository into structured intelligence for AI coding agents.** Point it at a folder and it maps the architecture, scores the health, surfaces the risk hotspots, identifies entry points, and generates ready-to-use prompts and context packs — all in seconds, entirely offline. It's the missing bridge between your codebase and your AI assistant: instead of dumping raw files into a prompt, you feed Sentinel's compact, high-signal output and let the agent work with real understanding.
+
+```mermaid
+flowchart LR
+    A["📂 Any Repo"] -->|scan| S["🛡️ Sentinel"]
+    S --> B["💊 Health Score"]
+    S --> C["🔥 Hotspots & Risks"]
+    S --> D["🎯 Entry Points"]
+    S --> E["🤖 Agent Prompt"]
+    S --> F["📦 Context Pack"]
+    S --> G["💡 Next Actions"]
+    B & C & D & E & F & G --> H["🧠 AI Coding Agent"]
+```
+
+---
+
 ## ⚡ 30-Second Demo
 
 ```bash
