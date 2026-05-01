@@ -2,7 +2,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../src')
 
 tempdir = tempfile.TemporaryDirectory()
 project_root = Path(tempdir.name)
@@ -10,8 +10,8 @@ project_root = Path(tempdir.name)
 (locales_dir := project_root / "packages" / "app" / "locales").mkdir(parents=True)
 (locale_file := locales_dir / "de.json").write_text('{"key": "value"}', encoding='utf-8')
 
-from classify import classifyFile
-from auditor import ProjectAuditor
+from classify import classifyFile, classifySurface  # noqa: E402
+from auditor import ProjectAuditor  # noqa: E402
 
 fc = classifyFile('packages/app/locales/de.json')
 print('File classification:')

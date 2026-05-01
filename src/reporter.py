@@ -697,7 +697,7 @@ main{{padding:20px 16px}}
       </div>
       <div>
         <div class="cap">Health score</div>
-        {f'<p class="muted" style="margin:2px 0 0">(excluding security review)</p>' if result['audit'].get('health_score_data', {}).get('security_assessed') is False else ''}
+        {'<p class="muted" style="margin:2px 0 0">(excluding security review)</p>' if result['audit'].get('health_score_data', {}).get('security_assessed') is False else ''}
         <p class="muted" style="margin:2px 0 0">Scan #{esc(result.get('scan_number'))}</p>
       </div>
     </div>
@@ -1171,15 +1171,11 @@ main{{padding:20px 16px}}
         audit = result.get("audit", {})
         understanding = audit.get("understanding", {})
         risk_summary = audit.get("risk_summary", {})
-        health_data = audit.get("health_score_data", {})
-        breakdown = health_data.get("breakdown", {})
-        suggestions = result.get("suggestions", [])
         metrics = audit.get("metrics", {})
         issues = audit.get("issues", [])
 
         test_level = str(risk_summary.get("test", {}).get("level", "unknown"))
         runtime_level = str(risk_summary.get("runtime", {}).get("level", "unknown"))
-        maintainability = str(breakdown.get("maintainability_risk", "unknown"))
         todos = metrics.get("open_todos", 0)
         high_risks = [i for i in audit.get("risk_scores", []) if i.get("level") == "high"]
         files_scanned = metrics.get("total_files", 0)
@@ -1189,8 +1185,8 @@ main{{padding:20px 16px}}
         # Strong tests + high complexity
         if test_level in ("strong", "high") and runtime_level in ("high", "medium"):
             scenarios.append(
-                f"Strong test infrastructure but high runtime complexity — tests are your safety net, "
-                f"but complexity in core paths increases regression risk"
+                "Strong test infrastructure but high runtime complexity — tests are your safety net, "
+                "but complexity in core paths increases regression risk"
             )
 
         # Many TODOs + high risk
@@ -1211,15 +1207,15 @@ main{{padding:20px 16px}}
         # Simple repo, strong test signal
         if test_level == "strong" and runtime_level in ("low", "unknown") and not high_risks:
             scenarios.append(
-                f"Well-structured project with good test coverage and low hotspot density — "
-                f"ideal for safe, incremental changes"
+                "Well-structured project with good test coverage and low hotspot density — "
+                "ideal for safe, incremental changes"
             )
 
         # No tests
         if test_level in ("missing", "none", "low") and files_scanned > 50:
             scenarios.append(
-                f"Limited test infrastructure for a project of this size — "
-                f"regression risk is higher than necessary"
+                "Limited test infrastructure for a project of this size — "
+                "regression risk is higher than necessary"
             )
 
         if scenarios:

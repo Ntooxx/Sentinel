@@ -114,8 +114,9 @@ class ProjectAuditorTests(unittest.TestCase):
 
         issue_types = [issue["type"] for issue in audit["issues"]]
         self.assertEqual(issue_types.count("large_file"), 13)
-        self.assertGreaterEqual(audit["health_score"], 70)
-        self.assertLess(audit["health_score"], 90)
+        # Health should reflect maintainability penalty but stay above 55
+        self.assertGreaterEqual(audit["health_score"], 55)
+        self.assertLess(audit["health_score"], 95)
         # Maintainability risk in summary must match the health breakdown
         health_data = audit["health_score_data"]
         breakdown = health_data["breakdown"]

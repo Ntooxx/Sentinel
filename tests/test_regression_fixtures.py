@@ -11,8 +11,9 @@ if str(SRC) in sys.path:
     sys.path.remove(str(SRC))
 sys.path.insert(0, str(SRC))
 
-from auditor import ProjectAuditor
-from classify import FileClassification, classifyFile, classifyRiskSurface
+from auditor import ProjectAuditor  # noqa: E402
+from classify import classifyFile, classifyRiskSurface  # noqa: E402
+
 
 
 def _make_file(tmpdir: Path, rel_path: str, content: str = ""):
@@ -163,7 +164,6 @@ class RegressionFixtureTests(unittest.TestCase):
 
         audit, files = self._scan([".go", ".md"])
         archetype = audit["understanding"]["archetype"]
-        workflow = audit["understanding"]["workflow_hints"]
         self.assertIn(archetype, ("app", "framework_library", "cli_server"))
         if archetype == "app":
             runtime_entries = audit["structure"]["entry_points_by_category"].get("runtime", [])
@@ -194,7 +194,10 @@ class RegressionFixtureTests(unittest.TestCase):
         project_name = audit["understanding"]["project_name"]
         self.assertNotIn("<", project_name)
         self.assertNotIn("div", project_name.lower())
-        self.assertEqual(project_name, self.project_root.name)
+        self.assertNotIn("img", project_name.lower())
+        # Should be the repo folder name (no raw HTML)
+        self.assertGreater(len(project_name), 0)
+        self.assertNotEqual(project_name, '<div align="center">')
 
     def test_requirements_lock_file_issues_not_module_boundary(self):
         lock = "\n".join(f"pkg=={i}.0.0" for i in range(500))
@@ -268,6 +271,189 @@ class RegressionFixtureTests(unittest.TestCase):
         self.assertEqual(classifyRiskSurface("packages/app/src/i18n/en.ts"), "localization")
         self.assertEqual(classifyRiskSurface("gen/types.gen.ts"), "generated_sdk")
         self.assertEqual(classifyRiskSurface("generated/client.go"), "generated_sdk")
+
+
+    def test_gen_cc_not_in_runtime_risks(self):
+        _make_file(self.project_root, "src/core.cc", "void Core() {}")
+        _make_file(self.project_root, "src/converter_gen.cc", "// generated")
+        _make_file(self.project_root, "README.md", "# Test\n")
+
+        audit, files = self._scan([".cc", ".md"])
+        runtime_risks = audit["risk_groups"].get("runtime", [])
+        for risk in runtime_risks:
+            self.assertNotIn("_gen.cc", risk["file"])
+        all_risk_files = {r["file"] for r in audit.get("risk_scores", [])}
+        self.assertNotIn("src/converter_gen.cc", all_risk_files)
+
+    def test_framework_library_workflow_no_runtime_trace(self):
+        _make_file(self.project_root, "tensorflow/core/ops.cc", "void Op() {}")
+        _make_file(self.project_root, "tensorflow/python/layers.py", "class Layer: pass")
+        _make_file(self.project_root, "tensorflow/go/genop/main.go",
+                   "package main\nfunc main() {}")
+        _make_file(self.project_root, "README.md", "# TensorFlow\nAn ML framework.\n")
+
+        audit, files = self._scan([".py", ".cc", ".go", ".md"])
+        workflow = audit["understanding"]["workflow_hints"]
+        for hint in workflow:
+            self.assertNotIn("Start runtime tracing from", hint)
+        self.assertTrue(
+            any("Framework/library repo detected" in h for h in workflow),
+            f"Expected framework_library workflow hint, got: {workflow}",
+        )
+
+    def test_project_name_from_html_readme_fallback_dir_name(self):
+        _make_file(self.project_root, "README.md",
+                   '<p align="center"><img src="logo.png"/></p>\n')
+        _make_file(self.project_root, "src/main.py", "def main(): pass\n")
+
+        audit, files = self._scan([".py", ".md"])
+        project_name = audit["understanding"]["project_name"]
+        self.assertNotIn("<", project_name)
+        self.assertNotIn("div", project_name.lower())
+        self.assertNotIn("<p", project_name.lower())
+        self.assertEqual(project_name, self.project_root.name.replace("_", ""))
+
+    def test_purpose_application_logic_replaced(self):
+        _make_file(self.project_root, "src/main.py", "def main(): pass\n")
+
+        from auditor import ProjectAuditor
+        tempdir2 = tempfile.TemporaryDirectory()
+        proj2 = Path(tempdir2.name)
+        _make_file(proj2, "src/main.py", "def main(): pass\n")
+        _make_file(proj2, "README.md", "# My Project\napplication logic, application logic, application logic\n")
+
+        auditor2 = ProjectAuditor(str(proj2), str(proj2 / "checkpoints.json"))
+        f2 = auditor2.scan_directory(
+            ignore_dirs=["__pycache__"],
+            extensions=[".py", ".md"],
+            max_size=1024 * 1024,
+        )
+        a2 = auditor2.audit_project(f2)
+        purpose = a2["understanding"]["purpose"]
+        self.assertNotIn("application logic", purpose.lower())
+        self.assertIn("confidently inferred", purpose)
+        tempdir2.cleanup()
+
+    def test_large_requirements_lock_message_is_dependency(self):
+        lock = "\n".join(f"pkg=={i}.0.0" for i in range(500))
+        _make_file(self.project_root, "ci/requirements_lock_3_10.txt", lock)
+        _make_file(self.project_root, "src/app.py", "def main(): pass\n")
+        _make_file(self.project_root, "README.md", "# App\n")
+
+        audit, files = self._scan([".py", ".txt", ".md"])
+        fc = classifyFile("ci/requirements_lock_3_10.txt")
+        self.assertTrue(fc.isDependencyLock)
+        self.assertIn("dependency", fc.largeFilePolicy.lower())
+
+    def test_template_like_framework_components_split_deep(self):
+        _make_file(self.project_root, "tensorflow/core/framework/types.cc", "void Types() {}")
+        _make_file(self.project_root, "tensorflow/core/ops/math_ops.cc", "void MathOps() {}")
+        _make_file(self.project_root, "tensorflow/python/keras/layers.py", "class Layer: pass")
+        _make_file(self.project_root, "tensorflow/python/keras/models.py", "class Model: pass")
+        _make_file(self.project_root, "tensorflow/compiler/xla/service.cc", "void Service() {}")
+        _make_file(self.project_root, "tensorflow/lite/kernels/add.cc", "void Add() {}")
+        _make_file(self.project_root, "tensorflow/lite/kernels/mul.cc", "void Mul() {}")
+        _make_file(self.project_root, "tensorflow/c/api_test.cc", "void TestApi() {}")
+        _make_file(self.project_root, "tensorflow/c/c_api.cc", "void CApi() {}")
+        _make_file(self.project_root, "README.md", "# TF\n")
+
+        audit, files = self._scan([".py", ".cc", ".md"])
+        components = {c["path"]: c["role"] for c in audit["understanding"]["main_components"]}
+        self.assertIn("tensorflow/core", components)
+        self.assertIn("tensorflow/python", components)
+        self.assertIn("tensorflow/compiler", components)
+        self.assertIn("tensorflow/lite", components)
+        # tensorflow itself should NOT appear as a single "application logic" bucket
+        for cpath, role in components.items():
+            if cpath == "tensorflow" and "application" in role.lower():
+                self.fail(f"tensorflow should be split, got role={role}")
+
+    def test_score_file_risks_excludes_tests_and_generators(self):
+        _make_file(self.project_root, "src/core.py", "def core(): pass\n")
+        _make_file(self.project_root, "src/core_test.py", "def test_core(): pass\n")
+        _make_file(self.project_root, "src/generate_protos.py", "def generate(): pass\n")
+        _make_file(self.project_root, "src/gen/types.gen.ts", "export type T = {};\n")
+        _make_file(self.project_root, "README.md", "# Test\n")
+
+        audit, files = self._scan([".py", ".ts", ".md"])
+        risk_scores = audit.get("risk_scores", [])
+        risk_files = [r["file"] for r in risk_scores]
+        self.assertIn("src/core.py", risk_files)
+        self.assertNotIn("src/core_test.py", risk_files)
+        self.assertNotIn("src/generate_protos.py", risk_files)
+        self.assertNotIn("src/gen/types.gen.ts", risk_files)
+
+    def test_genop_file_classified_as_generator_in_source_section(self):
+        fc = classifyFile("tensorflow/go/genop/main.go")
+        self.assertTrue(fc.isGenerator)
+
+    def test_framework_library_project_type_is_mixed_language(self):
+        _make_file(self.project_root, "tensorflow/core/ops.cc", "void Op() {}")
+        _make_file(self.project_root, "tensorflow/python/layers.py", "class Layer: pass")
+        _make_file(self.project_root, "tensorflow/compiler/xla/service.cc", "void Service() {}")
+        _make_file(self.project_root, "tensorflow/lite/kernels/add.cc", "void Add() {}")
+        _make_file(self.project_root, "README.md", "# TensorFlow\n")
+
+        audit, files = self._scan([".py", ".cc", ".md"])
+        project_type = audit["understanding"]["project_type"]
+        self.assertIn("framework", project_type.lower())
+        self.assertIn("learning", project_type.lower())
+
+    def test_full_pipeline_tensorflow_readme_with_html_badges(self):
+        readme = (
+            '<div align="center">\n'
+            '  <img src="logo.png"><br><br>\n'
+            '</div>\n\n'
+            '[![Python](https://img.shields.io/badge/Python-3.x-blue)]()\n'
+            '[![Stars](https://img.shields.io/badge/stars-100k-green)]()\n\n'
+            '# TensorFlow\n\n'
+            'An end-to-end open source machine learning platform.\n'
+        )
+        _make_file(self.project_root, "README.md", readme)
+        _make_file(self.project_root, "tensorflow/core/ops.cc", "void Op() {}")
+        _make_file(self.project_root, "tensorflow/python/layers.py", "class Layer: pass")
+        _make_file(self.project_root, "tensorflow/compiler/xla/service.cc", "void Service() {}")
+        _make_file(self.project_root, "tensorflow/lite/kernels/add.cc", "void Add() {}")
+        _make_file(self.project_root, "tensorflow/go/genop/main.go",
+                   "package main\nfunc main() {}")
+
+        audit, files = self._scan([".py", ".cc", ".go", ".md"])
+
+        identity = audit["understanding"]
+        self.assertNotIn("<", identity["project_name"])
+        self.assertNotIn("div", identity["project_name"].lower())
+        self.assertNotIn("align", identity["project_name"].lower())
+        self.assertNotIn("img", identity["project_name"].lower())
+
+        self.assertNotIn("<div", identity.get("summary", "").lower())
+        self.assertNotIn("application logic, application logic",
+                         identity.get("purpose", "").lower())
+        self.assertEqual(identity["archetype"], "framework_library")
+
+        runtime_eps = audit["structure"]["entry_points_by_category"].get("runtime", [])
+        for ep in runtime_eps:
+            self.assertNotIn("genop", ep)
+
+    def test_normalize_identity_rejects_every_bad_pattern(self):
+        auditor = ProjectAuditor(
+            str(self.project_root),
+            str(self.project_root / "checkpoints.json"),
+        )
+        result = auditor._normalize_identity(
+            project_name='<div align="center">',
+            project_type='c++ project and a test suite',
+            purpose='It is organized around application logic, application logic, and application logic.',
+            summary='<div align="center"> appears to be c++ project and a test suite. It is organized around application logic, application logic, and application logic.',
+            description='<p>Some HTML here</p>',
+        )
+        self.assertNotIn("<", result["project_name"])
+        self.assertNotIn("div", result["project_name"].lower())
+        self.assertNotIn("application logic", result["purpose"].lower())
+        self.assertNotIn("<div", result["summary"].lower())
+        self.assertNotIn("<p>", result["description"].lower())
+        self.assertNotIn("</p>", result["description"].lower())
+        self.assertIn("confidently inferred", result["purpose"])
+        self.assertEqual(result["project_name"], self.project_root.name)
 
 
 if __name__ == "__main__":

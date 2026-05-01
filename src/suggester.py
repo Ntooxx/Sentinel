@@ -117,6 +117,11 @@ class Suggester:
         if not evidence:
             uncertainty = "high"
 
+        # Surface confidence downgrades overall confidence
+        surface_confidence = suggestion.get("surface_confidence", "high")
+        if surface_confidence == "low" and uncertainty == "low":
+            uncertainty = "medium"
+
         suggestion["impact"] = impact
         suggestion["effort"] = effort
         suggestion["ranking_label"] = label
@@ -125,6 +130,7 @@ class Suggester:
             "evidence": evidence[:4],
             "files_inspected": len(known_files),
             "uncertainty": uncertainty,
+            "surface_confidence": surface_confidence,
         }
         if "verification" not in suggestion:
             suggestion["verification"] = {
@@ -151,6 +157,12 @@ class Suggester:
             return [f"python -m pytest {' '.join(python_tests[:4])}"]
         return ["Run the project's native test runner."]
 
+    @staticmethod
+    def _is_weak_entry_point(path: str) -> bool:
+        lower = path.replace("\\", "/").lower()
+        weak_dirs = {"/assets/", "/asset/", "/static/", "/docs/", "/docs_src/", "/examples/", "/example/", "/samples/", "/sample/"}
+        return any(d in lower for d in weak_dirs)
+
     def _check_hotspot_trace(
         self,
         audit: Dict[str, Any],
@@ -166,11 +178,19 @@ class Suggester:
             runtime_hotspots = [h for h in all_hotspots if classifyRiskSurface(h.get("path", "")) == "runtime"]
         entry_points_by_category = audit.get("structure", {}).get("entry_points_by_category", {})
         runtime_entries = entry_points_by_category.get("runtime", [])
-        entry_points = runtime_entries or entry_points_by_category.get("build", []) or entry_points_by_category.get("generator", [])
-        if not runtime_hotspots:
-            return None
+        build_entries = entry_points_by_category.get("build", [])
+        generator_entries = entry_points_by_category.get("generator", [])
+
+        # Prefer strong runtime entries (not in assets/docs/examples)
+        strong_entries = [e for e in (runtime_entries or []) if not self._is_weak_entry_point(e)]
+        entry_points = strong_entries or runtime_entries or build_entries or generator_entries
 
         hotspot_paths = [item.get("path") for item in runtime_hotspots[:3] if item.get("path")]
+
+        # Detect surface mismatch: if the primary entry point is weak/asset but hotspots are real code
+        entry_is_weak = bool(entry_points and self._is_weak_entry_point(entry_points[0]))
+        has_real_hotspots = bool(hotspot_paths) and not all(self._is_weak_entry_point(h) for h in hotspot_paths)
+        surface_confidence = "low" if (entry_is_weak or not entry_points) and has_real_hotspots else "high"
 
         if archetype == "framework_library":
             return {
@@ -185,6 +205,7 @@ class Suggester:
                     "Explain which modules are touched first, identify the hotspots involved, "
                     "and recommend the safest first change before making edits."
                 ),
+                "surface_confidence": surface_confidence,
             }
 
         if archetype == "monorepo":
@@ -200,10 +221,42 @@ class Suggester:
                     "Explain which modules are touched first, identify the hotspots involved, "
                     "and recommend the safest first change before making edits."
                 ),
+                "surface_confidence": surface_confidence,
+            }
+
+        if surface_confidence == "low" and runtime_hotspots:
+            # Entry point is in a weak directory (assets/docs/examples) but we have real hotspots
+            return {
+                "category": "debugging",
+                "priority": "medium",
+                "title": "Trace the main execution path before editing",
+                "reason": f"Real hotspots detected ({', '.join(hotspot_paths[:2])}) but primary runtime entry was uncertain. Use hotspots as the tracing anchor.",
+                "action": "Map the runtime path through current hotspots",
+                "focus_files": hotspot_paths,
+                "suggested_prompt": (
+                    f"Trace the execution flow through the main hotspots: {', '.join(hotspot_paths[:2])}. "
+                    "Explain which modules are touched first, identify the entry points involved, "
+                    "and recommend the safest first change before making edits."
+                ),
+                "surface_confidence": surface_confidence,
             }
 
         if not entry_points:
-            return None
+            if not runtime_hotspots:
+                return None
+            return {
+                "category": "debugging",
+                "priority": "medium",
+                "title": "Map runtime hotspots before editing",
+                "reason": f"No entry point detected. Focus on the hottest files: {', '.join(hotspot_paths[:2])}",
+                "action": "Analyze hotspots before making changes",
+                "focus_files": hotspot_paths,
+                "suggested_prompt": (
+                    "No clear entry point was detected. Start by examining the hottest files: "
+                    f"{', '.join(hotspot_paths[:2])}. Explain which modules are touched first "
+                    "and recommend the safest first change."
+                ),
+            }
 
         runtime_focus = [entry_points[0], *hotspot_paths] if entry_points else hotspot_paths
         reason = f"Start from {runtime_focus[0]} and trace into {', '.join(hotspot_paths[:2])}" if len(hotspot_paths) >= 2 else f"Start from {runtime_focus[0]} and trace into hotspots"
@@ -219,6 +272,7 @@ class Suggester:
                 "Explain which modules are touched first, identify the hotspots involved, "
                 "and recommend the safest first change before making edits."
             ),
+            "surface_confidence": surface_confidence,
         }
 
     def _check_missing_tests(self, audit: Dict[str, Any], diff: Dict[str, Any], _: Dict[str, Any]) -> List[Dict[str, Any]]:

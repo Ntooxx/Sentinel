@@ -293,7 +293,6 @@ class ReportQualityTests(unittest.TestCase):
 
         audit, files = self._scan([".py", ".md"])
         total_lines = audit["metrics"]["total_lines"]
-        total_files = audit["metrics"]["total_files"]
         confidence_label = audit["health_score_data"].get("confidence_label", "")
         if total_lines >= 50000:
             self.assertIn(confidence_label, ("moderate_confidence", "low_confidence"))
@@ -307,7 +306,7 @@ class ReportQualityTests(unittest.TestCase):
                        f"namespace llvm {{\nclass X{i} {{\npublic:\n  void run() {{}}\n}};\n}}\n")
         for i in range(50):
             _make_file(self.project_root, f"llvm/test/Transforms/test{i}.cpp",
-                       f"// RUN: llc < %s\n// CHECK: pass\nint main() {{ return 0; }}\n")
+                       "// RUN: llc < %s\n// CHECK: pass\nint main() { return 0; }\n")
         _make_file(self.project_root, "llvm/tools/llc/llc.cpp",
                    "int main(int argc, char** argv) { return 0; }\n")
 
@@ -410,7 +409,6 @@ class ReportQualityTests(unittest.TestCase):
 
         audit, files = self._scan([".cpp", ".h", ".md"])
         runtime_entries = audit["structure"]["entry_points_by_category"].get("runtime", [])
-        test_entries = audit["structure"]["entry_points_by_category"].get("test", [])
 
         # Unit test with main() should be in test, not runtime
         for ep in runtime_entries:
@@ -731,7 +729,6 @@ class RustRepoRegressionTests(unittest.TestCase):
 
     def test_tests_rs_classified_as_test(self):
         """tests.rs file in a source directory should be classified as test."""
-        from classify import classifyFile
         fc = classifyFile("src/tools/rust-analyzer/crates/ide/src/hover/tests.rs")
         self.assertTrue(fc.isTest,
                         f"tests.rs should be classified as test, got role={fc.role}")
@@ -759,8 +756,6 @@ class RustRepoRegressionTests(unittest.TestCase):
         self.assertNotIn("src/tools/rust-analyzer/crates/ide/src/hover/tests.rs",
                          runtime_files,
                          "tests.rs should NOT appear in runtime hotspots")
-        test_hotspots = hotspot_groups.get("test_runner", [])
-        test_files = {h["path"] for h in test_hotspots}
 
     def test_runtime_hotspot_includes_compiler_src(self):
         _make_file(self.project_root, "compiler/rustc/src/main.rs",

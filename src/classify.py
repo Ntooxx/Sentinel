@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -127,7 +127,6 @@ def detectRepoArchetype(
     frameworks: list[str],
 ) -> Dict[str, Any]:
     component_paths = {c["path"].lower() for c in components}
-    all_paths_lower = {p.lower() for p in files}
 
     has_cmd = any(p.startswith("cmd/") for p in files)
     has_api = any(p.startswith("api/") for p in files)
@@ -145,12 +144,7 @@ def detectRepoArchetype(
         for p in files
     )
     has_gen = any("/gen/" in p or "/generated/" in p for p in files)
-    has_docs = any(p.startswith("docs/") for p in files)
-
-    has_main_rs = any(p.endswith("main.rs") for p in files)
     has_main_go = any(p.endswith("main.go") for p in files)
-    has_main_ts = any(p.endswith("main.ts") for p in files)
-    has_main_cpp = any(p.endswith("main.cpp") or p.endswith("main.cc") for p in files)
     
     has_main_in_app_root = any(
         p.endswith("main.rs") or p.endswith("main.go") or p.endswith("main.ts") or p.endswith("main.py") or p.endswith("main.cpp") or p.endswith("main.cc")

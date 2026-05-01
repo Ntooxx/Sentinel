@@ -73,7 +73,6 @@ class WeightedEntryPointsTests(unittest.TestCase):
         src_main = next((ep for ep in entry_points if "src/main.py" in ep["path"]), None)
         tests_main = next((ep for ep in entry_points if "test_main.py" in ep["path"]), None)
         docs_example = next((ep for ep in entry_points if "example.py" in ep["path"]), None)
-        scripts_tool = next((ep for ep in entry_points if "tool.py" in ep["path"]), None)
 
         # src/main.py should have the highest score
         if src_main:

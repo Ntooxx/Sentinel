@@ -2,7 +2,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, 'src')
+sys.path.insert(0, '../src')
 
 tempdir = tempfile.TemporaryDirectory()
 project_root = Path(tempdir.name)
@@ -10,8 +10,8 @@ project_root = Path(tempdir.name)
 nvidia_file = project_root / 'nvidia_nim_models.json'
 nvidia_file.write_text('["model"]', encoding='utf-8')
 
-from classify import classifyFile, classifyLargeFilePolicy
-from auditor import ProjectAuditor
+from classify import classifyFile, classifyLargeFilePolicy  # noqa: E402
+from auditor import ProjectAuditor  # noqa: E402
 
 auditor = ProjectAuditor(str(project_root), str(project_root / 'checkpoints.json'))
 files = auditor.scan_directory(

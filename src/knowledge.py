@@ -3,7 +3,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 from utils import CONTEXT_BUDGETS, DEFAULT_KNOWLEDGE_BASE, merge_dicts, normalize_budget_name, now_iso, read_json, write_json
 

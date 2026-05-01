@@ -20,19 +20,11 @@ from classify import (
     ARCHETYPE_BROWSER_ENGINE,
     ARCHETYPE_FRAMEWORK_LIBRARY,
     ARCHETYPE_MONOREPO,
-    ARCHETYPE_TEST_SUITE,
-    ARCHETYPE_VENDOR_HEAVY,
-    ARCHETYPE_GENERATED_HEAVY,
-    ARCHETYPE_DOCUMENTATION_HEAVY,
-    ARCHETYPE_MIXED_LANGUAGE,
-    FileClassification,
     classifyFile,
     classifyComponentRole,
     classifyLargeFilePolicy,
     classifyRiskSurface,
-    classifyRoleLabel,
     classifySurface,
-    is_under_monorepo_root,
     monorepo_component_key,
     riskFromScore,
     detectRepoArchetype,
@@ -574,7 +566,6 @@ class ProjectAuditor:
         return classifyComponentRole(key)
 
     def _is_runtime_hotspot_not_entry(self, filepath: str) -> bool:
-        lower_path = filepath.replace("\\", "/").lower()
         name = Path(filepath).name.lower()
         stem = Path(filepath).stem.lower()
         runtime_hotspot_names = {
@@ -2890,7 +2881,6 @@ class ProjectAuditor:
         return {"entries": entries}
 
     def _classify_test_coverage(self, path: str, test_index: Dict[str, Any]) -> Dict[str, Any]:
-        fc = classifyFile(path)
         ext = Path(path).suffix.lower()
 
         if ext not in {".py", ".go"}:
@@ -3080,7 +3070,6 @@ class ProjectAuditor:
             "health_penalties_by_type",
             DEFAULT_AUDIT_RULES["health_penalties_by_type"],
         )
-        floors = self.rules.get("health_score_floors", DEFAULT_AUDIT_RULES["health_score_floors"])
         score = 100.0
 
         # Check if security was assessed

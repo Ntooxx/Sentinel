@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -35,9 +36,8 @@ def verify_patch(
             )
             continue
         completed = subprocess.run(
-            test_command,
+            shlex.split(test_command),
             cwd=root,
-            shell=True,
             capture_output=True,
             text=True,
             timeout=timeout,

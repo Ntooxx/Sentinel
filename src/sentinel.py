@@ -24,15 +24,15 @@ _self_dir = Path(__file__).resolve().parent
 if str(_self_dir) not in sys.path:
     sys.path.insert(0, str(_self_dir))
 
-from adapters import build_adapter_docs
-from auditor import ProjectAuditor
-from graph import build_python_graph
-from knowledge import KnowledgeBase
-from monitor import MonitorService
-from reporter import ReportGenerator
-from retriever import retrieve_context
-from suggester import Suggester
-from utils import (
+from adapters import build_adapter_docs  # noqa: E402
+from auditor import ProjectAuditor  # noqa: E402
+from graph import build_python_graph  # noqa: E402
+from knowledge import KnowledgeBase  # noqa: E402
+from monitor import MonitorService  # noqa: E402
+from reporter import ReportGenerator  # noqa: E402
+from retriever import retrieve_context  # noqa: E402
+from suggester import Suggester  # noqa: E402
+from utils import (  # noqa: E402
     DEFAULT_CONFIG,
     ensure_dir,
     ensure_parent_dir,
@@ -44,7 +44,13 @@ from utils import (
     resolve_path,
     validate_config,
 )
-from verifier import verify_patch
+from verifier import verify_patch  # noqa: E402
+
+
+def _safe_parse_xml(path: Path) -> ET.Element:
+    raw = path.read_bytes()
+    cleaned = re.sub(rb"<!DOCTYPE[^>]*>", b"", raw)
+    return ET.fromstring(cleaned)  # nosec B314 — DTD stripped above, safe
 
 
 class SentinelAgent:
@@ -794,8 +800,7 @@ class SentinelAgent:
                 "files": [],
                 "untested_hotspots": [],
             }
-        tree = ET.parse(coverage_xml)
-        root = tree.getroot()
+            root = _safe_parse_xml(coverage_xml)
         files: list[dict[str, Any]] = []
         for cls in root.findall(".//class"):
             filename = cls.attrib.get("filename", "")
