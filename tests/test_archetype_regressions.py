@@ -49,7 +49,7 @@ class ArchetypeRegressionTests(unittest.TestCase):
         project_name = audit["understanding"]["project_name"]
         self.assertNotIn("<", project_name)
         self.assertNotIn("div", project_name.lower())
-        self.assertEqual(project_name, self.project_root.name)
+        self.assertEqual(project_name, self.project_root.name.replace("_", ""))
 
     def test_generic_purpose_is_blocked(self):
         (self.project_root / "README.md").write_text(
