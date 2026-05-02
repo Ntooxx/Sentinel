@@ -1,5 +1,9 @@
 # User Guide
 
+<p align="center">
+  <img src="../logos/logo2.png" alt="Sentinel" width="120">
+</p>
+
 ## What Sentinel Does
 
 Sentinel watches a project the way a focused engineering lead would:

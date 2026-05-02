@@ -1094,6 +1094,19 @@ class SentinelAgent:
                         self.end_headers()
                         self.wfile.write(payload)
                         return
+                    if self.path.startswith("/logos/"):
+                        logo_path = Path(__file__).resolve().parent.parent / "logos" / self.path[len("/logos/"):]
+                        if logo_path.exists():
+                            data = logo_path.read_bytes()
+                            ctype = "image/svg+xml" if logo_path.suffix == ".svg" else "image/png"
+                            self.send_response(200)
+                            self.send_header("Content-Type", ctype)
+                            self.send_header("Content-Length", str(len(data)))
+                            self.end_headers()
+                            self.wfile.write(data)
+                            return
+                        self.send_error(404, "Logo not found")
+                        return
                     html = _dashboard_html(self.server.server_address, self.path).encode("utf-8")
                     self.send_response(200)
                     self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1632,6 +1645,7 @@ def _dashboard_html(_: tuple[str, int], __: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sentinel</title>
+<link rel="icon" href="/logos/logo.png">
 <style>
 :root{color-scheme:dark;--bg:#080c14;--surface:#101826;--surface2:#161f2f;--line:#1e2a3d;--ink:#e6edf5;--muted:#7b8fa8;--accent:#4b9eff;--accent-dim:#4b9eff22;--good:#3dd68c;--warn:#f0b429;--bad:#f56565;--radius:10px;--radius-sm:6px;--shadow:0 2px 8px #00000020}
 *{box-sizing:border-box}
@@ -1647,7 +1661,7 @@ p{margin:0 0 8px}
 /* header */
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding:0 0 16px;border-bottom:1px solid var(--line)}
 .top-left{display:flex;align-items:center;gap:12px}
-.top-left .logo{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#080c14;flex-shrink:0}
+.top-left .logo{width:32px;height:32px;border-radius:8px;flex-shrink:0}
 .top-right{display:flex;align-items:center;gap:10px}
 .badge-pulse{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
 .badge-pulse::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--good);animation:pulse 2s infinite}
@@ -1748,7 +1762,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <!-- top bar -->
 <div class="top">
   <div class="top-left">
-    <div class="logo">S</div>
+    <img src="/logos/logo.png" class="logo" alt="Sentinel">
     <h1>Sentinel</h1>
     <span class="muted" style="font-size:13px">Command Center</span>
   </div>

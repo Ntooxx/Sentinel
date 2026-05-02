@@ -1,6 +1,10 @@
 <div align="center">
 
-# 🛡️ SENTINEL
+<p align="center">
+  <img src="logos/logo.png" alt="Sentinel" width="140">
+</p>
+
+# SENTINEL
 
 ### **Repo intelligence for AI coding agents**
 
@@ -71,7 +75,7 @@ python sentinel.py scan . --fast
 ## 📊 Scan Performance
 
 <p align="center">
-  <img src="sentinel-assets/performance-dashboard.png" alt="Sentinel Performance Dashboard" width="100%">
+  <img src="logos/diagram1.png" alt="Sentinel Performance Dashboard" width="100%">
 </p>
 
 | Target | Files | Lines | Time | Health |
@@ -320,25 +324,8 @@ Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
 ## 🏛️ Architecture
 
 <p align="center">
-  <img src="sentinel-assets/architecture.png" alt="Sentinel Architecture" width="100%">
+  <img src="logos/diagram.png" alt="Sentinel Architecture" width="100%">
 </p>
-
-```mermaid
-graph TD
-    S["🛡️ sentinel.py<br/>CLI · Dashboard · MCP Server<br/><i>4,149 lines</i>"]
-
-    S -->|scan| A["🔍 auditor.py<br/>Scanning · Identity<br/>Entry Points · Checkpoints<br/><i>2,686 lines</i>"]
-    S -->|report| R["📊 reporter.py<br/>Terminal · HTML · Markdown<br/>JSON Reports<br/><i>1,059 lines</i>"]
-    S -->|suggest| G["💡 suggester.py<br/>Suggestion Engine<br/>Confidence · Impact · Effort<br/><i>738 lines</i>"]
-
-    A -->|classify| C["🏷️ classify.py<br/>File Roles · Archetypes<br/>Risk Surfaces<br/><i>1,036 lines</i>"]
-
-    style S fill:#1f6feb,stroke:#58a6ff,stroke-width:3px,color:#fff
-    style A fill:#238636,stroke:#3fb950,stroke-width:2px,color:#fff
-    style R fill:#8957e5,stroke:#bc8cff,stroke-width:2px,color:#fff
-    style G fill:#9e6a03,stroke:#d29922,stroke-width:2px,color:#fff
-    style C fill:#0d7f8a,stroke:#56d4dd,stroke-width:2px,color:#fff
-```
 
 ---
 
@@ -378,20 +365,8 @@ graph TD
 ## 🏁 Quick Start
 
 <p align="center">
-  <img src="sentinel-assets/product-flow.png" alt="Sentinel Product Flow" width="100%">
+  <img src="logos/diagram2.png" alt="Sentinel Product Flow" width="100%">
 </p>
-
-```mermaid
-flowchart LR
-    A["🔧 Install"] --> B["🔍 Scan"]
-    B --> C["📊 Report"]
-    B --> D["❓ Ask"]
-    B --> E["🤖 Prompt"]
-    C --> F["✅ Verify"]
-    D --> F
-    E --> F
-    F -->|iterate| B
-```
 
 ### Install & Scan
 

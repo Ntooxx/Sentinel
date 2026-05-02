@@ -575,6 +575,7 @@ class ReportGenerator:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sentinel Report – {esc(project_name)}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect x=%2212%22 y=%2216%22 width=%2240%22 height=%2232%22 rx=%226%22 fill=%22%230f6b9e%22/><polygon points=%2232,20 24,30 28,30 24,44 32,36 40,44 36,30 40,30%22 fill=%22%23fff%22/></svg>">
 <style>
 :root{{color-scheme:light;--bg:#f0f4f8;--surface:#ffffff;--ink:#0b1b2b;--muted:#5d6f83;--line:#d8e2ec;--accent:#0f6b9e;--accent-glow:#0f6b9e0f;--good:#1a7f4c;--warn:#a86800;--bad:#c62828;--shadow:0 1px 3px #0000000d,0 1px 2px #0000000a;--shadow-lg:0 4px 16px #00000012;--radius:10px;--radius-sm:6px}}
 *{{box-sizing:border-box}}

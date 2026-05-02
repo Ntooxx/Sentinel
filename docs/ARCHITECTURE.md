@@ -1,5 +1,9 @@
 # Architecture
 
+<p align="center">
+  <img src="../logos/diagram.png" alt="Sentinel Architecture Diagram" width="80%">
+</p>
+
 ## Overview
 
 Sentinel follows a simple scan pipeline:

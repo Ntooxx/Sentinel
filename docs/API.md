@@ -1,5 +1,9 @@
 # API
 
+<p align="center">
+  <img src="../logos/logo2.png" alt="Sentinel" width="120">
+</p>
+
 ## `SentinelAgent`
 
 Defined in `src/sentinel.py`.
