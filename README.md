@@ -6,18 +6,18 @@
 
 # SENTINEL
 
-### **Repo intelligence for AI coding agents**
+### **For developers who want AI to understand their codebase — without uploading to the cloud**
 
 **Scan → Understand → Act**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
-[![Python](https://img.shields.io/badge/python-pure%20%F0%9F%90%8D-blue?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
-[![No Cloud](https://img.shields.io/badge/no%20cloud-0%20dependencies-critical?style=for-the-badge&logo=socket&logoColor=white)](#limitations)
+[![Python](https://img.shields.io/badge/python-3.8+-blue?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
+[![Zero Deps](https://img.shields.io/badge/dependencies-0-critical?style=for-the-badge&logo=socket&logoColor=white)](#quick-start)
 [![Benchmark](https://img.shields.io/badge/reproducible-benchmark-orange?style=for-the-badge&logo=lightning&logoColor=white)](#reproducible-benchmark)
 
-> **25,000 files. 6 million lines. One command. Under a minute. No cloud.**
+> **25,000 files scanned in 55 seconds. Zero dependencies. 197 tests.**
 
-[Quick Start](#quick-start) · [Commands](#commands) · [Dashboard](#dashboard-gui) · [Architecture](#architecture)
+[Quick Start](#quick-start) · [Install](#quick-start) · [Commands](#commands) · [Dashboard](#dashboard-gui) · [Architecture](#architecture)
 
 </div>
 
@@ -25,7 +25,15 @@
 
 ## 🧭 What is Sentinel?
 
-**Sentinel is a local, zero-dependency codebase scanner that turns any repository into structured intelligence for AI coding agents.** Point it at a folder and it maps the architecture, scores the health, surfaces the risk hotspots, identifies entry points, and generates ready-to-use prompts and context packs — all in seconds, entirely offline. It's the missing bridge between your codebase and your AI assistant: instead of dumping raw files into a prompt, you feed Sentinel's compact, high-signal output and let the agent work with real understanding.
+**You use AI coding agents (Claude Code, Cline, Codex, Continue, Roo). They need to understand your codebase — but dumping raw files wastes tokens and misses context.**
+
+Sentinel solves this. It's a **local, zero-dependency** scanner that turns any repo into structured, token-efficient intelligence:
+
+```
+Point → Scan → AI-ready context pack (~2,500 tokens)
+```
+
+It maps architecture, scores maintainability, surfaces risk hotspots, identifies entry points, and generates ready-to-use prompts for your AI agent — all in seconds, entirely offline. No uploads. No API keys. No dependencies beyond Python stdlib.
 
 ```mermaid
 flowchart LR
@@ -274,6 +282,10 @@ Sentinel filters out the noise from *all* identity fields (project name, type, p
 
 The generated HTML report is a **single self-contained page** — no external assets, no build step:
 
+<p align="center">
+  <img src="logos/report-screenshot.png" alt="Sentinel HTML Report" width="100%">
+</p>
+
 | Element | Description |
 |:---|:---|
 | 🟢 SVG health ring | Donut chart color-coded by score (green/gold/red) |
@@ -294,28 +306,9 @@ The generated HTML report is a **single self-contained page** — no external as
 
 Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🛡️ SENTINEL                                               │
-│                                                             │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │
-│  │Files │ │Lines │ │Issues│ │Signals│ │TODOs │ │Score │  │
-│  │2,341 │ │420K  │ │  47  │ │  23  │ │  12  │ │ 74%  │  │
-│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘ └──────┘  │
-│                                                             │
-│  ┌─ Understand ─┐ ┌─ Ask ────────┐ ┌─ Reports ────┐      │
-│  │  Scan  Brief │ │  Question    │ │  HTML  MD    │      │
-│  │  Overview    │ │  Retrieve    │ │  JSON  Context│      │
-│  └──────────────┘ └──────────────┘ └──────────────┘      │
-│                                                             │
-│  ┌─ Output Terminal ────────────────────────────────┐      │
-│  │  $ Scan complete · 74% health · 3 hotspots      │      │
-│  │  → artifact: report.html (2.1 KB)               │      │
-│  └──────────────────────────────────────────────────┘      │
-│                                                             │
-│  💡 Suggestions: Split kubelet.go · Add integration tests  │
-╚═════════════════════════════════════════════════════════════╝
-```
+<p align="center">
+  <img src="logos/dashboard-screenshot.png" alt="Sentinel Dashboard" width="100%">
+</p>
 
 **Features:** Stats row · Project identity + risk cards · Shared inputs (query, repo URL, budget, goal, flags) · Toggle pills (fast scan, dry-run, apply, verify, adapters) · Tool cards (Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL) · Output terminal · Suggestions + prompt · Focus/hotspots/frameworks · File risks + review signals tables · Health timeline · Auto-refresh (3s)
 
@@ -368,40 +361,58 @@ Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
   <img src="logos/diagram2.png" alt="Sentinel Product Flow" width="100%">
 </p>
 
-### Install & Scan
+### Install
+
+**One-liner (any platform):**
+```bash
+pip install git+https://github.com/Ntooxx/Sentinel.git
+```
+
+**From source (for development):**
+```bash
+git clone https://github.com/Ntooxx/Sentinel.git
+cd Sentinel
+pip install -e .
+```
+
+**Windows users:** double-click `install.ps1` or run:
+```powershell
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+After install, the `project-sentinel` command is available globally.
+
+### Scan
 
 ```bash
-# Install from source
-python -m pip install -e .
-
 # Scan the current directory
-python sentinel.py scan . --fast
+project-sentinel scan . --fast
 
-# Launch the dashboard
-python sentinel.py dashboard . --fast
+# Launch the live dashboard
+project-sentinel dashboard . --fast
 ```
 
 ### Generate Reports
 
 ```bash
 # Beautiful HTML report
-python sentinel.py report . --format html
+project-sentinel report . --format html
 
 # Markdown report
-python sentinel.py report . --format markdown
+project-sentinel report . --format markdown
 ```
 
 ### AI Agent Workflow
 
 ```bash
 # Generate an agent-ready prompt
-python sentinel.py prompt . --goal next --budget small --fast
+project-sentinel prompt . --goal next --budget small --fast
 
 # Ask a question about your codebase
-python sentinel.py ask . --question "where is authentication handled?" --fast
+project-sentinel ask . --question "where is authentication handled?" --fast
 
 # Analyse any GitHub repo
-python sentinel.py analyze-url https://github.com/user/repo --fast
+project-sentinel analyze-url https://github.com/user/repo --fast
 ```
 
 ---
@@ -460,13 +471,14 @@ python -m unittest discover -s tests -v
 Run Sentinel against all bundled fixture repos to verify performance claims on your own machine:
 
 ```bash
-python sentinel.py benchmark . --fast
+project-sentinel benchmark . --fast
 ```
 
-Example output:
+Example output from a real run:
 
 ```text
 SENTINEL BENCHMARK
+Benchmarked 7 fixture(s)
   cpp_repo              files=    2  lines=     6  time=  0.007s  health=85%
   docs_heavy            files=    2  lines=     6  time=  0.006s  health=85%
   generated_heavy       files=    2  lines=     8  time=  0.008s  health=85%
@@ -486,16 +498,16 @@ See the [`examples/`](./examples/) directory for ready-to-run scripts:
 
 ```bash
 # Scan the Sentinel repo itself
-python sentinel.py scan . --fast
+project-sentinel scan . --fast
 
 # Generate an HTML report
-python sentinel.py report . --format html
+project-sentinel report . --format html
 
 # Launch the dashboard
-python sentinel.py dashboard . --fast
+project-sentinel dashboard . --fast
 
 # Run a benchmark on all fixture repos
-python sentinel.py benchmark . --fast
+project-sentinel benchmark . --fast
 ```
 
 ---

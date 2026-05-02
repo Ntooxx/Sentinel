@@ -13,12 +13,12 @@ if [ ! -d "$REPO_DIR" ]; then
 fi
 
 echo "=== Scanning FastAPI ==="
-python sentinel.py scan "$REPO_DIR" --fast
+project-sentinel scan "$REPO_DIR" --fast
 
 echo ""
 echo "=== Generating FastAPI Report ==="
-python sentinel.py report "$REPO_DIR" --format html
+project-sentinel report "$REPO_DIR" --format html
 
 echo ""
 echo "=== FastAPI Overview ==="
-python sentinel.py overview "$REPO_DIR" --fast --quiet
+project-sentinel overview "$REPO_DIR" --fast --quiet

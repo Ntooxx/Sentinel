@@ -2,4 +2,4 @@
 # Scan Sentinel itself
 
 cd "$(dirname "$0")/.."
-python sentinel.py scan . --fast
+project-sentinel scan . --fast

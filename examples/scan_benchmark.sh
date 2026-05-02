@@ -3,4 +3,4 @@
 
 cd "$(dirname "$0")/.."
 echo "=== Sentinel Benchmark ==="
-python sentinel.py benchmark . --fast
+project-sentinel benchmark . --fast

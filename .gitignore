@@ -7,6 +7,7 @@ venv/
 data/sentinel.log
 data/reports/*.md
 SENTINEL_REPORT.md
+SENTINEL_REPORT.html
 .sentinel/
 sentinel-url-reports/
 server.log
@@ -34,3 +35,18 @@ SELLABLE_PRODUCT_ROADMAP.md
 docs/PRODUCT_TIERS.md
 TOLARIA_FIX_PLAN.md
 time_to_do_this.md
+dist/
+build/
+*.whl
+*.egg
+.coverage
+htmlcov/
+.mypy_cache/
+.tox/
+.nox/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
