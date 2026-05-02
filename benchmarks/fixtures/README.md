@@ -10,8 +10,14 @@ These small public fixtures exercise Sentinel detection paths:
 - `docs_heavy`
 - `generated_heavy`
 
-Run:
+Run the full benchmark across all fixtures:
 
 ```bash
-project-sentinel benchmark benchmarks/fixtures/python_app --fast
+python sentinel.py benchmark . --fast
+```
+
+Or benchmark a single fixture:
+
+```bash
+python sentinel.py scan benchmarks/fixtures/python_app --fast
 ```

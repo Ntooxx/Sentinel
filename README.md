@@ -10,10 +10,10 @@
 
 **Scan → Understand → Act**
 
-[![Tests](https://img.shields.io/badge/tests-197%20%C2%B7%200%20failures-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](#test-suite)
+[![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
 [![Python](https://img.shields.io/badge/python-pure%20%F0%9F%90%8D-blue?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
 [![No Cloud](https://img.shields.io/badge/no%20cloud-0%20dependencies-critical?style=for-the-badge&logo=socket&logoColor=white)](#limitations)
-[![Speed](https://img.shields.io/badge/6M%20lines-55s-orange?style=for-the-badge&logo=lightning&logoColor=white)](#scan-performance)
+[![Benchmark](https://img.shields.io/badge/reproducible-benchmark-orange?style=for-the-badge&logo=lightning&logoColor=white)](#reproducible-benchmark)
 
 > **25,000 files. 6 million lines. One command. Under a minute. No cloud.**
 
@@ -451,6 +451,51 @@ python -m unittest discover -s tests -v
 │  197 passed  ·  0 failed  ·  9.3s                      │
 │  No flaky tests  ·  No external dependencies           │
 └─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📈 Reproducible Benchmark
+
+Run Sentinel against all bundled fixture repos to verify performance claims on your own machine:
+
+```bash
+python sentinel.py benchmark . --fast
+```
+
+Example output:
+
+```text
+SENTINEL BENCHMARK
+  cpp_repo              files=    2  lines=     6  time=  0.007s  health=85%
+  docs_heavy            files=    2  lines=     6  time=  0.006s  health=85%
+  generated_heavy       files=    2  lines=     8  time=  0.008s  health=85%
+  go_service            files=    2  lines=     6  time=  0.007s  health=85%
+  node_app              files=    2  lines=    19  time=  0.006s  health=85%
+  python_app            files=    3  lines=    14  time=  0.007s  health=95%
+  rust_cli              files=    2  lines=     8  time=  0.007s  health=85%
+```
+
+Benchmarks run entirely offline with zero external dependencies.
+
+---
+
+## 📁 Examples
+
+See the [`examples/`](./examples/) directory for ready-to-run scripts:
+
+```bash
+# Scan the Sentinel repo itself
+python sentinel.py scan . --fast
+
+# Generate an HTML report
+python sentinel.py report . --format html
+
+# Launch the dashboard
+python sentinel.py dashboard . --fast
+
+# Run a benchmark on all fixture repos
+python sentinel.py benchmark . --fast
 ```
 
 ---

@@ -800,7 +800,7 @@ class SentinelAgent:
                 "files": [],
                 "untested_hotspots": [],
             }
-            root = _safe_parse_xml(coverage_xml)
+        root = _safe_parse_xml(coverage_xml)
         files: list[dict[str, Any]] = []
         for cls in root.findall(".//class"):
             filename = cls.attrib.get("filename", "")
@@ -820,6 +820,38 @@ class SentinelAgent:
             "files": files,
             "untested_hotspots": untested[:10],
             "message": f"Loaded coverage for {len(files)} file(s)",
+        }
+
+    def benchmark_run(self, fast_mode: bool = False) -> Dict[str, Any]:
+        fixtures_dir = self.repo_root / "benchmarks" / "fixtures"
+        if not fixtures_dir.exists():
+            return {"ok": False, "message": "benchmarks/fixtures/ not found", "results": []}
+        results = []
+        for entry in sorted(fixtures_dir.iterdir()):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            agent = SentinelAgent(str(entry), config_path=str(self.config_base_dir / "config.json"))
+            start = perf_counter()
+            scan = agent.scan_once(
+                print_report=False,
+                fast_mode=fast_mode,
+                include_suggestions=False,
+                create_checkpoint=False,
+            )
+            elapsed = perf_counter() - start
+            health = scan["audit"]["health_score"]
+            metrics = scan["audit"]["metrics"]
+            results.append({
+                "fixture": entry.name,
+                "files": metrics["total_files"],
+                "lines": metrics["total_lines"],
+                "time_seconds": round(elapsed, 3),
+                "health": health,
+            })
+        return {
+            "ok": True,
+            "message": f"Benchmarked {len(results)} fixture(s)",
+            "results": results,
         }
 
     def build_watch_alerts(
@@ -2682,6 +2714,16 @@ def _render_coverage(result: Dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_benchmark(result: Dict[str, Any]) -> str:
+    lines = ["SENTINEL BENCHMARK", result.get("message", "")]
+    for r in result.get("results", []):
+        lines.append(
+            f"  {r['fixture']:20s}  files={r['files']:>5d}  "
+            f"lines={r['lines']:>6d}  time={r['time_seconds']:>7.3f}s  health={r['health']}%"
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _render_insights(result: Dict[str, Any]) -> str:
     lines = ["SENTINEL INSIGHTS", f"Project: {result.get('project_dir')}", ""]
     lines.append("Alerts:")
@@ -3132,6 +3174,7 @@ def _normalize_argv(argv: list[str]) -> list[str]:
         "alerts",
         "ledger",
         "bundle",
+        "benchmark",
         "speed-plan",
         "cleanup-reports",
         "release-check",
@@ -3532,6 +3575,15 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format for coverage",
     )
+
+    benchmark_parser = subparsers.add_parser("benchmark", parents=[common], help="Run reproducible scan benchmarks against bundled fixture repos")
+    benchmark_parser.add_argument(
+        "--format",
+        choices=["text", "json", "markdown"],
+        default="text",
+        help="Output format for benchmark results",
+    )
+    benchmark_parser.add_argument("--fast", action="store_true", help="Use faster scanning for benchmarks")
 
     insights_parser = subparsers.add_parser("insights", parents=[common], help="Show dashboard-style evidence, drilldowns, alerts, and diff impact")
     insights_parser.add_argument("--query", default="", help="Optional query to include retrieval evidence")
@@ -4090,6 +4142,14 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print(agent.reporter.render_json(result))
             else:
                 print(_render_coverage(result))
+            return 0
+
+        if args.command == "benchmark":
+            result = agent.benchmark_run(fast_mode=args.fast)
+            if args.format == "json":
+                print(agent.reporter.render_json(result))
+            else:
+                print(_render_benchmark(result))
             return 0
 
         if args.command == "insights":
