@@ -839,38 +839,63 @@
             background: rgba(240, 152, 64, 0.03);
         }
         .cap-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 22px;
             transition: all 0.4s;
+            position: relative;
         }
-        .cap-card:nth-child(1) .cap-icon {
-            background: rgba(240, 152, 64, 0.12);
+        .cap-icon::before {
+            content: '◆';
+            font-size: 42px;
+            line-height: 1;
+            opacity: 0.25;
+            transition: all 0.4s;
+        }
+        .cap-icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.4s;
+        }
+        .cap-card:nth-child(1) .cap-icon::before {
             color: var(--gold);
         }
-        .cap-card:nth-child(2) .cap-icon {
-            background: rgba(224, 80, 72, 0.12);
+        .cap-card:nth-child(2) .cap-icon::before {
             color: var(--coral);
         }
-        .cap-card:nth-child(3) .cap-icon {
-            background: rgba(200, 112, 96, 0.12);
+        .cap-card:nth-child(3) .cap-icon::before {
             color: var(--copper);
         }
-        .cap-card:nth-child(4) .cap-icon {
-            background: rgba(255, 184, 112, 0.12);
+        .cap-card:nth-child(4) .cap-icon::before {
             color: var(--amber-light);
         }
-        .cap-card:hover .cap-icon {
-            transform: scale(1.12) rotate(-4deg);
+        .cap-card:nth-child(1) .cap-icon::after {
+            background: radial-gradient(circle, rgba(240, 152, 64, 0.15), transparent 70%);
         }
-        .cap-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke-width: 1.8;
+        .cap-card:nth-child(2) .cap-icon::after {
+            background: radial-gradient(circle, rgba(224, 80, 72, 0.15), transparent 70%);
+        }
+        .cap-card:nth-child(3) .cap-icon::after {
+            background: radial-gradient(circle, rgba(200, 112, 96, 0.15), transparent 70%);
+        }
+        .cap-card:nth-child(4) .cap-icon::after {
+            background: radial-gradient(circle, rgba(255, 184, 112, 0.15), transparent 70%);
+        }
+        .cap-card:hover .cap-icon {
+            transform: scale(1.08);
+        }
+        .cap-card:hover .cap-icon::before {
+            opacity: 0.6;
+            text-shadow: 0 0 20px currentColor;
+        }
+        .cap-card:hover .cap-icon::after {
+            opacity: 1;
         }
         .cap-card h3 {
             font-family: 'Orbitron', sans-serif;
@@ -1198,14 +1223,17 @@
             transform: scaleX(1);
         }
         .limit-card .lim-icon {
-            font-size: 1.4rem;
+            font-size: 1.8rem;
             margin-bottom: 16px;
-            opacity: 0.4;
-            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0.2;
+            transition: all 0.4s;
+            color: var(--coral);
+            line-height: 1;
         }
         .limit-card:hover .lim-icon {
-            opacity: 0.8;
-            transform: scale(1.12);
+            opacity: 0.6;
+            transform: scale(1.15);
+            text-shadow: 0 0 20px var(--coral);
         }
         .limit-card h3 {
             font-family: 'Orbitron', sans-serif;
@@ -1732,53 +1760,22 @@
             <p class="section-lead reveal">Seven structured outputs from a single scan — no cloud, no uploads, no dependencies beyond Python stdlib.</p>
             <div class="caps-grid">
                 <div class="cap-card reveal" style="transition-delay:0s">
-                    <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 8c3-1 5-1 8 0s5 1 8 0"/>
-                            <path d="M5 12c3-1 5-1 8 0s5 1 8 0"/>
-                            <path d="M5 16c3-1 5-1 8 0s5 1 8 0"/>
-                            <path d="M9 4v16"/>
-                            <path d="M15 4v16"/>
-                        </svg>
-                    </div>
+                    <div class="cap-icon"></div>
                     <h3>Architecture Graph</h3>
                     <p>Live directed graph of your codebase — entry points, module boundaries, dependency flows, resolved through a 5-tier ranked fallback.</p>
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.1s">
-                    <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20V10"/>
-                            <path d="M18 20V4"/>
-                            <path d="M6 20v-4"/>
-                            <path d="M2 22h20"/>
-                        </svg>
-                    </div>
+                    <div class="cap-icon"></div>
                     <h3>Health Score</h3>
                     <p>Maintainability, runtime complexity, test signal, security — with a detailed breakdown so you know exactly where the pain is.</p>
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.2s">
-                    <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2a10 10 0 1 0 10 10"/>
-                            <path d="M12 6v6l4 2"/>
-                            <path d="M21 3v4h-4"/>
-                            <path d="M21 3l-5.5 5.5"/>
-                        </svg>
-                    </div>
+                    <div class="cap-icon"></div>
                     <h3>Hotspot Detection</h3>
                     <p>Identifies files with highest risk — oversize files, TODO density, doc drift, test gaps. Ranked by severity so you attack the worst first.</p>
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.3s">
-                    <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <path d="M14 2v6h6"/>
-                            <path d="M16 13H8"/>
-                            <path d="M16 17H8"/>
-                            <path d="M10 9H8"/>
-                            <path d="M8 21v-4"/>
-                        </svg>
-                    </div>
+                    <div class="cap-icon"></div>
                     <h3>Context Pack</h3>
                     <p>Compact ~2,500 token brief that replaces hours of file reading — ready for Cline, Claude Code, Codex, Roo, Continue. Copy, paste, ship.</p>
                 </div>
@@ -1896,17 +1893,17 @@
             <p class="section-lead reveal">Transparent about where Sentinel is still evolving. These are honest edges — not hidden flaws.</p>
             <div class="limits-grid">
                 <div class="limit-card reveal" style="transition-delay:0s">
-                    <div class="lim-icon">⚡</div>
+                    <div class="lim-icon">◆</div>
                     <h3>Project Naming</h3>
                     <p>5-tier fallback resolves most cases (FastAPI → "FastAPI", not "Sponsors") but unconventional manifests can still confuse. Actively tuning tier weights.</p>
                 </div>
                 <div class="limit-card reveal" style="transition-delay:.1s">
-                    <div class="lim-icon">🎯</div>
+                    <div class="lim-icon">◆</div>
                     <h3>Entry Point Ranking</h3>
                     <p>Large monorepos with unconventional layouts may rank secondary entry points below expected thresholds. Go binaries get a +80 bonus — still tuning for edge cases.</p>
                 </div>
                 <div class="limit-card reveal" style="transition-delay:.2s">
-                    <div class="lim-icon">📄</div>
+                    <div class="lim-icon">◆</div>
                     <h3>Doc Extraction Drift</h3>
                     <p>Sparse or inconsistent docstrings can reduce docs-to-code alignment accuracy. Purpose inference uses 6-step fallback — works on well-documented repos, drifts on sparse ones.</p>
                 </div>
@@ -1944,7 +1941,7 @@
             <div class="cta-h reveal-scale">Try Sentinel</div>
             <p class="cta-sub reveal">Scan your repository in seconds. See what your codebase is actually telling you.</p>
             <div class="cta-btns reveal">
-                <a href="#" class="btn-glow">Start Scanning →</a>
+                <a href="https://github.com/Ntooxx/Sentinel#quick-start" class="btn-glow" target="_blank">Start Scanning →</a>
                 <a href="#capabilities" class="btn-ghost">Explore Capabilities</a>
             </div>
             <div class="cta-nums reveal">
