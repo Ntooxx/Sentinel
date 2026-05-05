@@ -20,9 +20,10 @@
             --coral: #e05048;
             --copper: #c87060;
             --amber-light: #ffb870;
-            --cream: #faf5ef;
-            --mist: #a09080;
-            --mist2: #6b5c50;
+            --cream: #f5efe8;
+            --mist: #b8a898;
+            --mist2: #7a6c60;
+            --text: #e8e0d8;
             --glass: rgba(255, 255, 255, 0.03);
             --glassborder: rgba(240, 152, 64, 0.1);
             --glassborder-hover: rgba(240, 152, 64, 0.25);
@@ -45,12 +46,14 @@
         }
         body {
             background: var(--void);
-            color: var(--cream);
+            color: var(--text);
             font-family: 'Manrope', sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 17px;
+            line-height: 1.7;
             overflow-x: hidden;
-            font-weight: 400;
+            font-weight: 350;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* ═══════════════════════════════════════════
@@ -261,6 +264,17 @@
             padding: 14px clamp(20px, 4vw, 56px);
         }
         .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .nav-logo img {
+            height: 28px;
+            width: auto;
+            display: block;
+        }
+        .nav-logo-text {
             font-family: 'Orbitron', sans-serif;
             font-size: 20px;
             font-weight: 700;
@@ -271,7 +285,7 @@
             background-clip: text;
             position: relative;
         }
-        .nav-logo::after {
+        .nav-logo-text::after {
             content: '';
             position: absolute;
             bottom: -4px;
@@ -317,7 +331,7 @@
             transition: width 0.3s ease;
         }
         .nav-links a:hover {
-            color: var(--amber-light);
+            color: var(--cream);
         }
         .nav-links a:hover::after {
             width: 100%;
@@ -522,19 +536,19 @@
             }
         }
         .hero-tagline {
-            font-size: clamp(14px, 1.8vw, 20px);
-            font-weight: 300;
-            color: var(--mist);
-            max-width: 600px;
+            font-size: clamp(15px, 1.8vw, 20px);
+            font-weight: 350;
+            color: var(--text);
+            max-width: 660px;
             margin: 28px auto 0;
-            line-height: 1.7;
+            line-height: 1.75;
             opacity: 0;
             animation: rise 1s ease forwards 0.9s;
             position: relative;
             z-index: 2;
         }
         .hero-tagline strong {
-            color: #fff;
+            color: var(--amber-light);
             font-weight: 600;
         }
         .hero-actions {
@@ -674,9 +688,9 @@
         }
         .hstat span {
             font-family: 'Space Mono', monospace;
-            font-size: clamp(8px, 0.9vw, 10px);
+            font-size: clamp(9px, 0.9vw, 11px);
             letter-spacing: 0.1em;
-            color: var(--mist);
+            color: var(--mist2);
             text-transform: uppercase;
         }
         .scroll-hint {
@@ -778,10 +792,10 @@
             margin-bottom: 18px;
         }
         .section-lead {
-            font-size: clamp(14px, 1.6vw, 17px);
-            font-weight: 300;
-            color: var(--mist);
-            max-width: 560px;
+            font-size: clamp(15px, 1.6vw, 18px);
+            font-weight: 350;
+            color: var(--text);
+            max-width: 600px;
             line-height: 1.75;
             margin-bottom: 60px;
         }
@@ -854,22 +868,22 @@
             transform: scale(1.12) rotate(-4deg);
         }
         .cap-icon svg {
-            width: 22px;
-            height: 22px;
-            stroke-width: 1.6;
+            width: 24px;
+            height: 24px;
+            stroke-width: 1.8;
         }
         .cap-card h3 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(16px, 1.8vw, 19px);
+            font-size: clamp(17px, 1.8vw, 20px);
             font-weight: 700;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.03em;
             margin-bottom: 10px;
             color: var(--cream);
         }
         .cap-card p {
-            font-size: clamp(12px, 1.2vw, 14px);
-            color: var(--mist);
-            line-height: 1.7;
+            font-size: clamp(13px, 1.2vw, 15px);
+            color: var(--text);
+            line-height: 1.75;
         }
 
         /* ═══════════════════════════════════════════
@@ -972,7 +986,7 @@
         }
         .ring-val {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             font-weight: 800;
             letter-spacing: -0.02em;
         }
@@ -1042,12 +1056,12 @@
         .bpanel-result {
             padding-top: 18px;
             border-top: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 13px;
-            color: var(--mist);
-            line-height: 1.65;
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.7;
         }
         .bpanel-result strong {
-            color: #fff;
+            color: var(--cream);
             font-weight: 600;
         }
 
@@ -1137,9 +1151,9 @@
             color: var(--cream);
         }
         .think-body p {
-            font-size: 14px;
-            color: var(--mist);
-            line-height: 1.7;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.75;
         }
 
         /* ═══════════════════════════════════════════
@@ -1202,9 +1216,9 @@
             color: var(--cream);
         }
         .limit-card p {
-            font-size: clamp(12px, 1.2vw, 14px);
-            color: var(--mist);
-            line-height: 1.7;
+            font-size: clamp(13px, 1.2vw, 15px);
+            color: var(--text);
+            line-height: 1.75;
         }
         .note-bar {
             margin-top: 44px;
@@ -1212,9 +1226,9 @@
             border-radius: var(--radius);
             background: rgba(240, 152, 64, 0.03);
             border: 1px solid rgba(240, 152, 64, 0.1);
-            font-size: 14px;
-            color: var(--mist);
-            line-height: 1.7;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.75;
             text-align: center;
         }
         .note-bar strong {
@@ -1277,12 +1291,12 @@
             animation: gradientShift 8s ease-in-out infinite;
         }
         .cta-sub {
-            font-size: clamp(14px, 1.6vw, 17px);
-            font-weight: 300;
-            color: var(--mist);
-            max-width: 480px;
+            font-size: clamp(15px, 1.6vw, 18px);
+            font-weight: 350;
+            color: var(--text);
+            max-width: 520px;
             margin: 0 auto 56px;
-            line-height: 1.7;
+            line-height: 1.75;
         }
         .cta-btns {
             display: flex;
@@ -1657,14 +1671,18 @@
 
     <!-- NAV -->
     <nav>
-        <div class="nav-logo">SENTINEL</div>
+        <a href="#" class="nav-logo">
+            <img src="logos/logo.png" alt="Sentinel"/>
+            <span class="nav-logo-text">SENTINEL</span>
+        </a>
         <div class="nav-links">
             <a href="#capabilities">Capabilities</a>
             <a href="#benchmark">Benchmark</a>
-            <a href="#how">How It Thinks</a>
+            <a href="#how">Pipeline</a>
             <a href="#limits">Limits</a>
+            <a href="https://github.com/Ntooxx/Sentinel" target="_blank">GitHub</a>
         </div>
-        <a href="#" class="nav-cta-btn">Run Scan →</a>
+        <a href="https://github.com/Ntooxx/Sentinel" class="nav-cta-btn" target="_blank">★ Star on GitHub</a>
     </nav>
 
     <!-- HERO -->
@@ -1682,22 +1700,23 @@
         <div class="diamond-particle" style="top:55%;right:12%;animation-delay:1.5s;animation-duration:9s;"></div>
         <div class="diamond-particle" style="top:35%;left:50%;animation-delay:3.2s;animation-duration:7.5s;"></div>
 
-        <div class="hero-eyebrow">v0.9 · Local · Zero Deps · 197 Tests</div>
+        <div class="hero-eyebrow">v0.9 · Open Source · Zero Deps · 197 Tests</div>
         <h1 class="hero-title">Sentinel</h1>
         <p class="hero-tagline">
-            <strong>Maps architecture, risk, and runtime surfaces</strong> across <strong>25,432 files
-            in 55 seconds</strong> — entirely offline, zero dependencies. AI-ready context packs,
-            not vague summaries.
+            <strong>Maps architecture, risk, and runtime surfaces</strong> — from <strong>73-file libraries
+            to 25,432-file infrastructure repos</strong> in under a minute. Entirely offline,
+            zero dependencies, <strong>100% open source</strong>. AI-ready context packs, not vague
+            summaries.
         </p>
         <div class="hero-actions">
-            <a href="#" class="btn-glow">View Demo →</a>
+            <a href="https://github.com/Ntooxx/Sentinel" class="btn-glow" target="_blank">★ Star on GitHub</a>
             <a href="#benchmark" class="btn-ghost">See Benchmarks ↓</a>
         </div>
         <div class="hero-stats">
-            <div class="hstat"><strong>73</strong><span>→ 25,432 files</span></div>
+            <div class="hstat"><strong>73</strong><span>→ 40k files</span></div>
             <div class="hstat"><strong>0.16s→55s</strong><span>scan range</span></div>
             <div class="hstat"><strong>6M</strong><span>lines scanned</span></div>
-            <div class="hstat"><strong>197</strong><span>tests · 0 failures</span></div>
+            <div class="hstat"><strong>197</strong><span>tests · 0 fails</span></div>
         </div>
         <div class="scroll-hint">
             <span>Scroll</span>
@@ -1714,8 +1733,12 @@
             <div class="caps-grid">
                 <div class="cap-card reveal" style="transition-delay:0s">
                     <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 8c3-1 5-1 8 0s5 1 8 0"/>
+                            <path d="M5 12c3-1 5-1 8 0s5 1 8 0"/>
+                            <path d="M5 16c3-1 5-1 8 0s5 1 8 0"/>
+                            <path d="M9 4v16"/>
+                            <path d="M15 4v16"/>
                         </svg>
                     </div>
                     <h3>Architecture Graph</h3>
@@ -1723,8 +1746,11 @@
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.1s">
                     <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20V10" /><path d="M18 20V4" /><path d="M6 20v-4" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20V10"/>
+                            <path d="M18 20V4"/>
+                            <path d="M6 20v-4"/>
+                            <path d="M2 22h20"/>
                         </svg>
                     </div>
                     <h3>Health Score</h3>
@@ -1732,8 +1758,11 @@
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.2s">
                     <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a10 10 0 1 0 10 10"/>
+                            <path d="M12 6v6l4 2"/>
+                            <path d="M21 3v4h-4"/>
+                            <path d="M21 3l-5.5 5.5"/>
                         </svg>
                     </div>
                     <h3>Hotspot Detection</h3>
@@ -1741,8 +1770,13 @@
                 </div>
                 <div class="cap-card reveal" style="transition-delay:.3s">
                     <div class="cap-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M16 13H8" /><path d="M16 17H8" /><path d="M10 9H8" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                            <path d="M16 13H8"/>
+                            <path d="M16 17H8"/>
+                            <path d="M10 9H8"/>
+                            <path d="M8 21v-4"/>
                         </svg>
                     </div>
                     <h3>Context Pack</h3>
@@ -1881,6 +1915,28 @@
         </div>
     </section>
 
+    <!-- OPEN SOURCE -->
+    <section class="cta-section" style="border-top:1px solid var(--glassborder);">
+        <div class="inner">
+            <div class="cta-pre reveal">Open Source</div>
+            <div class="cta-h reveal-scale" style="font-size:clamp(32px,6vw,64px);">100% Free &amp; Open Source</div>
+            <p class="cta-sub reveal" style="max-width:560px;">
+                MIT licensed. Zero dependencies. No telemetry, no accounts, no cloud.
+                Built for developers who want AI to understand their codebase — without uploading to the cloud.
+            </p>
+            <div class="cta-btns reveal">
+                <a href="https://github.com/Ntooxx/Sentinel" class="btn-glow" target="_blank">★ Star on GitHub</a>
+                <a href="https://github.com/Ntooxx/Sentinel/blob/main/LICENSE" class="btn-ghost" target="_blank">MIT License →</a>
+            </div>
+            <div class="cta-nums reveal" style="border-top-color:var(--glassborder);">
+                <div class="cnum"><strong>Python</strong><span>3.8+ stdlib only</span></div>
+                <div class="cnum"><strong>Zero</strong><span>external deps</span></div>
+                <div class="cnum"><strong>MIT</strong><span>free forever</span></div>
+                <div class="cnum"><strong>Offline</strong><span>no telemetry</span></div>
+            </div>
+        </div>
+    </section>
+
     <!-- CTA -->
     <section class="cta-section">
         <div class="inner">
@@ -1904,15 +1960,16 @@
     <footer>
         <div>
             <div class="f-logo">SENTINEL</div>
-            <div style="margin-top:4px;font-size:12px;">Repository intelligence engine</div>
+            <div style="margin-top:4px;font-size:13px;color:var(--mist);">Open source · MIT license</div>
         </div>
         <div class="f-links">
             <a href="#capabilities">Capabilities</a>
             <a href="#benchmark">Benchmark</a>
-            <a href="#how">Approach</a>
+            <a href="#how">Pipeline</a>
             <a href="#limits">Limits</a>
+            <a href="https://github.com/Ntooxx/Sentinel" target="_blank">GitHub</a>
         </div>
-        <div style="font-size:12px;">v0.9 · 197 tests · 0 failures · zero deps</div>
+        <div style="font-size:13px;color:var(--mist);">v0.9 · 197 tests · 0 failures · zero deps</div>
     </footer>
 
     <!-- Three.js for background floating geometry -->
