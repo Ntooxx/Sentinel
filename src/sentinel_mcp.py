@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
-
 PROTOCOL_VERSION = "2025-03-26"
 SERVER_NAME = "sentinel-mcp"
 SERVER_VERSION = "1.1.0"

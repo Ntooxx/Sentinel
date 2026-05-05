@@ -5,7 +5,6 @@ from typing import Any
 
 from utils import ensure_dir
 
-
 ADAPTERS = {
     "cline": {
         "file": "cline.md",

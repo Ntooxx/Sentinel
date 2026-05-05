@@ -3,7 +3,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 
@@ -11,8 +10,8 @@ if str(SRC) in sys.path:
     sys.path.remove(str(SRC))
 sys.path.insert(0, str(SRC))
 
-from classify import classifyFile, riskFromScore, FileClassification  # noqa: E402
 from auditor import ProjectAuditor  # noqa: E402
+from classify import FileClassification, classifyFile, riskFromScore  # noqa: E402
 
 
 def _make_file(tmpdir: Path, rel_path: str, content: str = ""):

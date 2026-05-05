@@ -15,19 +15,19 @@ from typing import Any, Dict, List, Optional
 
 from classify import (
     ARCHETYPE_APP,
+    ARCHETYPE_BROWSER_ENGINE,
     ARCHETYPE_CLI_SERVER,
     ARCHETYPE_DESKTOP_APP,
-    ARCHETYPE_BROWSER_ENGINE,
     ARCHETYPE_FRAMEWORK_LIBRARY,
     ARCHETYPE_MONOREPO,
-    classifyFile,
     classifyComponentRole,
+    classifyFile,
     classifyLargeFilePolicy,
     classifyRiskSurface,
     classifySurface,
+    detectRepoArchetype,
     monorepo_component_key,
     riskFromScore,
-    detectRepoArchetype,
 )
 from utils import DEFAULT_AUDIT_RULES, DEFAULT_PATTERNS, merge_dicts, now_iso, read_json, write_json
 
@@ -226,7 +226,7 @@ class ProjectAuditor:
             with open(filepath, "rb") as handle:
                 for chunk in iter(lambda: handle.read(8192), b""):
                     hasher.update(chunk)
-        except (OSError, IOError):
+        except OSError:
             return "unreadable"
         return hasher.hexdigest()
 

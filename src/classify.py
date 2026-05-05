@@ -145,7 +145,7 @@ def detectRepoArchetype(
     )
     has_gen = any("/gen/" in p or "/generated/" in p for p in files)
     has_main_go = any(p.endswith("main.go") for p in files)
-    
+
     has_main_in_app_root = any(
         p.endswith("main.rs") or p.endswith("main.go") or p.endswith("main.ts") or p.endswith("main.py") or p.endswith("main.cpp") or p.endswith("main.cc")
         for p in files

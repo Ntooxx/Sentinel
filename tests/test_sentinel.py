@@ -1,5 +1,5 @@
-import json
 import io
+import json
 import shutil
 import subprocess
 import sys
@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"

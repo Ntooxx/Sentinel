@@ -9,8 +9,8 @@ import re
 import shutil
 import subprocess
 import sys
-import threading
 import tempfile
+import threading
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from datetime import datetime

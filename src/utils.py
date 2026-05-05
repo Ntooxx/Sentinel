@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 DEFAULT_KNOWLEDGE_BASE = {
     "files": {},
     "architecture": {},
