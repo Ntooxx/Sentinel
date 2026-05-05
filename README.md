@@ -282,9 +282,7 @@ Sentinel filters out the noise from *all* identity fields (project name, type, p
 
 The generated HTML report is a **single self-contained page** — no external assets, no build step:
 
-<p align="center">
-  <img src="logos/report-screenshot.png" alt="Sentinel HTML Report" width="100%">
-</p>
+
 
 | Element | Description |
 |:---|:---|
@@ -306,9 +304,7 @@ The generated HTML report is a **single self-contained page** — no external as
 
 Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
 
-<p align="center">
-  <img src="logos/dashboard-screenshot.png" alt="Sentinel Dashboard" width="100%">
-</p>
+
 
 **Features:** Stats row · Project identity + risk cards · Shared inputs (query, repo URL, budget, goal, flags) · Toggle pills (fast scan, dry-run, apply, verify, adapters) · Tool cards (Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL) · Output terminal · Suggestions + prompt · Focus/hotspots/frameworks · File risks + review signals tables · Health timeline · Auto-refresh (3s)
 
