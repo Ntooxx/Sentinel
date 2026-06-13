@@ -508,13 +508,7 @@ project-sentinel benchmark . --fast
 
 ---
 
-## ⚠️ Limitations
 
-> **Sentinel produces review signals and AI-agent context — not guaranteed bug findings.**
-
-It is not a replacement for SonarQube, Semgrep, or CodeQL. Always review recommendations before applying changes.
-
----
 
 <div align="center">
 
