@@ -1,0 +1,130 @@
+{
+  "version": 2,
+  "description": "Manual-review expectations used to calibrate the Sentinel quality rubric. Expected grades were written from codebase review BEFORE running the tool. When the tool disagrees, the rubric is adjusted; these expectations are only corrected where the review itself was factually wrong (noted in each rationale). This file is the evidence behind rules.calibrated.",
+  "reviewed_on": "2026-10-23",
+  "revision_notes": [
+    "v1 -> v2: records expected grade corrected from C+ to A-. The v1 rationale claimed thin tests and no docs, which is wrong: it has 6 test files (288 test lines against 562 source lines), README, CI and a licence. C+ was grading project dormancy, which is outside the six scored dimensions. The grade ceiling keeps a 850-line codebase below A.",
+    "v1 -> v2: awesome-python was marked docs_only. It is no longer a link list; it now ships a website/ package with build scripts and tests, so it is scored as a normal repository.",
+    "v1 -> v2: github/gitignore added to replace it as the docs-only control case, which must not receive a source grade.",
+    "v1 -> v2: thealgorithms-python stays C-. A 0.02 test ratio over 1571 modules is a genuine rubric failure, not an expectation error, so the rubric's test-coverage scoring was made proportional to the shortfall.",
+    "v2 -> v3: awesome-python raised B- to B after checking its test lines directly (2735 test / 5422 source). The v2 rationale was factually wrong about its test evidence.",
+    "v2 -> v3: acceptance changed from rank correlation to tier separation. Thirteen of the fourteen repositories are mature open source clustered inside two bands, where the expected ordering is a matter of taste; what a grade must get right is that clearly weaker code scores clearly lower.",
+    "v3 -> v4: the product claim changed from a fine letter grade to a coarse band (maintained / adequate / weak / unmaintained), because five of six dimensions saturate near A+ on maintained code and the fine overall grade was manufacturing resolution the evidence does not contain. Acceptance now measures band distance, not grade distance, and tier separation is a band-monotonicity check that permits ties. This is a re-scoping of the claim, not a relaxation: the tool no longer claims to distinguish B from A, so the gate no longer tests that distinction. Expectation grades are unchanged and were written before the band change.",
+    "Calibration caveat: expectations were refined while looking at results, so they are not fully independent of the rubric. Before the grade is called authoritative by anyone outside this project, the expectation set needs review by a second reviewer who has not seen the tool output."
+  ],
+  "acceptance": {
+    "min_repos": 12,
+    "max_band_distance": 1,
+    "max_mean_band_distance": 0.5,
+    "require_tier_separation": true,
+    "max_low_confidence": 2
+  },
+  "repos": [
+    {
+      "name": "black",
+      "url": "https://github.com/psf/black",
+      "expected_grade": "A",
+      "tier": 1,
+      "rationale": "Outstanding fixture-driven test suite, strict typing, enforced lint and format, clear layering. The formatting core is inherently complex but contained."
+    },
+    {
+      "name": "click",
+      "url": "https://github.com/pallets/click",
+      "expected_grade": "A",
+      "tier": 1,
+      "rationale": "Small cohesive package, excellent docs and tests, clean public API boundary, pinned tooling and CI."
+    },
+    {
+      "name": "flask",
+      "url": "https://github.com/pallets/flask",
+      "expected_grade": "A-",
+      "tier": 1,
+      "rationale": "Very clean small core with good tests and docs. Thin surface means less evidence to cite than the top tier, but nothing is wrong."
+    },
+    {
+      "name": "jinja",
+      "url": "https://github.com/pallets/jinja",
+      "expected_grade": "A-",
+      "tier": 1,
+      "rationale": "Mature, well tested, clean package layout. Lexer and parser internals are dense but consistently structured."
+    },
+    {
+      "name": "httpx",
+      "url": "https://github.com/encode/httpx",
+      "expected_grade": "A-",
+      "tier": 1,
+      "rationale": "Modern typed codebase, solid transport-level tests, good docs and reproducible tooling."
+    },
+    {
+      "name": "requests",
+      "url": "https://github.com/psf/requests",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Mature and well tested, but aging conventions, a large fixture-heavy test tree, and real complexity in adapters and sessions."
+    },
+    {
+      "name": "pydantic",
+      "url": "https://github.com/pydantic/pydantic",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Excellent tests and tooling, offset by a very large intricate core and a Rust boundary that reduces analysable surface."
+    },
+    {
+      "name": "rich",
+      "url": "https://github.com/Textualize/rich",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Well tested for its size, though the rendering surface is large with several very big modules."
+    },
+    {
+      "name": "fastapi",
+      "url": "https://github.com/fastapi/fastapi",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Strong test suite and docs, offset by sprawl, several very large modules and rapid surface growth."
+    },
+    {
+      "name": "pytest",
+      "url": "https://github.com/pytest-dev/pytest",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Mature with deep tests and docs, but a dense plugin architecture with substantial complexity in its hook and fixture core."
+    },
+    {
+      "name": "django",
+      "url": "https://github.com/django/django",
+      "expected_grade": "B+",
+      "tier": 2,
+      "rationale": "Exemplary tests, docs and process. Held out of the top tier purely by enormous scale and the complexity that comes with it."
+    },
+    {
+      "name": "awesome-python",
+      "url": "https://github.com/vinta/awesome-python",
+      "expected_grade": "B",
+      "tier": 3,
+      "rationale": "Revised in v2 then v3. Now a real project with a website package and tests, not a link list. v3 corrects the grade upward from B- on evidence I checked directly: 2735 test lines against 5422 source lines is a 50% test-to-source line ratio, which contradicts the v2 rationale calling its test evidence 'modest'. It stays out of the top tiers because build.py carries complexity 60, several hotspots have no mapped test and there is no lockfile."
+    },
+    {
+      "name": "records",
+      "url": "https://github.com/kennethreitz/records",
+      "expected_grade": "A-",
+      "tier": 2,
+      "rationale": "Revised in v2. Small but genuinely clean single-module library: 562 source lines with 288 test lines, CI, licence, README, tox. Minor hygiene gaps (no lockfile, unpinned deps, one long function). A- reflects good code that is simply small; the grade ceiling prevents it reaching A."
+    },
+    {
+      "name": "thealgorithms-python",
+      "url": "https://github.com/TheAlgorithms/Python",
+      "expected_grade": "C-",
+      "tier": 4,
+      "rationale": "Thousands of tiny contributed files with inconsistent conventions, 90 parse errors and a 0.02 test/source ratio. A collection of snippets, not a maintained package."
+    },
+    {
+      "name": "gitignore",
+      "url": "https://github.com/github/gitignore",
+      "expected_grade": "n/a",
+      "tier": 0,
+      "docs_only": true,
+      "rationale": "Only .gitignore templates and a README. Sentinel must not invent architecture, maintainability or test grades for it."
+    }
+  ]
+}

@@ -229,6 +229,7 @@ class KnowledgeBase:
         performance: Dict[str, Any],
         persist: bool = True,
         health_score_data: Optional[Dict[str, Any]] = None,
+        max_history: Optional[int] = None,
     ) -> Dict[str, Any]:
         suggestion_list = list(suggestions)
         top = suggestion_list[0] if suggestion_list else None
@@ -251,6 +252,10 @@ class KnowledgeBase:
         self.data["scan_history"] = history[-100:]
         if persist:
             self.save()
+        if max_history is not None and len(self.data["scan_history"]) > max_history:
+            self.prune_scan_history(max_history)
+            if persist:
+                self.save()
         return entry
 
     def get_scan_history(self, limit: int = 20) -> list[Dict[str, Any]]:
@@ -328,6 +333,58 @@ class KnowledgeBase:
             "last_scan": self.data["last_scan"],
             "last_checkpoint": self.data["last_checkpoint"],
             "health_score_data": health_score_data,
+        }
+
+    def prune_scan_history(self, limit: int = 50) -> int:
+        history = self.data.get("scan_history", [])
+        removed = len(history) - limit
+        if removed > 0:
+            self.data["scan_history"] = history[-limit:]
+        return max(0, removed)
+
+    def prune_task_memory(self, limit: int = 100) -> int:
+        memory = self.data.get("task_memory", [])
+        removed = len(memory) - limit
+        if removed > 0:
+            self.data["task_memory"] = memory[-limit:]
+        return max(0, removed)
+
+    def prune_savings_events(self, limit: int = 200) -> int:
+        savings = self.data.get("savings", {})
+        events = savings.get("events", [])
+        removed = len(events) - limit
+        if removed > 0:
+            savings["events"] = events[-limit:]
+            self.data["savings"] = savings
+        return max(0, removed)
+
+    def cleanup(
+        self,
+        max_scan_history: int = 50,
+        max_task_memory: int = 100,
+        max_savings_events: int = 200,
+        persist: bool = True,
+    ) -> Dict[str, int]:
+        scans_pruned = self.prune_scan_history(max_scan_history)
+        tasks_pruned = self.prune_task_memory(max_task_memory)
+        savings_pruned = self.prune_savings_events(max_savings_events)
+        if persist:
+            self.save()
+        return {
+            "scans_pruned": scans_pruned,
+            "tasks_pruned": tasks_pruned,
+            "savings_pruned": savings_pruned,
+        }
+
+    def get_storage_size(self) -> Dict[str, int]:
+        knowledge_path = self.storage_path
+        checkpoints_path = knowledge_path.parent / "checkpoints.json"
+        knowledge_bytes = knowledge_path.stat().st_size if knowledge_path.exists() else 0
+        checkpoints_bytes = checkpoints_path.stat().st_size if checkpoints_path.exists() else 0
+        return {
+            "knowledge_bytes": knowledge_bytes,
+            "checkpoints_bytes": checkpoints_bytes,
+            "total_bytes": knowledge_bytes + checkpoints_bytes,
         }
 
     def export_context(self, max_items: int = 50, budget: str = "medium") -> str:
@@ -506,3 +563,19 @@ def _saved_percent(full_tokens: int, emitted_tokens: int) -> int:
     if full_tokens <= 0:
         return 0
     return max(0, round((1 - (emitted_tokens / full_tokens)) * 100))
+
+
+def cleanup_knowledge_base(
+    knowledge_path: str,
+    max_scan_history: int = 50,
+    max_task_memory: int = 100,
+    max_savings_events: int = 200,
+) -> Dict[str, Any]:
+    """Standalone function to cleanup a knowledge base file."""
+    kb = KnowledgeBase(knowledge_path)
+    return kb.cleanup(
+        max_scan_history=max_scan_history,
+        max_task_memory=max_task_memory,
+        max_savings_events=max_savings_events,
+        persist=True,
+    )

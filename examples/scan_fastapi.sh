@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scan a real-world framework (FastAPI) to see Sentinel in action
+# Scan FastAPI source + tests and write a one-page HTML report.
 
 set -e
 REPO_DIR="/tmp/sentinel-fastapi-benchmark"
@@ -13,12 +13,7 @@ if [ ! -d "$REPO_DIR" ]; then
 fi
 
 echo "=== Scanning FastAPI ==="
-project-sentinel scan "$REPO_DIR" --fast
+project-sentinel scan "$REPO_DIR" --format html --out "$REPO_DIR/.sentinel/quality.html" --quiet
 
 echo ""
-echo "=== Generating FastAPI Report ==="
-project-sentinel report "$REPO_DIR" --format html
-
-echo ""
-echo "=== FastAPI Overview ==="
-project-sentinel overview "$REPO_DIR" --fast --quiet
+echo "Report written to $REPO_DIR/.sentinel/quality.html"

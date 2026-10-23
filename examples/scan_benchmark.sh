@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Run reproducible benchmark across all bundled fixture repos
+# Run the reproducible benchmark across a repository.
 
+set -e
 cd "$(dirname "$0")/.."
-echo "=== Sentinel Benchmark ==="
-project-sentinel benchmark . --fast
+python tools/benchmark.py --repo "${1:-.}" --mode all

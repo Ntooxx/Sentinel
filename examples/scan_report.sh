@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-# Scan a project and generate an HTML report
+# Scan a project and generate a self-contained HTML report.
 
+set -e
 TARGET="${1:-.}"
 cd "$(dirname "$0")/.."
 echo "=== Scanning: $TARGET ==="
-project-sentinel scan "$TARGET" --fast
+project-sentinel scan "$TARGET" --format html --out .sentinel/quality.html --quiet
 echo ""
-echo "=== Generating HTML Report ==="
-project-sentinel report "$TARGET" --format html
-echo ""
-echo "Report saved to SENTINEL_REPORT.html"
+echo "Report written to .sentinel/quality.html"

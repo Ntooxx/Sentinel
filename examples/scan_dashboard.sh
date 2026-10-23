@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Launch the Sentinel dashboard
+# Keep a live, self-contained HTML report while editing.
+# Sentinel 2.0 has no dashboard server; this is the replacement.
 
+set -e
 TARGET="${1:-.}"
 cd "$(dirname "$0")/.."
-echo "=== Dashboard for: $TARGET ==="
-echo "Open http://127.0.0.1:8765 in your browser"
-project-sentinel dashboard "$TARGET" --fast
+echo "=== Watching: $TARGET ==="
+echo "Open .sentinel/quality.html in your browser (Ctrl+C to stop)."
+project-sentinel watch "$TARGET" --out .sentinel/quality.html

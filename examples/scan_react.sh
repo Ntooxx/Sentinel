@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scan a React project to demo frontend detection
+# Scan a large JavaScript/TypeScript repository with conservative heuristics.
 
 set -e
 REPO_DIR="/tmp/sentinel-react-demo"
@@ -13,8 +13,4 @@ if [ ! -d "$REPO_DIR" ]; then
 fi
 
 echo "=== Scanning React ==="
-project-sentinel scan "$REPO_DIR" --fast
-
-echo ""
-echo "=== React Overview ==="
-project-sentinel overview "$REPO_DIR" --fast --quiet
+project-sentinel scan "$REPO_DIR" --format text

@@ -1,0 +1,80 @@
+name: 'Sentinel Code Analysis'
+description: >
+  Scan pull request code with Sentinel — health score, risk surfaces,
+  test suggestions, and trend tracking. Zero dependencies.
+author: 'Sentinel'
+
+inputs:
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+  scan-path:
+    description: 'Path to scan within the repository'
+    required: false
+    default: '.'
+  budget:
+    description: 'Context budget: tiny, small, medium, large'
+    required: false
+    default: 'small'
+  fast-mode:
+    description: 'Use fast scan (sample first 64KB of each file)'
+    required: false
+    default: 'true'
+  fail-on:
+    description: >
+      Fail CI condition: never, drop-5, drop-10, below-70, below-50.
+      "drop-5" fails if health drops 5+ points. "below-70" fails if
+      health is under 70.
+    required: false
+    default: 'never'
+  comment-title:
+    description: 'Title for the PR comment'
+    required: false
+    default: 'Sentinel Analysis'
+  checkpoint-key:
+    description: >
+      Cache key prefix for checkpoint storage. Change to force a fresh
+      baseline scan.
+    required: false
+    default: 'sentinel-checkpoint'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Restore base checkpoint from cache
+      id: sentinel-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/.sentinel-checkpoint
+        key: ${{ inputs.checkpoint-key }}-${{ github.base_ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ inputs.checkpoint-key }}-${{ github.base_ref }}-
+          ${{ inputs.checkpoint-key }}-
+
+    - name: Run Sentinel CI analysis
+      shell: bash
+      env:
+        SENTINEL_ACTION_PATH: ${{ github.action_path }}
+        SENTINEL_SCAN_PATH: ${{ inputs.scan-path }}
+        SENTINEL_BUDGET: ${{ inputs.budget }}
+        SENTINEL_FAST_MODE: ${{ inputs.fast-mode }}
+        SENTINEL_FAIL_ON: ${{ inputs.fail-on }}
+        SENTINEL_COMMENT_TITLE: ${{ inputs.comment-title }}
+        SENTINEL_CHECKPOINT_DIR: ${{ runner.temp }}/.sentinel-checkpoint
+        SENTINEL_GITHUB_TOKEN: ${{ inputs.github-token }}
+        SENTINEL_BASE_REF: ${{ github.base_ref }}
+        SENTINEL_EVENT_NAME: ${{ github.event_name }}
+      run: |
+        python "$SENTINEL_ACTION_PATH/src/ci.py"
+
+    - name: Save checkpoint to cache
+      if: steps.sentinel-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/.sentinel-checkpoint
+        key: ${{ inputs.checkpoint-key }}-${{ github.base_ref }}-${{ github.sha }}
+
+branding:
+  icon: 'shield'
+  color: 'blue'

@@ -1,0 +1,112 @@
+{
+  "summary": {
+    "band": "maintained",
+    "overall_score": 93,
+    "confidence": "high",
+    "provisional": true,
+    "headline": "All assessed dimensions are healthy; no high-signal findings were detected.",
+    "confidence_reasons": [],
+    "grade_ceiling": "A"
+  },
+  "dimensions": [
+    {
+      "id": "architecture",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "cli; pyproject.toml; 0 import cycle(s).",
+      "evidence": []
+    },
+    {
+      "id": "maintainability",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "3 source files; 0 over 500 lines; 0 TODOs; max complexity 1; 0 parse error(s).",
+      "evidence": []
+    },
+    {
+      "id": "tests",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "2 test files; ratio 0.67; 0 test-signal finding(s).",
+      "evidence": []
+    },
+    {
+      "id": "docs",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring.",
+      "evidence": []
+    },
+    {
+      "id": "dependencies",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "0 dependency/hygiene finding(s); lockfile; 0 unpinned dependency string(s).",
+      "evidence": []
+    },
+    {
+      "id": "security",
+      "grade": "A+",
+      "score": 100,
+      "confidence": "high",
+      "assessed": true,
+      "summary": "Basic pattern checks only; 0 secret-like match(es); 0 dynamic-execution and 0 debug finding(s).",
+      "evidence": []
+    }
+  ],
+  "metrics": {
+    "source_files": 3,
+    "test_files": 2,
+    "source_lines": 15,
+    "test_lines": 16,
+    "test_to_source_file_ratio": 0.67,
+    "test_to_source_line_ratio": 1.07,
+    "source_todos": 0,
+    "parse_errors": 0,
+    "max_complexity": 1,
+    "oversized_source_files": 0,
+    "archetype": "cli"
+  },
+  "findings": [],
+  "architecture": {
+    "archetype": "cli",
+    "components": [
+      "clean_app"
+    ],
+    "entry_points": [
+      "pyproject.toml",
+      "src/clean_app/__main__.py"
+    ],
+    "hotspots": [
+      "src/clean_app/__main__.py",
+      "src/clean_app/core.py",
+      "src/clean_app/__init__.py"
+    ]
+  },
+  "actions": [
+    {
+      "rank": 1,
+      "title": "Keep the quality baseline and re-scan after changes",
+      "why": "No high-signal findings were detected in the current snapshot.",
+      "impact": "low",
+      "effort": "low"
+    }
+  ],
+  "exclusions": {
+    "vendor": 0,
+    "generated": 0,
+    "docs_translations": 0,
+    "examples": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality."
+  }
+}

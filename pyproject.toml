@@ -2,16 +2,78 @@
 requires = ["setuptools>=64.0"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "sentinel-agent"
+version = "2.0.0"
+description = "Local real-time repository quality report"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Sentinel maintainers" }]
+dependencies = []
+keywords = ["code-quality", "static-analysis", "code-review", "developer-tools", "maintainability", "cli"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ntooxx/Sentinel"
+Repository = "https://github.com/Ntooxx/Sentinel"
+Issues = "https://github.com/Ntooxx/Sentinel/issues"
+Changelog = "https://github.com/Ntooxx/Sentinel/blob/main/CHANGELOG.md"
+
+[project.scripts]
+project-sentinel = "sentinel2.cli:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sentinel2*"]
+
+[tool.setuptools.package-data]
+sentinel2 = ["quality_rules.json"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py310"
+extend-exclude = [
+  ".github/actions",
+  "benchmarks/fixtures",
+  "sentinel-url-reports",
+  "docs/legacy",
+  # Retired 1.x code, kept under legacy/ for historical reference. The active
+  # package is src/sentinel2. Excluded as a directory rather than as individual
+  # files: a pattern like "src/*.py" would also match src/sentinel2/** because
+  # ruff's `*` crosses directory separators, which silently excluded the active
+  # package from `ruff check .`.
+  "legacy",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "ARG"]
 ignore = ["E501", "N802", "N815"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["N999"]
+"tests/*" = ["N999", "ARG001"]
+"src/sentinel_mcp.py" = ["ARG002"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "perf: performance tests that are not part of the default fast run",
+]
+# The retired 1.x suite lives in legacy/tests and runs only when invoked directly:
+#   python -m pytest legacy/tests
+norecursedirs = ["legacy"]
