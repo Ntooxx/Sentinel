@@ -1,84 +1,82 @@
 # API
 
-<p align="center">
-  <img src="../logos/logo2.png" alt="Sentinel" width="120">
-</p>
+Sentinel 2.0 has one supported entry point: the CLI. The Python functions below are used by the CLI and tests; they are stable enough for local automation, but the JSON report is the compatibility contract.
 
-## `SentinelAgent`
-
-Defined in `src/sentinel.py`.
-
-### Constructor
+## CLI entry point
 
 ```python
-SentinelAgent(project_dir: str, config_path: Optional[str] = None)
+from sentinel2.cli import main
+
+raise SystemExit(main(["scan", ".", "--format", "json"]))
 ```
 
-### Methods
+Console script: `project-sentinel = sentinel2.cli:main`
 
-- `scan_once(print_report: bool = True) -> dict`
-  Runs a single scan, audit, knowledge sync, and suggestion cycle.
-- `scan_once(..., fast_mode: bool = False, compact: bool = False, output_format: str = "text") -> dict`
-  Supports faster shallow scans and smaller output formats for CLI usage.
-- `scan_once(..., top_suggestions: Optional[int] = None) -> dict`
-  Can trim the suggestion list for lower-noise CLI output.
-- `get_full_report() -> str`
-  Runs a scan and returns a markdown report string.
-- `get_status() -> dict`
-  Returns the latest saved summary from the knowledge base without performing a new scan.
-- `save_full_report(destination: Optional[str] = None) -> dict`
-  Writes a markdown report to the scanned project and an archived copy to `data/reports/`.
-- `run_continuous() -> None`
-  Starts the continuous monitor loop.
+## Python helpers
 
-## `ProjectAuditor`
+```python
+from pathlib import Path
+from sentinel2.config import load_rules
+from sentinel2.scanner import scan_project
+from sentinel2.cli import load_latest_report
+from sentinel2.renderers import render
 
-Defined in `src/auditor.py`.
+rules = load_rules(Path("."))
+report = scan_project(Path("."), rules=rules)          # scan and return report dict
+latest = load_latest_report(Path("."))                 # no rescan; latest SQLite snapshot
+text = render(latest, "text", color=False)
+html = render(latest, "html")
+json_text = render(latest, "json")
+```
 
-### Key Methods
+`scan_project` raises `sentinel2.scanner.ScanError` for invalid paths and runtime failures. `load_latest_report` raises `sentinel2.cli.ReportError` when the index is missing or unreadable.
 
-- `scan_directory(...) -> dict`
-  Walks the target project and returns metadata for important files.
-- `audit_project(file_data: dict) -> dict`
-  Computes metrics, structure, patterns, issues, architecture, health score, risk summary, and per-file risk scores.
-- `diff_from_last_checkpoint(current_files: dict) -> dict`
-  Computes added, modified, and deleted files.
-- `create_checkpoint(file_data: dict, audit: dict) -> dict`
-  Persists a new checkpoint snapshot.
-- `is_significant_change(diff: dict) -> bool`
-  Applies threshold rules to determine whether a checkpoint should be created.
+## JSON report schema v1
 
-## `KnowledgeBase`
+Top-level keys:
 
-Defined in `src/knowledge.py`.
+| Key | Meaning |
+|---|---|
+| `schema_version` | `2` |
+| `generated_at` | ISO timestamp for the scan |
+| `project` | name, relative root, git commit/branch/dirty |
+| `scan` | mode, duration, file counts, coverage, index size |
+| `summary` | quality band/score, confidence, provisional flag, headline |
+| `dimensions` | one object per dimension with `assessed`, `grade`, `score`, `summary`, `evidence` |
+| `metrics` | source/test counts, ratios, TODOs, parse errors, complexity, archetype |
+| `findings` | every finding, source-first ordering |
+| `changes` | added/modified/deleted counts and quality delta |
+| `architecture` | archetype, components, entry points, hotspots |
+| `actions` | up to three ranked next actions |
+| `exclusions` | translation/vendor/generated/example counts and reason |
+| `limitations` | explicit caveats |
+| `rules_version` | quality rules version |
 
-### Key Methods
+Finding object:
 
-- `update_file_info(filepath, info, persist=True)`
-- `remove_file(filepath, persist=True)`
-- `replace_patterns(patterns, persist=True)`
-- `replace_issues(issues, persist=True)`
-- `update_architecture(arch, persist=True)`
-- `update_dependencies(deps, persist=True)`
-- `get_project_summary() -> dict`
-- `export_context(max_items: int = 50) -> str`
+```json
+{
+  "id": "MNT002:fastapi/routing.py",
+  "rule_id": "MNT002",
+  "dimension": "maintainability",
+  "severity": "high",
+  "confidence": "high",
+  "title": "Very large source file",
+  "file": "fastapi/routing.py",
+  "line": 1,
+  "evidence": ["4,956 lines", "197.0 KB"],
+  "why": "Very large modules are hard to review, test and change safely.",
+  "recommendation": "Map the relevant tests, then extract one cohesive concern at a time."
+}
+```
 
-## `Suggester`
+Rules:
 
-Defined in `src/suggester.py`.
+- paths are project-relative;
+- findings are sorted source-first, then by severity, confidence, dimension, path, and rule;
+- JSON contains all findings even when text output shows the top five;
+- timestamps and durations are the only intentionally non-deterministic fields.
 
-### Key Methods
+## Removed 1.x API
 
-- `generate_suggestions(audit, diff, knowledge) -> list`
-- `format_suggestions(suggestions) -> str`
-
-## `ReportGenerator`
-
-Defined in `src/reporter.py`.
-
-### Key Methods
-
-- `render_terminal(result, include_all_suggestions=False) -> str`
-- `render_markdown(result, knowledge_context="") -> str`
-- `render_json(result) -> str`
-- `save_markdown(report_text, destination) -> Path`
+`SentinelAgent`, `ProjectAuditor`, the dashboard action API, MCP bridge, retrieval/ask, memory, savings, timeline, ledger, verifier, coverage ingestion, autofix, PR generation, and URL analysis are retired. They remain in git history, not in the active API.

@@ -9,9 +9,17 @@ data/reports/*.md
 SENTINEL_REPORT.md
 SENTINEL_REPORT.html
 .sentinel/
+.sentinel/quality.db*
+.sentinel/quality.html
 sentinel-url-reports/
+.tmp/
+smoke.json
+sentinel-report.md
+sentinel.json
 server.log
 server.err.log
+demo/.cache/
+legacy/src/scan_cache.json
 sentinel_scan_output.txt
 sentinel_scan_with.md
 sentinel_scan_without.md

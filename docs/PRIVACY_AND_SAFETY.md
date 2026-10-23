@@ -1,34 +1,57 @@
-# Privacy And Safety
+# Privacy and Safety
 
-Sentinel is local-first. Repository scans, summaries, cache files, reports, and dashboard actions run on the local machine.
+Sentinel 2.0 is local-only by design.
 
-## What Sentinel Writes
+## Network
 
-- `.sentinel/knowledge_base.json`
-- `.sentinel/checkpoints.json`
-- `.sentinel/scan_cache.json`
-- `.sentinel/reports/`
-- `.sentinel/kilo/`
-- `.sentinel/adapters/`
-- `SENTINEL_REPORT.md`
-- `SENTINEL_REPORT.html`
-- `CONTEXT.md` when Kilo bridge commands are used
-- URL scan bundles under `sentinel-url-reports/`
-- URL clone cache under `sentinel-url-reports/.url-cache/`
+- No network calls during `scan`, `report`, or `watch`.
+- No telemetry, analytics, remote logging, or crash uploads.
+- No LLM calls, embeddings, or cloud APIs.
+- No CDN assets in HTML; the report is a single self-contained file.
 
-Use `project-sentinel scan . --no-write` for a scan that avoids updating knowledge, checkpoints, cache, or scan history.
+The privacy test monkeypatches `socket.socket` and `urllib.request.urlopen` to fail and then runs scan and every renderer.
 
-## Secret Handling
+## What is stored
 
-Sentinel detects likely secret-bearing files and redacts their content summaries. It flags:
+Runtime state is stored only under `.sentinel/` in the scanned root:
 
-- `.env` style files
-- filenames and paths containing `secret`, `credentials`, or private key terms
-- private key blocks
-- common API key, token, password, and AWS key patterns
+- `.sentinel/quality.db` plus SQLite `-wal`/`-shm`;
+- optional live report output, default `.sentinel/quality.html`.
 
-Secret detection is a guardrail, not a formal secret scanner. Keep sensitive paths excluded with `--ignore-path` when needed.
+The database contains file metadata, symbols, imports, findings, and the latest 20 report snapshots. It does not store full source files. Findings may include short evidence strings and redacted secret matches.
 
-## Network Behavior
+No JSON checkpoint or knowledge-base file is used. Old 1.x `.sentinel` state is not migrated and is ignored by discovery.
 
-Normal scans do not require network access. `analyze-url` uses Git to clone or fetch the requested repository source.
+## What is sent anywhere
+
+Nothing. Sentinel has no remote endpoint and no opt-in upload path.
+
+## Secret handling
+
+The security dimension performs basic pattern checks for:
+
+- provider-shaped tokens (AWS, GitHub, Slack, Google, OpenAI-style, Stripe);
+- assigned credentials such as `api_key = "..."`;
+- dangerous dynamic execution (`eval`, `exec`, `os.system`, shell-enabled subprocess, unsafe `pickle`/YAML loading);
+- hardcoded debug mode.
+
+Matches are redacted before they enter findings, then re-redacted at render time. A redacted value is never included in text, Markdown, HTML, or JSON.
+
+This is **not a security audit**. It is a small set of pattern checks intended to catch obvious mistakes. It can miss real vulnerabilities and can flag test fixtures; test files only receive provider-shaped token checks to reduce fake-credential noise.
+
+## Paths and report safety
+
+- Report paths are project-relative by default.
+- HTML escapes project names, file paths, titles, evidence, actions, and limitations.
+- Discovery does not follow symlinks.
+- Binary files and oversized files are skipped with a reason.
+- `.sentinel/` and the watch output file are ignored.
+- The report never embeds source files; only short evidence snippets and redacted values.
+
+## Limits
+
+- Sentinel does not execute tests or ingest coverage. "Test mapping" is static import/name evidence.
+- Non-Python analysis is conservative heuristics, not deep semantic analysis.
+- Security checks are basic and explicitly not an audit.
+- Churn requires git history; without git the hotspot rules are skipped and the report says so.
+- A cold scan of a very large repository is still I/O-bound; budgets are documented in `sentinel_2.md`.

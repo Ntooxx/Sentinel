@@ -1,519 +1,248 @@
-<div align="center">
+<img src="logos/logo.png" alt="Sentinel" width="120">
 
-<p align="center">
-  <img src="logos/logo.png" alt="Sentinel" width="140">
-</p>
+# Sentinel 2.0
 
-# SENTINEL
-
-### **For developers who want AI to understand their codebase — without uploading to the cloud**
-
-**Scan → Understand → Act**
+**One command. One page. Live repository quality with evidence.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
-[![Python](https://img.shields.io/badge/python-3.8+-blue?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
-[![Zero Deps](https://img.shields.io/badge/dependencies-0-critical?style=for-the-badge&logo=socket&logoColor=white)](#quick-start)
-[![Benchmark](https://img.shields.io/badge/reproducible-benchmark-orange?style=for-the-badge&logo=lightning&logoColor=white)](#reproducible-benchmark)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](#install)
+[![Zero dependencies](https://img.shields.io/badge/runtime_dependencies-0-critical?style=for-the-badge)](pyproject.toml)
 
-> **25,000 files scanned in 55 seconds. Zero dependencies. 197 tests.**
-
-[Quick Start](#quick-start) · [Install](#quick-start) · [Commands](#commands) · [Dashboard](#dashboard-gui) · [Architecture](#architecture)
-
-</div>
-
----
-
-## 🧭 What is Sentinel?
-
-**You use AI coding agents (Claude Code, Cline, Codex, Continue, Roo). They need to understand your codebase — but dumping raw files wastes tokens and misses context.**
-
-Sentinel solves this. It's a **local, zero-dependency** scanner that turns any repo into structured, token-efficient intelligence:
-
-```
-Point → Scan → AI-ready context pack (~2,500 tokens)
-```
-
-It maps architecture, scores maintainability, surfaces risk hotspots, identifies entry points, and generates ready-to-use prompts for your AI agent — all in seconds, entirely offline. No uploads. No API keys. No dependencies beyond Python stdlib.
-
-```mermaid
-flowchart LR
-    A["📂 Any Repo"] -->|scan| S["🛡️ Sentinel"]
-    S --> B["💊 Health Score"]
-    S --> C["🔥 Hotspots & Risks"]
-    S --> D["🎯 Entry Points"]
-    S --> E["🤖 Agent Prompt"]
-    S --> F["📦 Context Pack"]
-    S --> G["💡 Next Actions"]
-    B & C & D & E & F & G --> H["🧠 AI Coding Agent"]
-```
-
----
-
-## ⚡ 30-Second Demo
-
-```bash
-# Install
-pip install -e .
-
-# Scan any project — fast
-python sentinel.py scan . --fast
-```
+Sentinel reads a repository, builds a fast incremental index, and produces a concise quality report with the source risks that matter. Run it once in CI, or keep it live while refactoring.
 
 ```text
-╔══════════════════════════════════════════════════════════════╗
-║  🛡️  SENTINEL  —  Repo Intelligence                         ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  Project    kubernetes                                       ║
-║  Type       container orchestration platform                 ║
-║  Health     ████████████████░░░░  74%                        ║
-║  Files      25,432                                           ║
-║  Lines      6,007,991                                       ║
-║  Time       55s                                              ║
-║                                                              ║
-║  ⚠️  Top risk: 3 oversize files exceeding 5K lines          ║
-║  💡  Next action: Split kubelet.go into focused modules     ║
-║                                                              ║
-║  197 tests · 0 failures · no external dependencies          ║
-╚══════════════════════════════════════════════════════════════╝
+project-sentinel scan  <path>    # build/update the index and print the report
+project-sentinel report <path>   # render from the index without rescanning
+project-sentinel watch  <path>   # keep the index and report live
 ```
 
----
+Sentinel 2.0 is intentionally focused: three commands, one SQLite index, one report object, zero runtime dependencies.
 
-## 📊 Scan Performance
+**Local. Free. Fast.** No account, no upload, no API key, no telemetry, no per-report cost.
 
-<p align="center">
-  <img src="logos/diagram1.png" alt="Sentinel Performance Dashboard" width="100%">
-</p>
+| | |
+|---|---|
+| **Local** | your code never leaves the machine. A local folder path works fully offline. |
+| **Free** | Apache-2.0 with zero runtime dependencies, so there is nothing to meter or bill. |
+| **Fast** | warm scan of a 1,228-file repository in **0.34 s**; report from the index in **0.11 s**. |
 
-| Target | Files | Lines | Time | Health |
-|:---|---:|---:|---:|:---:|
-| **Python library** | 234 | 42K | 0.16s | 🟢 86% |
-| **FastAPI web framework** | ~1K | ~200K | 4.56s | 🟡 74% |
-| **Kubernetes** *(k8s.io/kubernetes)* | 25,432 | 6,007,991 | 55s | 🟡 74% |
-| **Ladybird browser engine** | ~40K | ~1.4M | ~40s | — |
+That is the trade against hosted paste-a-repo services: you give up a hosted convenience and get a scan that is instant, private, and unmetered.
 
-> 💡 **No cloud. No external services. Pure Python.** Every scan runs entirely on your machine.
+## See it
 
----
+This is a real report on this repository, rendered from Sentinel's own self-contained HTML output — one file, inline CSS, no server:
 
-## 🧬 What Sentinel Produces
+![Sentinel quality report](docs/demo/sentinel-report.png)
 
-<table>
-<tr><td width="180">
+Regenerate it with `project-sentinel report . --open`, or write it to a file with
+`project-sentinel scan . --format html --out report.html`. The committed artifact is
+[`docs/demo/sentinel-report.html`](docs/demo/sentinel-report.html); open it in a browser. It is produced by
+[`tools/capture_screenshots.ps1`](tools/capture_screenshots.ps1).
 
-**🔍 Project Identity**
+### Try it on any repository
 
-</td><td>
-
-Name, type, archetype, purpose, language, frameworks, workflow — resolved through a 5-tier ranked fallback system that never returns garbage.
-
-</td></tr>
-<tr><td>
-
-**💊 Health Score**
-
-</td><td>
-
-Maintainability, runtime complexity, test signal, security — with a detailed breakdown so you know *exactly* where the pain is.
-
-</td></tr>
-<tr><td>
-
-**🎯 Entry Points**
-
-</td><td>
-
-Primary runtime, API surfaces, examples, build tools, generators — with intelligent scoring (Go binaries get +80 bonus).
-
-</td></tr>
-<tr><td>
-
-**🔥 Hotspots**
-
-</td><td>
-
-Runtime, build, test runner, documentation, vendor — ranked by risk so you attack the worst problems first.
-
-</td></tr>
-<tr><td>
-
-**🚨 Review Signals**
-
-</td><td>
-
-Oversized files, TODO density, documentation drift, test gaps — every signal is actionable.
-
-</td></tr>
-<tr><td>
-
-**💡 Next Actions**
-
-</td><td>
-
-Suggestions ranked by **impact**, **effort**, and **confidence** — not just "you should fix this" but *where to start*.
-
-</td></tr>
-<tr><td>
-
-**🤖 Agent Prompt**
-
-</td><td>
-
-Ready-to-use prompt for **Cline, Claude Code, Codex, Roo, Continue** — copy, paste, ship.
-
-</td></tr>
-<tr><td>
-
-**📦 Context Pack**
-
-</td><td>
-
-Compact, token-efficient project brief — ~2,500 tokens that replace hours of file reading.
-
-</td></tr>
-<tr><td>
-
-**🏗️ Architecture Summary**
-
-</td><td>
-
-Components, dependencies, archetype, patterns — the big picture at a glance.
-
-</td></tr>
-<tr><td>
-
-**⚠️ Risk Scores**
-
-</td><td>
-
-Per-file scoring with deduplicated factors and test coverage — no noise, no duplicates.
-
-</td></tr>
-</table>
-
----
-
-## ✅ Test Suite
-
-[![197 tests](https://img.shields.io/badge/tests-197-brightgreen?style=flat-square)]()
-[![0 failures](https://img.shields.io/badge/failures-0-brightgreen?style=flat-square)]()
-[![9.3s runtime](https://img.shields.io/badge/runtime-9.3s-blue?style=flat-square)]()
-
-| Suite | Tests | Scope |
-|:---|---:|:---|
-| `test_archetype_regressions` | 11 | Archetype detection, entry point filtering, vendor classification |
-| `test_auditor` | 18 | Checkpoints, file classification, maintainability, test signals |
-| `test_classification_regressions` | 36 | File roles, risk surfaces, generated code, i18n, monorepo detection |
-| `test_ladybird_regressions` | 37 | Risk surface classification, hotspot filtering, focus files |
-| `test_regression_fixtures` | 28 | Full pipeline, identity resolution, purpose inference, HTML cleaning |
-| `test_report_quality` | 40 | Project name extraction, entry points, health scoring, LLVM/rust detection |
-| `test_sentinel` + misc | 27 | CLI commands, HTML report, dashboard, cache, MCP, knowledge base |
+Don't want to install anything to see the output? There is a zero-dependency web demo:
 
 ```bash
-python -m unittest discover -s tests -v
-# 197 tests · 0 failures · 9.3 seconds
+python demo/server.py --open
 ```
 
----
+Paste a repository URL (`https://github.com/psf/requests`, or the `psf/requests`
+shorthand) or a local folder path, and the demo clones it, runs the real scan, and
+shows the report. It is a thin harness over the same `scan_project` and
+`render_html` the CLI uses - no mock data and no pre-computed results - and it
+never executes the code it clones.
 
-## 🌟 Feature Highlights
+Pasting a URL and getting the report takes about **3 seconds** for a typical
+repository (`psf/requests`: clone ~2.9 s, scan ~0.5 s); a local folder path skips
+the clone entirely. The demo runs **local-only by default** and ships with
+deploy configs ([`render.yaml`](render.yaml), [`fly.toml`](fly.toml),
+[`demo/Dockerfile`](demo/Dockerfile)) for hosting it as a web service with
+`--public` limits. Full guide: [`docs/DEMO.md`](docs/DEMO.md).
 
-### 🏷️ Project Name Resolution
+## Why this version exists
 
-Sentinel resolves project names through a **5-tier ranked fallback** — no more "Sponsors" as a project name when scanning FastAPI:
+The 1.x line tried to be a dashboard, an MCP server, a retrieval engine, a memory store, and a scanner at once. Sentinel 2.0 keeps the part that is useful and makes it fast and trustworthy:
 
-```
-┌─ Tier 1: Known repo names (22 entries)
-│   FastAPI · Kubernetes · TensorFlow · Flask · Django · React
-│   PyTorch · NumPy · Pandas · Vite · Express · Tailwind CSS · …
-│
-├─ Tier 2: Package manifests
-│   Cargo.toml · pyproject.toml · package.json · setup.py · go.mod · CMakeLists.txt
-│
-├─ Tier 3: Manifest descriptions
-│   Extracted from the same manifests
-│
-├─ Tier 4: README body
-│   First real paragraph after headings
-│
-└─ Tier 5: README heading
-    Validated against blocked section keywords (Installation, Usage, Sponsors, …)
-```
+- source-first analysis, so documentation translations and vendored files do not dominate the report;
+- an incremental SQLite index instead of a 400+ MB JSON checkpoint;
+- a top-5 report with evidence and a recommendation for each finding;
+- a live HTML report updated by polling, with no server, WebSocket, telemetry, or cloud service;
+- one implementation used by the CLI, the installed entry point, and tests.
 
-### 🧠 Purpose Inference
+## Install
 
-A **6-step fallback chain** that never returns a placeholder — no more `----` as project purpose:
-
-| Step | Source | What It Does |
-|:---:|:---|:---|
-| 1 | Manifest description | Stripped of HTML/badges |
-| 2 | README body | First real paragraph, skip badges/tables/HTML |
-| 3 | README summary | Already-cleaned summary field |
-| 4 | README doc_title subtitle | Extracts subtitle after colon or em-dash |
-| 5 | Component-based generation | Built from non-test/doc component roles |
-| 6 | Final fallback | "Purpose could not be confidently inferred from README." |
-
-> 🎯 **Example:** `"Kubernetes: Production-Grade Container Orchestration"` → `"Production-Grade Container Orchestration"`
-
-### 🎯 Entry Point Detection
-
-Go binaries are detected even when not named `main.go`:
-
-```
-cmd/kube-apiserver/apiserver.go    →  runtime entry point  (+80 score)
-cmd/kubelet/kubelet.go             →  runtime entry point  (+80 score)
-cmd/cloud-controller-manager/main.go → runtime entry point
-```
-
-Major Go binaries get a **+80 score bonus**: `kube-apiserver`, `kubelet`, `kube-controller-manager`, `kube-scheduler`, `kubectl`, `kube-proxy`, `kubeadm`.
-
-### 🧹 Identity Text Safety
-
-Sentinel filters out the noise from *all* identity fields (project name, type, purpose, summary):
-
-- ❌ HTML tags · Markdown links · Badges · Images
-- ❌ Sponsor keywords · Section headings · Table artifacts
-- ❌ Decorative separators (`----`, `====`, etc.)
-
----
-
-## 📄 HTML Report
-
-The generated HTML report is a **single self-contained page** — no external assets, no build step:
-
-
-
-| Element | Description |
-|:---|:---|
-| 🟢 SVG health ring | Donut chart color-coded by score (green/gold/red) |
-| 📊 Stats bar | Files, lines, issues, signals, TODOs at a glance |
-| 🏷️ Project identity + risk | Definition lists in two-column card layout |
-| 🔥 Top risk insight | Accent-bordered card with the single most important finding |
-| 💡 Next actions | Grid of suggestion cards with impact/effort/confidence badges |
-| 🎯 Hotspots + entry points | Grouped file pills by category |
-| 📋 Components table | Path, role, file count, line count |
-| ⚠️ File risks | By surface with level, score, and factors |
-| 🚨 Review signals | Severity, message, file |
-| 🤖 Agent prompt | Terminal-styled `$`-prefixed block on dark background |
-| 📱 Responsive | Degrades gracefully from desktop to 500px viewport |
-
----
-
-## 🖥️ Dashboard GUI
-
-Dark-theme browser command centre at **`http://127.0.0.1:8765`**:
-
-
-
-**Features:** Stats row · Project identity + risk cards · Shared inputs (query, repo URL, budget, goal, flags) · Toggle pills (fast scan, dry-run, apply, verify, adapters) · Tool cards (Understand, Ask, Reports, Quality, Memory, Maintenance, Analyze URL) · Output terminal · Suggestions + prompt · Focus/hotspots/frameworks · File risks + review signals tables · Health timeline · Auto-refresh (3s)
-
----
-
-## 🏛️ Architecture
-
-<p align="center">
-  <img src="logos/diagram.png" alt="Sentinel Architecture" width="100%">
-</p>
-
----
-
-## 🚀 Commands
-
-| Command | What It Does |
-|:---|:---|
-| `scan` | Analyse project structure, risks, hotspots |
-| `brief` | One-line summary with the top suggestion |
-| `overview` | Full project description with components, hotspots, workflow |
-| `context` | Token-efficient project brief for AI agents |
-| `prompt` | Focused next-step prompt with goal selection |
-| `retrieve` | Find files, symbols, and snippets matching a query |
-| `ask` | Answer a natural-language question about the project |
-| `analyze-url` | Clone a git URL and generate a complete report bundle |
-| `graph` | Extract AST symbols, import graph, call graph |
-| `verify` | Preview or run focused tests for changed files |
-| `dashboard` | Launch the live browser GUI |
-| `report` | Save a Markdown or HTML report |
-| `pr` | Summarise changes, risks, and suggested tests |
-| `release-check` | Open-source readiness checklist |
-| `coverage` | Identify weakly tested areas from coverage.xml |
-| `timeline` | Show scan history, task memory, and token savings |
-| `memory` | Record or list task memory |
-| `savings` | Show estimated token savings |
-| `autofix` | Plan or apply small safe fixes |
-| `doctor` | Validate configuration and paths |
-| `mcp` | Run as a stdio MCP server |
-| `mcp-health` | Validate MCP tool availability |
-| `kilo-setup` | Configure Kilo with Sentinel-first rules |
-| `kilo-bridge` | Set up the no-MCP file bridge |
-| `kilo-refresh` | Refresh Kilo context files before a task |
-| `watch` | Continuously scan at an interval |
-
----
-
-## 🏁 Quick Start
-
-<p align="center">
-  <img src="logos/diagram2.png" alt="Sentinel Product Flow" width="100%">
-</p>
-
-### Install
-
-**One-liner (any platform):**
-```bash
-pip install git+https://github.com/Ntooxx/Sentinel.git
-```
-
-**From source (for development):**
-```bash
-git clone https://github.com/Ntooxx/Sentinel.git
-cd Sentinel
-pip install -e .
-```
-
-**Windows users:** double-click `install.ps1` or run:
-```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1
-```
-
-After install, the `project-sentinel` command is available globally.
-
-### Scan
+Requires Python 3.10+.
 
 ```bash
-# Scan the current directory
-project-sentinel scan . --fast
-
-# Launch the live dashboard
-project-sentinel dashboard . --fast
+python -m pip install .
+project-sentinel --version
 ```
 
-### Generate Reports
+From a checkout without installing:
 
 ```bash
-# Beautiful HTML report
-project-sentinel report . --format html
-
-# Markdown report
-project-sentinel report . --format markdown
+python sentinel.py --version
+# or, from the repository root:
+PYTHONPATH=src python -m sentinel2 --version
+# Windows PowerShell:
+$env:PYTHONPATH='src'; python -m sentinel2 --version
 ```
 
-### AI Agent Workflow
+`python sentinel.py` is a compatibility launcher for the same `sentinel2.cli:main` entry point and adds `src/` to the path automatically.
+
+## Quick start
 
 ```bash
-# Generate an agent-ready prompt
-project-sentinel prompt . --goal next --budget small --fast
-
-# Ask a question about your codebase
-project-sentinel ask . --question "where is authentication handled?" --fast
-
-# Analyse any GitHub repo
-project-sentinel analyze-url https://github.com/user/repo --fast
+project-sentinel scan .
+project-sentinel report . --format md --out sentinel-report.md
+project-sentinel watch . --out .sentinel/quality.html
 ```
 
----
+The first scan builds `.sentinel/quality.db`. Later scans reuse unchanged file facts and only analyse what changed.
 
-## 🤖 Token-Saving Workflow
+## Commands and flags
 
-Maximize your AI agent's effectiveness while minimizing token spend:
-
-```bash
-# Step 1: Get the big picture
-project-sentinel overview . --fast --quiet
-
-# Step 2: Get a compact context pack (~2,500 tokens)
-project-sentinel context . --budget small --fast --quiet
-
-# Step 3: Get a focused next-step prompt
-project-sentinel prompt . --goal next --budget small --fast --quiet
-```
-
-**What the agent receives:**
-
-| Output | Tokens | Value |
-|:---|---:|:---|
-| Project overview | ~1,500 | Full project understanding |
-| Compact context pack | ~2,500 | Replace hours of file reading |
-| Focused next-step prompt | ~800 | Actionable direction |
-| High-value focus files | ~500 | Narrowed verification path |
-| **Total** | **~5,300** | **Complete project intelligence** |
-
----
-
-## 🔬 Development
-
-```bash
-# Run the full test suite
-python -m unittest discover -s tests -v
-
-# 197 tests · 0 failures · 9.3 seconds
-```
+### scan
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│  Test Results                                           │
-│                                                         │
-│  ████████████████████████████████████████████████  100%  │
-│                                                         │
-│  197 passed  ·  0 failed  ·  9.3s                      │
-│  No flaky tests  ·  No external dependencies           │
-└─────────────────────────────────────────────────────────┘
+project-sentinel scan [PATH]
+  --format text|md|html|json   Output format. Default: text.
+  --out PATH                   Write output to a file.
+  --full                       Re-analyse all source files fully; no fast sampling.
+  --include-docs               Read documentation content, not only metadata.
+  --all-findings               Print all findings, not only the top 5.
+  --fail-under BAND            Exit 3 if the quality band is below maintained/adequate/weak.
+  --ignore PATH                Repeatable; exclude a project-relative path.
+  --no-color                   Disable ANSI color.
+  --quiet                      Suppress logs and progress.
 ```
 
----
-
-## 📈 Reproducible Benchmark
-
-Run Sentinel against all bundled fixture repos to verify performance claims on your own machine:
-
-```bash
-project-sentinel benchmark . --fast
-```
-
-Example output from a real run:
+### report
 
 ```text
-SENTINEL BENCHMARK
-Benchmarked 7 fixture(s)
-  cpp_repo              files=    2  lines=     6  time=  0.007s  health=85%
-  docs_heavy            files=    2  lines=     6  time=  0.006s  health=85%
-  generated_heavy       files=    2  lines=     8  time=  0.008s  health=85%
-  go_service            files=    2  lines=     6  time=  0.007s  health=85%
-  node_app              files=    2  lines=    19  time=  0.006s  health=85%
-  python_app            files=    3  lines=    14  time=  0.007s  health=95%
-  rust_cli              files=    2  lines=     8  time=  0.007s  health=85%
+project-sentinel report [PATH]
+  --format text|md|html|json
+  --out PATH
+  --open                       Open the HTML report in the default browser.
+  --refresh                    Run a scan first, then render.
 ```
 
-Benchmarks run entirely offline with zero external dependencies.
+`report` reads the latest scan snapshot from SQLite. It does not rescan, rebuild ASTs, or modify the index.
 
----
+### watch
 
-## 📁 Examples
+```text
+project-sentinel watch [PATH]
+  --format text|html|md|json   Default: html.
+  --out PATH                   Default: .sentinel/quality.html
+  --interval SECONDS           Default: 1.0
+  --debounce MILLISECONDS      Default: 300
+  --include-docs
+  --full
+  --quiet
+```
 
-See the [`examples/`](./examples/) directory for ready-to-run scripts:
+Watch mode polls for changes, re-analyses only changed paths, and writes the report atomically. The HTML file is self-contained and uses a small meta refresh so a browser can follow it without a local server.
+
+## Exit codes
+
+| Code | Meaning |
+|---:|---|
+| 0 | Success |
+| 1 | Runtime error, invalid path, unreadable index, or no index for `report` |
+| 2 | Invalid CLI usage |
+| 3 | Quality gate failed (`--fail-under`) |
+
+## What the report answers
+
+Every report states:
+
+1. what the repository is;
+2. how healthy the assessed dimensions are;
+3. the top source risks, with file/line evidence and a recommendation;
+4. what changed since the previous scan;
+5. what to do next;
+6. what was read, sampled, skipped, excluded, and what the confidence level means.
+
+The JSON report is the stable contract; text, Markdown, and HTML are renderings of the same object. JSON includes every finding, even when the terminal report shows only the top five.
+
+### Dimensions
+
+Sentinel scores six dimensions with initial weights:
+
+| Dimension | Weight | Measures |
+|---|---:|---|
+| Architecture | 20% | entry points, components, import cycles, public surface |
+| Maintainability | 25% | file/function size, complexity, TODOs, parse errors |
+| Tests | 20% | test presence, static test mapping, ratio, hotspot signals |
+| Documentation | 15% | README, canonical docs, placeholders, broken relative links |
+| Dependencies | 10% | manifests, lockfiles, pinning, license, ignore/CI files |
+| Security | 10% | basic secret and dangerous-pattern checks only |
+
+If a dimension is not assessed it is shown as `n/a` and excluded from the weighted score. Documentation translations, examples, generated files, and vendor trees are excluded from source quality. Test mapping is **static evidence** that a test imports or names a module; it is not runtime coverage.
+
+The overall result is a coarse **quality band** — `maintained`, `adequate`, `weak` or `unmaintained` — not a letter grade. Five of the six dimensions saturate near A+ on maintained code, so a fine overall grade was manufacturing resolution the evidence does not contain; the band is the claim the analysis can defend. Letter grades are still shown per dimension as evidence. The findings list is the primary output: it names what to fix first. The band is marked **provisional**. The rubric is calibrated against a corpus of fifteen real repositories with a reproducible harness (`tools/calibrate.py`), and its measured agreement is recorded in [`docs/CALIBRATION.md`](docs/CALIBRATION.md). The `(provisional)` marker disappears only once that calibration passes its acceptance criteria and `calibrated` is set in the rules. Security is explicitly a basic pattern check, not a security audit.
+
+## Performance
+
+Measured on Windows 11, Python 3.11, warm OS cache, FastAPI source + tests:
+
+| Workload | Measured |
+|---|---:|
+| Cold scan (963 text files, 184 skipped binaries) | ~1.9 s |
+| Warm scan, no changes | ~0.3 s |
+| Report from SQLite | ~0.15 s |
+| Index for that tree | ~4 MB |
+| Synthetic 10k cold / warm | ~5.3 s / ~0.8 s |
+| Synthetic 25k cold / warm | ~13.3 s / ~1.9 s |
+| Index for 25k files | ~45 MB |
+
+These are local measurements, not promises. The release budgets are in [`sentinel_2.md`](sentinel_2.md).
+
+Budgets and failure handling are documented in [`sentinel_2.md`](sentinel_2.md). The benchmark harness is in [`tools/benchmark.py`](tools/benchmark.py):
 
 ```bash
-# Scan the Sentinel repo itself
-project-sentinel scan . --fast
-
-# Generate an HTML report
-project-sentinel report . --format html
-
-# Launch the dashboard
-project-sentinel dashboard . --fast
-
-# Run a benchmark on all fixture repos
-project-sentinel benchmark . --fast
+python tools/gen_repo.py --files 10000 --out .tmp/repo-10k
+python tools/benchmark.py --repo .tmp/repo-10k --mode all --json
 ```
 
----
+## Privacy and safety
 
+- Local only. No network calls, telemetry, uploads, or remote logging during scan/report/watch.
+- No third-party runtime dependencies.
+- Repository paths are project-relative in reports.
+- Secret-like matches are redacted in every output format.
+- HTML escapes all repository-controlled strings.
+- `.sentinel/` is ignored by discovery.
+- Symlinks are not followed; binary and oversized files are skipped with a recorded reason.
 
+See [`docs/PRIVACY_AND_SAFETY.md`](docs/PRIVACY_AND_SAFETY.md).
 
-<div align="center">
+## Development
 
-### 25,000 files · 6 million lines · One command · Under a minute · No cloud
+```bash
+python -m pytest -q -m "not perf"
+python -m pytest -q -m perf
+ruff check .
+python -m compileall -q src
+```
 
-**[⬆ Back to Top](#-sentinel)**
+The tests exercise the real CLI and the `sentinel2` package. The retired 1.x code lives under [`legacy/`](legacy) — excluded from linting and from the scan, preserved in full, and still runnable with `python -m pytest legacy/tests`. The active package does not import it.
 
-</div>
+## Documentation
+
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - scan/report/watch, formats, CI usage
+- [`docs/DEMO.md`](docs/DEMO.md) - the web demo: usage, speed, and deploying it
+- [`docs/API.md`](docs/API.md) - Python helpers and JSON report contract
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - index, incremental scan, quality model
+- [`docs/CALIBRATION.md`](docs/CALIBRATION.md) - how the rubric is calibrated against real repositories, and how well it agrees with review
+- [`docs/PRIVACY_AND_SAFETY.md`](docs/PRIVACY_AND_SAFETY.md) - local-only design and basic security checks
+- [`docs/report.schema.json`](docs/report.schema.json) - JSON Schema for report v2
+- [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) - why the tool is shaped this way, including what was built and removed
+- [`sentinel_2.md`](sentinel_2.md) - the implementation blueprint and acceptance criteria
+- [`CHANGELOG.md`](CHANGELOG.md) - 2.0.0 breaking change
+
+## License
+
+Apache-2.0. See [`LICENSE`](LICENSE).

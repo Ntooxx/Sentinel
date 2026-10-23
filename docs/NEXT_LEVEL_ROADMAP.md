@@ -1,30 +1,38 @@
-# Roadmap
+# Sentinel 2.0 Roadmap
 
-Sentinel is a project intelligence scanner for humans and AI agents. Point it at a repository to understand the project quickly, ask focused questions, and hand an agent the smallest useful context with a clear verification path.
+The 2.0 surface is intentionally locked: `scan`, `report`, `watch`. Work after 2.0 should improve the quality of that one product, not add new surfaces.
 
-## Core (Implemented)
+## Calibration
 
-- **Scan** — fast project structure and risk analysis
-- **HTML/Markdown reports** — self-contained, responsive output
-- **Dashboard** — live local operator GUI with metrics and suggestions
-- **Context packs and prompts** — compact token-efficient agent handoff
-- **Ask Sentinel** — natural-language project questions via local retrieval
-- **URL analysis** — clone and scan remote repositories
-- **Release check** — open-source readiness validation
-- **PR summaries** — changed-file risk with suggested tests
-- **Verify** — focused test detection for changed files
-- **Coverage** — coverage.xml gap analysis
-- **Persistent memory** — scan history, task memory, token savings
+- Run the rubric against at least ten real repositories.
+- Record false positives and false negatives in the top five.
+- Tune dimension weights, grade bands, size/complexity thresholds, and test-ratio thresholds.
+- Flip `calibrated` to true only when the rubric is stable.
 
-## Planned
+## Analysis depth
 
-1. **CI/CD integration** — GitHub Action that posts findings as a PR comment
-2. **Static report bundles** — portable folder for GitHub Pages or artifact stores
-3. **Optional AI summary** — LLM-powered identity and executive summary when an API key is provided
-4. **Expanded symbol indexing** — call graphs and test relationships beyond Python
-5. **MCP resources** — stable low-token context surface for AI clients
-6. **Cost reporting** — token savings visibility and workflow optimization
+- Improve non-Python function spans and complexity heuristics.
+- Add conservative import extraction for JavaScript/TypeScript path aliases.
+- Improve test mapping for monorepos and namespace packages.
+- Add duplicate-code detection only after it is proven low-noise.
 
-## Design Constraint
+## Watch performance
 
-Sentinel must remain useful without requiring a paid API call. Local static analysis, local summaries, and deterministic context packing are the default path. AI features are optional enhancements, not required functionality.
+- Add an optional native filesystem watcher on Windows (`ReadDirectoryChangesW`) and Linux (inotify) behind the same polling fallback.
+- Keep the polling implementation as the correctness baseline.
+- Do not add a third-party watcher dependency.
+
+## Reporting
+
+- Add a small number of golden repositories with reviewed top-five findings.
+- Add a CI-friendly `--baseline` comparison for finding deltas.
+- Keep the JSON schema additive within version 1.
+
+## Explicitly out of scope
+
+- dashboard, HTTP server, MCP bridge, agent chat, retrieval, semantic search;
+- LLM calls, embeddings, telemetry, cloud upload;
+- test execution, coverage ingestion, autofix, PR generation;
+- URL cloning and remote repository analysis;
+- persistent agent memory, savings, timeline, ledger;
+- a promise that 25k files are fully re-read in seconds.

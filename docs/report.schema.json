@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/sentinel/report-v1.schema.json",
+  "title": "Sentinel 2.0 report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "project",
+    "scan",
+    "summary",
+    "dimensions",
+    "metrics",
+    "findings",
+    "changes",
+    "architecture",
+    "actions",
+    "exclusions",
+    "limitations",
+    "rules_version"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "generated_at": { "type": ["string", "null"] },
+    "rules_version": { "type": "string" },
+    "project": {
+      "type": "object",
+      "required": ["name", "root", "git"],
+      "properties": {
+        "name": { "type": "string" },
+        "root": { "const": "." },
+        "git": {
+          "type": "object",
+          "properties": {
+            "commit": { "type": ["string", "null"] },
+            "branch": { "type": ["string", "null"] },
+            "dirty": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "scan": {
+      "type": "object",
+      "required": [
+        "mode",
+        "duration_ms",
+        "files_total",
+        "files_analyzed",
+        "files_cached",
+        "files_skipped",
+        "coverage"
+      ],
+      "properties": {
+        "mode": { "enum": ["cold", "incremental"] },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "files_total": { "type": "integer", "minimum": 0 },
+        "files_analyzed": { "type": "integer", "minimum": 0 },
+        "files_cached": { "type": "integer", "minimum": 0 },
+        "files_skipped": { "type": "integer", "minimum": 0 },
+        "index_size_bytes": { "type": "integer", "minimum": 0 },
+        "coverage": {
+          "type": "object",
+          "required": ["source", "tests", "docs", "vendor"],
+          "properties": {
+            "source": { "type": "string" },
+            "tests": { "type": "string" },
+            "docs": { "type": "string" },
+            "vendor": { "type": "string" },
+            "generated": { "type": "string" },
+            "examples": { "type": "string" }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["band", "overall_score", "confidence", "provisional", "headline"],
+      "properties": {
+        "band": { "enum": ["maintained", "adequate", "weak", "unmaintained", "n/a"] },
+        "overall_score": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "provisional": { "type": "boolean" },
+        "headline": { "type": "string" },
+        "grade_ceiling": { "type": ["string", "null"] }
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "grade", "score", "confidence", "assessed", "summary", "evidence"],
+        "properties": {
+          "id": { "enum": ["architecture", "maintainability", "tests", "docs", "dependencies", "security"] },
+          "grade": { "type": "string" },
+          "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+          "confidence": { "type": "string" },
+          "assessed": { "type": "boolean" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "source_files": { "type": "integer", "minimum": 0 },
+        "test_files": { "type": "integer", "minimum": 0 },
+        "source_lines": { "type": "integer", "minimum": 0 },
+        "test_lines": { "type": "integer", "minimum": 0 },
+        "source_todos": { "type": "integer", "minimum": 0 },
+        "parse_errors": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "rule_id",
+          "dimension",
+          "severity",
+          "confidence",
+          "title",
+          "file",
+          "line",
+          "evidence",
+          "why",
+          "recommendation"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "rule_id": { "type": "string" },
+          "dimension": { "type": "string" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "confidence": { "enum": ["high", "medium", "low"] },
+          "title": { "type": "string" },
+          "file": { "type": ["string", "null"] },
+          "line": { "type": "integer", "minimum": 1 },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "why": { "type": "string" },
+          "recommendation": { "type": "string" }
+        }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "required": ["since_scan_id", "added", "modified", "deleted", "quality_delta"],
+      "properties": {
+        "since_scan_id": { "type": ["integer", "null"] },
+        "added": { "type": "integer", "minimum": 0 },
+        "modified": { "type": "integer", "minimum": 0 },
+        "deleted": { "type": "integer", "minimum": 0 },
+        "quality_delta": { "type": "integer" }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "properties": {
+        "archetype": { "type": "string" },
+        "components": { "type": "array", "items": { "type": "string" } },
+        "entry_points": { "type": "array", "items": { "type": "string" } },
+        "hotspots": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rank", "title", "why", "impact", "effort"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1 },
+          "title": { "type": "string" },
+          "why": { "type": "string" },
+          "impact": { "type": "string" },
+          "effort": { "type": "string" }
+        }
+      }
+    },
+    "exclusions": {
+      "type": "object",
+      "required": ["vendor", "generated", "docs_translations", "reason"],
+      "properties": {
+        "vendor": { "type": "integer", "minimum": 0 },
+        "generated": { "type": "integer", "minimum": 0 },
+        "docs_translations": { "type": "integer", "minimum": 0 },
+        "examples": { "type": "integer", "minimum": 0 },
+        "reason": { "type": "string" }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,35 @@
+# Build context for demo/Dockerfile. Keeps the image small and free of local
+# state. The server needs only demo/server.py and src/sentinel2.
+
+.git
+.github
+.vscode
+.opencode
+.kilo
+
+# Local scan state and demo clone cache
+.sentinel/
+**/.sentinel/
+demo/.cache/
+
+# Not needed at runtime
+legacy/
+tests/
+benchmarks/
+examples/
+tools/
+docs/
+sentinel-url-reports/
+data/
+dist/
+build/
+*.egg-info/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.md
+!demo/README.md

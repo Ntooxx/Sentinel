@@ -1,0 +1,29 @@
+# Fly.io config for the Sentinel web demo.
+#
+#   fly launch --copy-config --dockerfile demo/Dockerfile
+#   fly deploy
+#
+# The app reads PORT from the environment; the Dockerfile defaults it to 8080,
+# which matches internal_port below. Machines scale to zero when idle.
+
+app = "sentinel-demo"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "demo/Dockerfile"
+
+[env]
+  HOST = "0.0.0.0"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "512mb"

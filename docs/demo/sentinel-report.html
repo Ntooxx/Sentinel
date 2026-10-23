@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Sentinel Quality Report - sentinel-agent</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #070b16;
+  --bg-2: #0b1120;
+  --surface: #0f1626;
+  --surface-2: #141d33;
+  --surface-3: #1b2542;
+  --text: #e8eefb;
+  --muted: #93a3c4;
+  --faint: #5f6e8e;
+  --border: #22304f;
+  --border-2: #2f3e64;
+  --accent: #38bdf8;
+  --accent-2: #818cf8;
+  --violet: #a78bfa;
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --info: #a5b4fc;
+  --radius: 16px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(56, 189, 248, 0.16), transparent 60%),
+    radial-gradient(760px 480px at 92% 4%, rgba(167, 139, 250, 0.14), transparent 62%),
+    var(--bg);
+  color: var(--text);
+  font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+code, .mono { font-family: var(--mono); }
+
+/* ---- top bar ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 12px max(20px, calc((100vw - 1180px) / 2));
+  background: rgba(7, 11, 22, 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: 0.14em; font-size: 13px; }
+.brand .dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-2));
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.85);
+}
+.brand .repofile { color: var(--muted); font-weight: 600; letter-spacing: 0; text-transform: none; }
+.navlinks { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.navlinks a {
+  color: var(--muted); font-size: 12.5px; padding: 6px 10px; border-radius: 8px;
+  border: 1px solid transparent;
+}
+.navlinks a:hover { color: var(--text); background: var(--surface-2); border-color: var(--border); }
+
+/* ---- layout ---- */
+main { max-width: 1180px; margin: 0 auto; padding: 26px 20px 70px; }
+section { margin-top: 34px; scroll-margin-top: 74px; }
+h2.sec {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 14px; font-weight: 700;
+}
+h2.sec::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-2), transparent); }
+h2.sec .count {
+  color: var(--faint); letter-spacing: 0.02em; font-size: 11.5px; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px;
+}
+
+/* ---- hero ---- */
+.hero {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 26px; align-items: center;
+  padding: 26px 28px; border: 1px solid var(--border); border-radius: 22px;
+  background:
+    linear-gradient(150deg, rgba(56, 189, 248, 0.10), transparent 46%),
+    linear-gradient(180deg, var(--surface), var(--surface-2));
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.42);
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2), var(--violet));
+}
+.hero h1 { margin: 0 0 4px; font-size: 25px; letter-spacing: 0.02em; }
+.hero .kicker { font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+.hero .repo { font-size: 20px; font-weight: 700; margin: 8px 0 2px; word-break: break-word; }
+.hero .commit { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+.hero .headline { color: var(--muted); font-size: 14px; max-width: 60ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border);
+  background: rgba(20, 29, 51, 0.7); color: var(--muted); font-size: 12px;
+}
+.chip b { color: var(--text); font-weight: 600; }
+.chip .k { color: var(--faint); }
+
+.scorewrap { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 190px; }
+.ring { position: relative; width: 148px; height: 148px; }
+.ring svg { transform: rotate(-90deg); display: block; }
+.ring .inner {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ring .num { font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+.ring .of { font-size: 11px; color: var(--faint); letter-spacing: 0.14em; }
+.bandpill {
+  font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 999px; border: 1px solid currentColor;
+}
+.bandpill.maintained { color: var(--good); background: rgba(52, 211, 153, 0.10); }
+.bandpill.adequate { color: var(--accent); background: rgba(56, 189, 248, 0.10); }
+.bandpill.weak { color: var(--warn); background: rgba(251, 191, 36, 0.10); }
+.bandpill.unmaintained { color: var(--bad); background: rgba(248, 113, 113, 0.10); }
+.bandpill.na { color: var(--muted); background: rgba(147, 163, 196, 0.10); }
+.bandnote { font-size: 11.5px; color: var(--faint); }
+
+/* ---- stat cards ---- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; }
+.stat {
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+.stat .v { font-size: 23px; font-weight: 700; letter-spacing: -0.01em; }
+.stat .v small { font-size: 13px; color: var(--muted); font-weight: 600; }
+.stat .l { font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+
+/* ---- dimensions ---- */
+.dimgrid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2)); padding: 18px;
+}
+.radarwrap { display: flex; flex-direction: column; align-items: center; }
+.radarwrap .cap { font-size: 11.5px; color: var(--faint); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; }
+.dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.dim { border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 16px; background: var(--surface); }
+.dim .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dim .name { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14.5px; }
+.dim .icon { font-size: 16px; }
+.grade {
+  font-weight: 800; font-size: 13px; padding: 3px 10px; border-radius: 8px;
+  border: 1px solid currentColor; letter-spacing: 0.04em;
+}
+.grade.good { color: var(--good); background: rgba(52, 211, 153, 0.08); }
+.grade.accent { color: var(--accent); background: rgba(56, 189, 248, 0.08); }
+.grade.warn { color: var(--warn); background: rgba(251, 191, 36, 0.08); }
+.grade.bad { color: var(--bad); background: rgba(248, 113, 113, 0.08); }
+.grade.muted { color: var(--muted); background: rgba(147, 163, 196, 0.08); }
+.bar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin: 12px 0 10px; }
+.bar > i { display: block; height: 100%; border-radius: 999px; }
+.bar > i.good { background: linear-gradient(90deg, #059669, var(--good)); }
+.bar > i.accent { background: linear-gradient(90deg, #0284c7, var(--accent)); }
+.bar > i.warn { background: linear-gradient(90deg, #d97706, var(--warn)); }
+.bar > i.bad { background: linear-gradient(90deg, #dc2626, var(--bad)); }
+.bar > i.muted { background: var(--surface-3); }
+.dim p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.dim .conf { color: var(--faint); font-size: 11.5px; margin-top: 8px; }
+.evidence { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.evidence code {
+  font-size: 11.5px; color: var(--muted); background: var(--bg-2);
+  border: 1px solid var(--border); border-radius: 7px; padding: 3px 7px;
+}
+
+/* ---- findings ---- */
+.findings { display: grid; gap: 12px; }
+.finding {
+  position: relative; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px 16px 20px; background: var(--surface); overflow: hidden;
+}
+.finding::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--faint); }
+.finding.sev-high::before, .finding.sev-critical::before { background: linear-gradient(180deg, #ef4444, var(--bad)); }
+.finding.sev-medium::before { background: linear-gradient(180deg, #d97706, var(--warn)); }
+.finding.sev-low::before { background: linear-gradient(180deg, #0284c7, var(--accent)); }
+.finding.sev-info::before { background: linear-gradient(180deg, #6366f1, var(--info)); }
+.finding .fhead { display: flex; align-items: flex-start; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+.finding h3 { margin: 0; font-size: 15.5px; font-weight: 650; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border-2); color: var(--muted);
+}
+.tag.sev-high, .tag.sev-critical { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
+.tag.sev-medium { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+.tag.sev-low { color: var(--accent); border-color: rgba(56, 189, 248, 0.4); }
+.tag.sev-info { color: var(--info); border-color: rgba(165, 180, 252, 0.4); }
+.where { font-family: var(--mono); font-size: 12.5px; color: var(--accent); margin-top: 8px; word-break: break-all; }
+.where .rule { color: var(--faint); }
+.finding ul.ev { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.finding ul.ev li { margin: 3px 0; }
+.finding .why { margin-top: 10px; color: var(--muted); font-size: 13.5px; }
+.finding .next {
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(56, 189, 248, 0.07); border: 1px solid rgba(56, 189, 248, 0.22);
+  font-size: 13.5px;
+}
+.finding .next b { color: var(--accent); letter-spacing: 0.06em; font-size: 11px; text-transform: uppercase; }
+.empty {
+  border: 1px dashed var(--border-2); border-radius: var(--radius);
+  padding: 22px; color: var(--muted); text-align: center;
+}
+
+/* ---- actions ---- */
+.steps { display: grid; gap: 10px; counter-reset: step; }
+.step {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: center;
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 16px;
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+}
+.step .n {
+  counter-increment: step; width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;
+  color: var(--bg); background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.step .n::before { content: counter(step); }
+.step .t { font-weight: 650; font-size: 14.5px; }
+.step .w { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.meta2 { display: flex; gap: 6px; }
+.pill { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border-2); color: var(--muted); }
+.pill.high { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
+.pill.medium { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+.pill.low { color: var(--good); border-color: rgba(52, 211, 153, 0.4); }
+
+/* ---- architecture / coverage ---- */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.kv { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.kv code { font-size: 12px; color: var(--muted); background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; }
+.blk { border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 16px; background: var(--surface); }
+.blk .h { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin-bottom: 6px; }
+.blk .big { font-size: 17px; font-weight: 700; }
+.blk p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+
+/* ---- changes ---- */
+.delta { display: flex; gap: 12px; flex-wrap: wrap; }
+.delta .d { border: 1px solid var(--border); border-radius: 12px; padding: 11px 15px; background: var(--surface); font-size: 13px; }
+.delta .d b { font-size: 18px; font-weight: 700; display: block; }
+.delta .up b { color: var(--good); } .delta .down b { color: var(--bad); }
+
+/* ---- notes ---- */
+details.notes { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 16px; }
+details.notes summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+details.notes ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+details.notes li { margin: 5px 0; }
+footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .dimgrid { grid-template-columns: 1fr; }
+  .hero { grid-template-columns: 1fr; }
+  .scorewrap { flex-direction: row; justify-content: flex-start; }
+  .step { grid-template-columns: 34px minmax(0, 1fr); }
+  .step .meta2 { grid-column: 2; }
+}
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #111; }
+  .topbar { position: static; background: #fff; }
+  .finding, .dim, .stat, .panel, .step, .blk { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>SENTINEL <span class="repofile">sentinel-agent</span></div>
+  <nav class="navlinks"><a href="#glance">At a glance</a><a href="#dimensions">Dimensions</a><a href="#findings">Findings</a><a href="#actions">Action plan</a><a href="#architecture">Architecture</a><a href="#coverage">Coverage</a><a href="#changes">Changes</a><a href="#notes">Notes</a></nav>
+</div>
+<main>
+  <header class="hero">
+    <div>
+      <div class="kicker">Sentinel Quality Report</div>
+      <h1>SENTINEL QUALITY REPORT</h1>
+      <div class="repo">sentinel-agent</div>
+      <div class="commit"><code>898d429</code> on <code>main</code> <span class="chip"><b>dirty</b></span></div>
+      <div class="headline">36 finding(s); weakest dimension: Maintainability.</div>
+      <div class="chips"><span class="chip"><span class="k">band</span> <b>maintained (provisional)</b></span><span class="chip"><span class="k">archetype</span> <b>monorepo</b></span><span class="chip"><span class="k">files</span> <b>110</b></span><span class="chip"><span class="k">lines</span> <b>10,062</b></span><span class="chip"><span class="k">scan</span> <b>incremental 231ms</b></span><span class="chip"><span class="k">index</span> <b>865.4 KB</b></span></div>
+    </div>
+    <div class="scorewrap">
+      <div class="ring"><svg width="148" height="148" viewBox="0 0 148 148" role="img" aria-label="overall score 91 out of 100"><circle cx="74.0" cy="74.0" r="69.0" fill="none" stroke="var(--surface-3)" stroke-width="10"/><circle cx="74.0" cy="74.0" r="69.0" fill="none" stroke="var(--good)" stroke-width="10" stroke-linecap="round" stroke-dasharray="394.52 433.54"/></svg>
+        <div class="inner"><div class="num">91</div><div class="of">/ 100</div></div>
+      </div>
+      <div class="bandpill maintained">maintained</div>
+      <div class="bandnote">quality band (provisional) - <span class="pill low">high confidence</span></div>
+    </div>
+  </header>
+
+  <section id="glance">
+    <h2 class="sec">At a glance</h2>
+    <div class="stats"><div class="stat"><div class="v">33</div><div class="l">Source files</div></div><div class="stat"><div class="v">20</div><div class="l">Test files</div></div><div class="stat"><div class="v">0.61<small>:1</small></div><div class="l">Test ratio</div></div><div class="stat"><div class="v">212</div><div class="l">Max complexity</div></div><div class="stat"><div class="v">8</div><div class="l">Oversized files</div></div><div class="stat"><div class="v">10</div><div class="l">TODOs</div></div><div class="stat"><div class="v">0</div><div class="l">Parse errors</div></div></div>
+  </section>
+
+  <section id="dimensions"><h2 class="sec">Dimensions <span class="count">6</span></h2><div class="dimgrid"><div class="panel radarwrap"><svg width="280" height="266" viewBox="0 0 280 266" role="img" aria-label="dimension score radar"><polygon points="140.0,110.5 156.9,120.2 156.9,139.8 140.0,149.5 123.1,139.8 123.1,120.2" fill="none" stroke="var(--border)" stroke-width="1"/><polygon points="140.0,91.0 173.8,110.5 173.8,149.5 140.0,169.0 106.2,149.5 106.2,110.5" fill="none" stroke="var(--border)" stroke-width="1"/><polygon points="140.0,71.5 190.7,100.8 190.7,159.2 140.0,188.5 89.3,159.3 89.3,100.8" fill="none" stroke="var(--border)" stroke-width="1"/><polygon points="140.0,52.0 207.5,91.0 207.5,169.0 140.0,208.0 72.5,169.0 72.5,91.0" fill="none" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="140.0" y2="52.0" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="207.5" y2="91.0" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="207.5" y2="169.0" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="140.0" y2="208.0" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="72.5" y2="169.0" stroke="var(--border)" stroke-width="1"/><line x1="140" y1="130" x2="72.5" y2="91.0" stroke="var(--border)" stroke-width="1"/><polygon points="140.0,52.0 188.6,101.9 206.2,168.2 140.0,208.0 76.5,166.7 75.2,92.6" fill="rgba(56, 189, 248, 0.22)" stroke="var(--accent)" stroke-width="2"/><circle cx="140.0" cy="52.0" r="2.6" fill="var(--accent)"/><circle cx="188.6" cy="101.9" r="2.6" fill="var(--accent)"/><circle cx="206.2" cy="168.2" r="2.6" fill="var(--accent)"/><circle cx="140.0" cy="208.0" r="2.6" fill="var(--accent)"/><circle cx="76.5" cy="166.7" r="2.6" fill="var(--accent)"/><circle cx="75.2" cy="92.6" r="2.6" fill="var(--accent)"/><text x="140.0" y="30.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle" dominant-baseline="middle">Arch</text><text x="226.6" y="80.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">Maint</text><text x="226.6" y="180.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">Tests</text><text x="140.0" y="230.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle" dominant-baseline="middle">Docs</text><text x="53.4" y="180.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="end" dominant-baseline="middle">Deps</text><text x="53.4" y="80.0" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="end" dominant-baseline="middle">Sec</text></svg><div class="cap">Score radar</div></div><div class="dims"><div class="dim"><div class="top"><div class="name"><span class="icon">🏗</span>Architecture</div><span class="grade good">A+</span></div><div class="bar"><i class="good" style="width:100%"></i></div><p>monorepo; pyproject.toml; 0 import cycle(s).</p><div class="conf">score 100/100 | high confidence</div></div><div class="dim"><div class="top"><div class="name"><span class="icon">🧹</span>Maintainability</div><span class="grade warn">C-</span></div><div class="bar"><i class="warn" style="width:72%"></i></div><p>33 source files; 8 over 500 lines; 10 TODOs; max complexity 212; 0 parse error(s).</p><div class="evidence"><code>demo/server.py</code><code>src/sentinel2/analyze.py</code><code>src/sentinel2/classify.py</code></div><div class="conf">score 72/100 | high confidence</div></div><div class="dim"><div class="top"><div class="name"><span class="icon">🧪</span>Tests</div><span class="grade good">A+</span></div><div class="bar"><i class="good" style="width:98%"></i></div><p>20 test files; ratio 0.61; 6 test-signal finding(s).</p><div class="evidence"><code>src/sentinel2/__main__.py</code><code>src/sentinel2/quality.py</code><code>src/sentinel2/renderers/html.py</code></div><div class="conf">score 98/100 | high confidence</div></div><div class="dim"><div class="top"><div class="name"><span class="icon">📚</span>Docs</div><span class="grade good">A+</span></div><div class="bar"><i class="good" style="width:100%"></i></div><p>0 canonical documentation finding(s); translations excluded from scoring.</p><div class="conf">score 100/100 | high confidence</div></div><div class="dim"><div class="top"><div class="name"><span class="icon">📦</span>Dependencies</div><span class="grade good">A</span></div><div class="bar"><i class="good" style="width:94%"></i></div><p>2 dependency/hygiene finding(s); no lockfile; 4 unpinned dependency string(s).</p><div class="evidence"><code>benchmarks/fixtures/cpp_repo/CMakeLists.txt</code><code>pyproject.toml</code></div><div class="conf">score 94/100 | high confidence</div></div><div class="dim"><div class="top"><div class="name"><span class="icon">🔐</span>Security</div><span class="grade good">A</span></div><div class="bar"><i class="good" style="width:96%"></i></div><p>Basic pattern checks only; 5 secret-like match(es); 1 dynamic-execution and 0 debug finding(s).</p><div class="evidence"><code>tests/test_s2_analyze.py</code><code>tests/test_s2_calibration.py</code></div><div class="conf">score 96/100 | high confidence</div></div></div></div></section>
+
+  <section id="findings">
+    <h2 class="sec">What to fix first <span class="count">5 of 36</span></h2>
+    <div class="findings"><article class="finding sev-high"><div class="fhead"><h3>Very high cyclomatic complexity</h3><div class="tags"><span class="tag sev-high">high</span><span class="tag">maintainability</span><span class="tag">high</span></div></div><div class="where"><span class="rule">MNT007</span> - src/sentinel2/analyze.py:442</div><ul class="ev"><li>_manifest_meta at line 442</li><li>86 lines</li><li>complexity 41</li></ul><div class="why">Very high branching complexity makes a function hard to test exhaustively.</div><div class="next"><b>Next</b><br>Split the function by responsibility and add regression tests for each branch.</div></article><article class="finding sev-high"><div class="fhead"><h3>Very high cyclomatic complexity</h3><div class="tags"><span class="tag sev-high">high</span><span class="tag">maintainability</span><span class="tag">high</span></div></div><div class="where"><span class="rule">MNT007</span> - src/sentinel2/classify.py:499</div><ul class="ev"><li>detect_archetype at line 499</li><li>40 lines</li><li>complexity 28</li></ul><div class="why">Very high branching complexity makes a function hard to test exhaustively.</div><div class="next"><b>Next</b><br>Split the function by responsibility and add regression tests for each branch.</div></article><article class="finding sev-high"><div class="fhead"><h3>Very high cyclomatic complexity</h3><div class="tags"><span class="tag sev-high">high</span><span class="tag">maintainability</span><span class="tag">high</span></div></div><div class="where"><span class="rule">MNT007</span> - src/sentinel2/findings.py:283</div><ul class="ev"><li>detect_findings at line 283</li><li>741 lines</li><li>complexity 212</li></ul><div class="why">Very high branching complexity makes a function hard to test exhaustively.</div><div class="next"><b>Next</b><br>Split the function by responsibility and add regression tests for each branch.</div></article><article class="finding sev-high"><div class="fhead"><h3>Very high cyclomatic complexity</h3><div class="tags"><span class="tag sev-high">high</span><span class="tag">maintainability</span><span class="tag">high</span></div></div><div class="where"><span class="rule">MNT007</span> - src/sentinel2/quality.py:242</div><ul class="ev"><li>compute_quality at line 242</li><li>199 lines</li><li>complexity 83</li></ul><div class="why">Very high branching complexity makes a function hard to test exhaustively.</div><div class="next"><b>Next</b><br>Split the function by responsibility and add regression tests for each branch.</div></article><article class="finding sev-high"><div class="fhead"><h3>Very high cyclomatic complexity</h3><div class="tags"><span class="tag sev-high">high</span><span class="tag">maintainability</span><span class="tag">high</span></div></div><div class="where"><span class="rule">MNT007</span> - src/sentinel2/renderers/html.py:431</div><ul class="ev"><li>render_html at line 431</li><li>296 lines</li><li>complexity 90</li></ul><div class="why">Very high branching complexity makes a function hard to test exhaustively.</div><div class="next"><b>Next</b><br>Split the function by responsibility and add regression tests for each branch.</div></article></div>
+  </section>
+
+  <section id="actions">
+    <h2 class="sec">Action plan <span class="count">3</span></h2>
+    <div class="steps"><div class="step"><div class="n"></div><div><div class="t">Add tests around the top hotspots</div><div class="w">The riskiest source paths have no direct static test evidence.</div></div><div class="meta2"><span class="pill high">high impact</span><span class="pill medium">medium effort</span></div></div><div class="step"><div class="n"></div><div><div class="t">Reduce oversized source files in small, test-backed moves</div><div class="w">Large files dominate review cost and make changes riskier.</div></div><div class="meta2"><span class="pill high">high impact</span><span class="pill high">high effort</span></div></div><div class="step"><div class="n"></div><div><div class="t">Split high-complexity functions and add branch tests</div><div class="w">Complex branching is the most expensive code to change safely.</div></div><div class="meta2"><span class="pill medium">medium impact</span><span class="pill high">high effort</span></div></div></div>
+  </section>
+
+  <section id="architecture">
+    <h2 class="sec">Architecture</h2>
+    <div class="cols"><div class="blk"><div class="h">Archetype</div><div class="big">monorepo</div></div><div class="blk"><div class="h">Components</div><div class="kv"><code>benchmarks</code><code>demo</code><code>install.ps1</code><code>sentinel.py</code><code>sentinel2</code><code>tools</code></div></div><div class="blk"><div class="h">Entry points</div><div class="kv"><code>pyproject.toml</code><code>src/sentinel2/__main__.py</code><code>benchmarks/fixtures/rust_cli/src/main.rs</code><code>benchmarks/fixtures/go_service/cmd/service/main.go</code></div></div><div class="blk"><div class="h">Hotspots</div><div class="kv"><code>src/sentinel2/findings.py</code><code>src/sentinel2/renderers/html.py</code><code>src/sentinel2/quality.py</code><code>tools/calibrate.py</code><code>src/sentinel2/analyze.py</code></div></div></div>
+  </section>
+
+  <section id="coverage">
+    <h2 class="sec">Coverage</h2>
+    <div class="cols"><div class="blk"><div class="h">Source</div><div class="big">100%</div></div><div class="blk"><div class="h">Tests</div><div class="big">100%</div></div><div class="blk"><div class="h">Docs</div><div class="big">metadata</div></div><div class="blk"><div class="h">Vendor</div><div class="big">none</div></div><div class="blk"><div class="h">Generated</div><div class="big">excluded</div></div><div class="blk"><div class="h">Examples</div><div class="big">excluded</div></div></div>
+    <p class="bandnote" style="margin-top:12px">vendor 0 | generated 1 | docs translations 0 | examples 6. Documentation translations, examples, generated files and vendored code do not drive source quality.</p>
+  </section>
+
+  <section id="changes">
+    <h2 class="sec">Changed since last scan</h2>
+    <div class="delta"><div class="d"><b>6</b>files added</div><div class="d"><b>5</b>files modified</div><div class="d"><b>0</b>files deleted</div><div class="d "><b>0</b>quality delta</div></div>
+  </section>
+
+  <section id="notes">
+    <h2 class="sec">Notes and limitations</h2>
+    <details class="notes" open>
+      <summary>6 limitation(s) - what this report does not claim</summary>
+      <ul><li>Security checks are basic pattern checks only; they are not a security audit.</li><li>Documentation content is read only for README unless --include-docs is used.</li><li>Churn requires a git repository and recent history.</li><li>Non-Python languages use conservative heuristics, not deep semantic analysis.</li><li>2 file(s) were skipped; see coverage.</li><li>The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies.</li></ul>
+    </details>
+  </section>
+
+  <footer>
+    <span>Generated by Sentinel 2.0. Paths are project-relative. Local-only: no network, no telemetry.</span>
+    <span>rules quality-rules-2 | 2026-10-23T22:03:59+01:00</span>
+  </footer>
+</main>
+</body>
+</html>

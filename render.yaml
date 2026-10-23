@@ -1,0 +1,20 @@
+# Render blueprint for the Sentinel web demo.
+#
+# In Render: New -> Blueprint -> pick this repository. Render builds
+# demo/Dockerfile, health-checks /healthz, and deploys on every push to main.
+# The free instance sleeps when idle and wakes on the next request.
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: sentinel-demo
+    runtime: docker
+    dockerfilePath: ./demo/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: SENTINEL_DEMO_MODE
+        value: public
