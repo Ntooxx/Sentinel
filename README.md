@@ -5,6 +5,7 @@
 **One command. One page. Live repository quality with evidence.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
+[![Live report](https://img.shields.io/badge/live_report-onthe_web-blue?style=for-the-badge&logo=githubpages&logoColor=white)](https://ntooxx.github.io/Sentinel/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](#install)
 [![Zero dependencies](https://img.shields.io/badge/runtime_dependencies-0-critical?style=for-the-badge)](pyproject.toml)
 
@@ -33,6 +34,8 @@ That is the trade against hosted paste-a-repo services: you give up a hosted con
 This is a real report on this repository, rendered from Sentinel's own self-contained HTML output — one file, inline CSS, no server:
 
 ![Sentinel quality report](docs/demo/sentinel-report.png)
+
+**Live version:** <https://ntooxx.github.io/Sentinel/> — rebuilt by CI on every push, so the published page is the report for the current commit. The machine-readable output is there too: `report.json` and `report.md`.
 
 Regenerate it with `project-sentinel report . --open`, or write it to a file with
 `project-sentinel scan . --format html --out report.html`. The committed artifact is

@@ -1,0 +1,53 @@
+name: Live report (GitHub Pages)
+
+# Publishes Sentinel's own quality report as a static page. It is rebuilt on
+# every push to main, so the public URL never goes stale: the page you see is
+# the report for the commit that produced it. No server, no build step beyond
+# running the tool on itself.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the report reads commit/branch and churn from git.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/configure-pages@v5
+      - name: Install Sentinel
+        run: python -m pip install .
+      - name: Build the report
+        run: |
+          project-sentinel scan . --format html --out _site/index.html --quiet
+          project-sentinel scan . --format json --out _site/report.json --quiet
+          project-sentinel scan . --format md   --out _site/report.md   --quiet
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
