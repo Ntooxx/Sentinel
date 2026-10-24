@@ -1,0 +1,17 @@
+{
+  "name": "Sentinel 2.0 - real CLI, nothing installed",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "python -m pip install -e . && python -m pip install pytest ruff",
+  "postAttachCommand": "project-sentinel scan . --format text",
+  "customizations": {
+    "vscode": {
+      "extensions": ["charliermarsh.ruff", "ms-python.python"],
+      "settings": {
+        "python.analysis.extraPaths": ["src"],
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"]
+      }
+    }
+  },
+  "forwardPorts": [8000]
+}

@@ -6,6 +6,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
 [![Try it live](https://img.shields.io/badge/try_it_live-in_your_browser-blue?style=for-the-badge&logo=githubpages&logoColor=white)](https://ntooxx.github.io/Sentinel/)
+[![Open in Codespaces](https://img.shields.io/badge/Codespaces-real_CLI-181717?style=for-the-badge&logo=github)](https://codespaces.new/Ntooxx/Sentinel)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](#install)
 [![Zero dependencies](https://img.shields.io/badge/runtime_dependencies-0-critical?style=for-the-badge)](pyproject.toml)
 
@@ -42,7 +43,7 @@ Regenerate it with `project-sentinel report . --open`, or write it to a file wit
 [`docs/demo/sentinel-report.html`](docs/demo/sentinel-report.html); open it in a browser. It is produced by
 [`tools/capture_screenshots.ps1`](tools/capture_screenshots.ps1).
 
-### Try it, three ways, none of them a mockup
+### Try it, four ways, none of them a mockup
 
 **1. In your browser, right now** — <https://ntooxx.github.io/Sentinel/>
 
@@ -66,6 +67,14 @@ default** and ships with deploy configs ([`render.yaml`](render.yaml),
 web service with `--public` limits.
 
 **3. The CLI**, which is the product: `project-sentinel scan .`
+
+**4. GitHub Codespaces — the real CLI with nothing installed on your machine**
+
+<https://codespaces.new/Ntooxx/Sentinel> opens a container that already has Sentinel
+installed, and runs `project-sentinel scan .` in the terminal when you attach. It is
+the same CLI, index, and report as a local install, and unlike the browser sandbox it
+has `git`, so commit metadata, churn, and the hotspot-churn rules are active. Nothing
+to install, nothing to clean up.
 
 What the browser version cannot do: the sandbox has no `git`, so commit metadata,
 churn and the churn-based rules are skipped. Private repositories, and addresses
