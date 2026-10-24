@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Competitive benchmark corpus. Five real repositories that were NOT used to tune the Sentinel rubric (the calibration corpus in config/calibration_corpus.json is separate and its expectations came from code review). Chosen to span size, quality and archetype: a small mature library, a small clean web framework, a large docs-heavy framework, a mid-size test-driven tool, and a large weak-quality collection. `path` is relative to the repository root; `url` is recorded so the exact corpus can be rebuilt.",
+  "frozen_rules": "Scoring is frozen for the round recorded in benchmarks/freeze.json. Nothing in this corpus may be used to adjust Sentinel's rubric.",
+  "repos": [
+    {
+      "name": "requests",
+      "path": "../test-repos/requests",
+      "url": "https://github.com/psf/requests",
+      "tier": 2,
+      "note": "Small mature library. Aging conventions, fixture-heavy test tree, real complexity in adapters and sessions."
+    },
+    {
+      "name": "flask",
+      "path": "../test-repos/flask",
+      "url": "https://github.com/pallets/flask",
+      "tier": 1,
+      "note": "Clean small framework core with strong tests and docs."
+    },
+    {
+      "name": "fastapi",
+      "path": "../test-repos/fastapi",
+      "url": "https://github.com/fastapi/fastapi",
+      "tier": 2,
+      "note": "Large docs-heavy framework; the original noise-control case (translated docs must not reach the top 5)."
+    },
+    {
+      "name": "pytest",
+      "path": "../test-repos/pytest",
+      "url": "https://github.com/pytest-dev/pytest",
+      "tier": 2,
+      "note": "Mid-size, deeply tested, dense plugin architecture."
+    },
+    {
+      "name": "thealgorithms-python",
+      "path": "../test-repos/Python",
+      "url": "https://github.com/TheAlgorithms/Python",
+      "tier": 4,
+      "note": "Large weak-quality collection: thousands of contributed files, inconsistent conventions, very low test ratio. The only clearly negative example in the set."
+    }
+  ]
+}

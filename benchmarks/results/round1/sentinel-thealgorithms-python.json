@@ -1,0 +1,4253 @@
+{
+  "actions": [
+    {
+      "effort": "medium",
+      "impact": "high",
+      "rank": 1,
+      "title": "Add tests around the top hotspots",
+      "why": "The riskiest source paths have no direct static test evidence."
+    },
+    {
+      "effort": "high",
+      "impact": "medium",
+      "rank": 2,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely."
+    }
+  ],
+  "architecture": {
+    "archetype": "library",
+    "components": [
+      "audio_filters",
+      "backtracking",
+      "bit_manipulation",
+      "blockchain",
+      "boolean_algebra",
+      "cellular_automata",
+      "ciphers",
+      "computer_vision",
+      "conversions",
+      "data_compression",
+      "data_structures",
+      "digital_image_processing",
+      "divide_and_conquer",
+      "dynamic_programming",
+      "electronics",
+      "file_transfer",
+      "financial",
+      "fractals",
+      "fuzzy_logic",
+      "genetic_algorithm"
+    ],
+    "entry_points": [],
+    "hotspots": [
+      "data_structures/binary_tree/red_black_tree.py",
+      "maths/primelib.py",
+      "linear_algebra/src/polynom_for_points.py",
+      "data_structures/heap/binomial_heap.py",
+      "dynamic_programming/optimal_binary_search_tree.py"
+    ]
+  },
+  "changes": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 0,
+    "quality_delta": 0,
+    "since_scan_id": 3
+  },
+  "dimensions": [
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [],
+      "grade": "A+?",
+      "id": "architecture",
+      "score": 100,
+      "summary": "library; no clear entry point; 0 import cycle(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [
+        "audio_filters/iir_filter.py",
+        "backtracking/rat_in_maze.py",
+        "boolean_algebra/quine_mc_cluskey.py"
+      ],
+      "grade": "D?",
+      "id": "maintainability",
+      "score": 63,
+      "summary": "1571 source files; 17 over 500 lines; 4 TODOs; max complexity 31; 90 parse error(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [
+        "data_structures/binary_tree/red_black_tree.py",
+        "data_structures/heap/binomial_heap.py",
+        "dynamic_programming/optimal_binary_search_tree.py"
+      ],
+      "grade": "D?",
+      "id": "tests",
+      "score": 68,
+      "summary": "37 test files; ratio 0.02; 5 test-signal finding(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [],
+      "grade": "A+?",
+      "id": "docs",
+      "score": 100,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring."
+    },
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [
+        "pyproject.toml"
+      ],
+      "grade": "A?",
+      "id": "dependencies",
+      "score": 94,
+      "summary": "2 dependency/hygiene finding(s); no lockfile; 16 unpinned dependency string(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "low",
+      "evidence": [],
+      "grade": "A+?",
+      "id": "security",
+      "score": 100,
+      "summary": "Basic pattern checks only; 0 secret-like match(es); 0 dynamic-execution and 0 debug finding(s)."
+    }
+  ],
+  "exclusions": {
+    "docs_translations": 0,
+    "examples": 8,
+    "generated": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality.",
+    "vendor": 0
+  },
+  "findings": [
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "f-string expression part cannot include a backslash (line 328)"
+      ],
+      "file": "conversions/endianness.py",
+      "id": "MNT009:conversions/endianness.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "dict unpacking cannot be used in dict comprehension (line 79)"
+      ],
+      "file": "data_compression/huffman.py",
+      "id": "MNT009:data_compression/huffman.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "iterable unpacking cannot be used in comprehension (line 41)"
+      ],
+      "file": "data_structures/arrays/sudoku_solver.py",
+      "id": "MNT009:data_structures/arrays/sudoku_solver.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 47)"
+      ],
+      "file": "data_structures/binary_tree/non_recursive_segment_tree.py",
+      "id": "MNT009:data_structures/binary_tree/non_recursive_segment_tree.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RedBlackTree._remove_repair at line 205",
+        "72 lines",
+        "complexity 31"
+      ],
+      "file": "data_structures/binary_tree/red_black_tree.py",
+      "id": "MNT007:data_structures/binary_tree/red_black_tree.py",
+      "line": 205,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 20)"
+      ],
+      "file": "data_structures/hashing/hash_map.py",
+      "id": "MNT009:data_structures/hashing/hash_map.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 14)"
+      ],
+      "file": "data_structures/heap/heap.py",
+      "id": "MNT009:data_structures/heap/heap.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 12)"
+      ],
+      "file": "data_structures/heap/randomized_heap.py",
+      "id": "MNT009:data_structures/heap/randomized_heap.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 11)"
+      ],
+      "file": "data_structures/heap/skew_heap.py",
+      "id": "MNT009:data_structures/heap/skew_heap.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 19)"
+      ],
+      "file": "data_structures/linked_list/doubly_linked_list_two.py",
+      "id": "MNT009:data_structures/linked_list/doubly_linked_list_two.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 16)"
+      ],
+      "file": "data_structures/linked_list/skip_list.py",
+      "id": "MNT009:data_structures/linked_list/skip_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 6)"
+      ],
+      "file": "data_structures/queues/queue_by_list.py",
+      "id": "MNT009:data_structures/queues/queue_by_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 6)"
+      ],
+      "file": "data_structures/queues/queue_by_two_stacks.py",
+      "id": "MNT009:data_structures/queues/queue_by_two_stacks.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 16)"
+      ],
+      "file": "data_structures/stacks/stack.py",
+      "id": "MNT009:data_structures/stacks/stack.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 11)"
+      ],
+      "file": "data_structures/stacks/stack_with_doubly_linked_list.py",
+      "id": "MNT009:data_structures/stacks/stack_with_doubly_linked_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 11)"
+      ],
+      "file": "data_structures/stacks/stack_with_singly_linked_list.py",
+      "id": "MNT009:data_structures/stacks/stack_with_singly_linked_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 22)"
+      ],
+      "file": "digital_image_processing/filters/local_binary_pattern.py",
+      "id": "MNT009:digital_image_processing/filters/local_binary_pattern.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 127)"
+      ],
+      "file": "divide_and_conquer/convex_hull.py",
+      "id": "MNT009:divide_and_conquer/convex_hull.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 74)"
+      ],
+      "file": "dynamic_programming/catalan_numbers.py",
+      "id": "MNT009:dynamic_programming/catalan_numbers.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 69)"
+      ],
+      "file": "dynamic_programming/egg_dropping.py",
+      "id": "MNT009:dynamic_programming/egg_dropping.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 31)"
+      ],
+      "file": "graphs/graph_adjacency_list.py",
+      "id": "MNT009:graphs/graph_adjacency_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 31)"
+      ],
+      "file": "graphs/graph_adjacency_matrix.py",
+      "id": "MNT009:graphs/graph_adjacency_matrix.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 14)"
+      ],
+      "file": "graphs/graph_list.py",
+      "id": "MNT009:graphs/graph_list.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 56)"
+      ],
+      "file": "graphs/hopcroft_karp.py",
+      "id": "MNT009:graphs/hopcroft_karp.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 8)"
+      ],
+      "file": "graphs/minimum_spanning_tree_kruskal2.py",
+      "id": "MNT009:graphs/minimum_spanning_tree_kruskal2.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 50)"
+      ],
+      "file": "graphs/minimum_spanning_tree_prims2.py",
+      "id": "MNT009:graphs/minimum_spanning_tree_prims2.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 251)"
+      ],
+      "file": "machine_learning/linear_discriminant_analysis.py",
+      "id": "MNT009:machine_learning/linear_discriminant_analysis.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 15)"
+      ],
+      "file": "machine_learning/q_learning.py",
+      "id": "MNT009:machine_learning/q_learning.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 76)"
+      ],
+      "file": "maths/greatest_common_divisor.py",
+      "id": "MNT009:maths/greatest_common_divisor.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 199)"
+      ],
+      "file": "maths/special_numbers/kaprekar_constant.py",
+      "id": "MNT009:maths/special_numbers/kaprekar_constant.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "iterable unpacking cannot be used in comprehension (line 26)"
+      ],
+      "file": "matrix/median_matrix.py",
+      "id": "MNT009:matrix/median_matrix.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 43)"
+      ],
+      "file": "matrix/similar_matrices.py",
+      "id": "MNT009:matrix/similar_matrices.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 5)"
+      ],
+      "file": "other/cheap_progress.py",
+      "id": "MNT009:other/cheap_progress.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 10)"
+      ],
+      "file": "other/least_recently_used.py",
+      "id": "MNT009:other/least_recently_used.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 10)"
+      ],
+      "file": "other/lfu_cache.py",
+      "id": "MNT009:other/lfu_cache.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 10)"
+      ],
+      "file": "other/lru_cache.py",
+      "id": "MNT009:other/lru_cache.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 59)"
+      ],
+      "file": "project_euler/problem_002/sol4.py",
+      "id": "MNT009:project_euler/problem_002/sol4.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 83)"
+      ],
+      "file": "project_euler/problem_003/sol1.py",
+      "id": "MNT009:project_euler/problem_003/sol1.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 47)"
+      ],
+      "file": "project_euler/problem_003/sol2.py",
+      "id": "MNT009:project_euler/problem_003/sol2.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 47)"
+      ],
+      "file": "project_euler/problem_003/sol3.py",
+      "id": "MNT009:project_euler/problem_003/sol3.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 50)"
+      ],
+      "file": "project_euler/problem_005/sol1.py",
+      "id": "MNT009:project_euler/problem_005/sol1.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 90)"
+      ],
+      "file": "project_euler/problem_007/sol2.py",
+      "id": "MNT009:project_euler/problem_007/sol2.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "iterable unpacking cannot be used in comprehension (line 37)"
+      ],
+      "file": "project_euler/problem_079/sol1.py",
+      "id": "MNT009:project_euler/problem_079/sol1.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "searches/double_linear_search_recursion.py",
+      "id": "MNT009:searches/double_linear_search_recursion.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 20)"
+      ],
+      "file": "searches/jump_search.py",
+      "id": "MNT009:searches/jump_search.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 8)"
+      ],
+      "file": "sorts/adaptive_merge_sort.py",
+      "id": "MNT009:sorts/adaptive_merge_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 96)"
+      ],
+      "file": "sorts/benchmark_sorts.py",
+      "id": "MNT009:sorts/benchmark_sorts.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 20)"
+      ],
+      "file": "sorts/binary_insertion_sort.py",
+      "id": "MNT009:sorts/binary_insertion_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 16)"
+      ],
+      "file": "sorts/bitonic_sort.py",
+      "id": "MNT009:sorts/bitonic_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 24)"
+      ],
+      "file": "sorts/bogo_sort.py",
+      "id": "MNT009:sorts/bogo_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 8)"
+      ],
+      "file": "sorts/bubble_sort.py",
+      "id": "MNT009:sorts/bubble_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 12)"
+      ],
+      "file": "sorts/bubble_sort_recursive.py",
+      "id": "MNT009:sorts/bubble_sort_recursive.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "iterable unpacking cannot be used in comprehension (line 105)"
+      ],
+      "file": "sorts/bucket_sort.py",
+      "id": "MNT009:sorts/bucket_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 19)"
+      ],
+      "file": "sorts/circle_sort.py",
+      "id": "MNT009:sorts/circle_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 14)"
+      ],
+      "file": "sorts/cocktail_shaker_sort.py",
+      "id": "MNT009:sorts/cocktail_shaker_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 28)"
+      ],
+      "file": "sorts/comb_sort.py",
+      "id": "MNT009:sorts/comb_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 13)"
+      ],
+      "file": "sorts/cycle_sort.py",
+      "id": "MNT009:sorts/cycle_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 8)"
+      ],
+      "file": "sorts/double_sort.py",
+      "id": "MNT009:sorts/double_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 8)"
+      ],
+      "file": "sorts/exchange_sort.py",
+      "id": "MNT009:sorts/exchange_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 32)"
+      ],
+      "file": "sorts/gnome_sort.py",
+      "id": "MNT009:sorts/gnome_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 12)"
+      ],
+      "file": "sorts/heap_sort.py",
+      "id": "MNT009:sorts/heap_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 24)"
+      ],
+      "file": "sorts/insertion_sort.py",
+      "id": "MNT009:sorts/insertion_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "sorts/intro_sort.py",
+      "id": "MNT009:sorts/intro_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 21)"
+      ],
+      "file": "sorts/iterative_merge_sort.py",
+      "id": "MNT009:sorts/iterative_merge_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 23)"
+      ],
+      "file": "sorts/merge_insertion_sort.py",
+      "id": "MNT009:sorts/merge_insertion_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 19)"
+      ],
+      "file": "sorts/merge_sort.py",
+      "id": "MNT009:sorts/merge_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "sorts/odd_even_sort.py",
+      "id": "MNT009:sorts/odd_even_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 23)"
+      ],
+      "file": "sorts/odd_even_transposition_single_threaded.py",
+      "id": "MNT009:sorts/odd_even_transposition_single_threaded.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 31)"
+      ],
+      "file": "sorts/pancake_sort.py",
+      "id": "MNT009:sorts/pancake_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 28)"
+      ],
+      "file": "sorts/patience_sort.py",
+      "id": "MNT009:sorts/patience_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 32)"
+      ],
+      "file": "sorts/power_sort.py",
+      "id": "MNT009:sorts/power_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 21)"
+      ],
+      "file": "sorts/quick_sort.py",
+      "id": "MNT009:sorts/quick_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 9)"
+      ],
+      "file": "sorts/quick_sort_3_partition.py",
+      "id": "MNT009:sorts/quick_sort_3_partition.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "sorts/recursive_insertion_sort.py",
+      "id": "MNT009:sorts/recursive_insertion_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "sorts/recursive_mergesort_array.py",
+      "id": "MNT009:sorts/recursive_mergesort_array.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 19)"
+      ],
+      "file": "sorts/recursive_quick_sort.py",
+      "id": "MNT009:sorts/recursive_quick_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 20)"
+      ],
+      "file": "sorts/reverse_selection.py",
+      "id": "MNT009:sorts/reverse_selection.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 27)"
+      ],
+      "file": "sorts/reversort.py",
+      "id": "MNT009:sorts/reversort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 9)"
+      ],
+      "file": "sorts/selection_sort.py",
+      "id": "MNT009:sorts/selection_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 12)"
+      ],
+      "file": "sorts/shell_sort.py",
+      "id": "MNT009:sorts/shell_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 30)"
+      ],
+      "file": "sorts/shrink_shell_sort.py",
+      "id": "MNT009:sorts/shrink_shell_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 21)"
+      ],
+      "file": "sorts/slowsort.py",
+      "id": "MNT009:sorts/slowsort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 27)"
+      ],
+      "file": "sorts/smoothsort.py",
+      "id": "MNT009:sorts/smoothsort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 8)"
+      ],
+      "file": "sorts/stooge_sort.py",
+      "id": "MNT009:sorts/stooge_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 11)"
+      ],
+      "file": "sorts/strand_sort.py",
+      "id": "MNT009:sorts/strand_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 9)"
+      ],
+      "file": "sorts/tim_sort.py",
+      "id": "MNT009:sorts/tim_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "invalid syntax (line 18)"
+      ],
+      "file": "sorts/tree_sort.py",
+      "id": "MNT009:sorts/tree_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "expected '(' (line 15)"
+      ],
+      "file": "sorts/unknown_sort.py",
+      "id": "MNT009:sorts/unknown_sort.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 27)"
+      ],
+      "file": "web_programming/crypto_price_tracker.py",
+      "id": "MNT009:web_programming/crypto_price_tracker.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 70)"
+      ],
+      "file": "web_programming/fetch_well_rx_price.py",
+      "id": "MNT009:web_programming/fetch_well_rx_price.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "multiple exception types must be parenthesized (line 54)"
+      ],
+      "file": "web_programming/instagram_crawler.py",
+      "id": "MNT009:web_programming/instagram_crawler.py",
+      "line": 1,
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage.",
+      "rule_id": "MNT009",
+      "severity": "high",
+      "title": "Python parse error",
+      "why": "A file that does not parse cannot be analysed or imported safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "IIRFilter at line 4",
+        "126 lines",
+        "complexity 0"
+      ],
+      "file": "audio_filters/iir_filter.py",
+      "id": "MNT005:audio_filters/iir_filter.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solve_maze at line 4",
+        "133 lines",
+        "complexity 8"
+      ],
+      "file": "backtracking/rat_in_maze.py",
+      "id": "MNT005:backtracking/rat_in_maze.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "selection at line 81",
+        "39 lines",
+        "complexity 17"
+      ],
+      "file": "boolean_algebra/quine_mc_cluskey.py",
+      "id": "MNT006:boolean_algebra/quine_mc_cluskey.py",
+      "line": 81,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "new_generation at line 26",
+        "44 lines",
+        "complexity 19"
+      ],
+      "file": "cellular_automata/conways_game_of_life.py",
+      "id": "MNT006:cellular_automata/conways_game_of_life.py",
+      "line": 26,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "548 lines",
+        "20.6 KB"
+      ],
+      "file": "cellular_automata/wa_tor.py",
+      "id": "MNT001:cellular_automata/wa_tor.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "WaTor at line 94",
+        "385 lines",
+        "complexity 0"
+      ],
+      "file": "cellular_automata/wa_tor.py",
+      "id": "MNT005:cellular_automata/wa_tor.py",
+      "line": 94,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "decrypt_caesar_with_chi_squared at line 5",
+        "249 lines",
+        "complexity 14"
+      ],
+      "file": "ciphers/decrypt_caesar_with_chi_squared.py",
+      "id": "MNT005:ciphers/decrypt_caesar_with_chi_squared.py",
+      "line": 5,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "562 lines",
+        "20.7 KB"
+      ],
+      "file": "ciphers/des_ecb.py",
+      "id": "MNT001:ciphers/des_ecb.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Operations at line 131",
+        "219 lines",
+        "complexity 0"
+      ],
+      "file": "ciphers/des_ecb.py",
+      "id": "MNT005:ciphers/des_ecb.py",
+      "line": 131,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "miller_rabin at line 6",
+        "82 lines",
+        "complexity 17"
+      ],
+      "file": "ciphers/deterministic_miller_rabin.py",
+      "id": "MNT006:ciphers/deterministic_miller_rabin.py",
+      "line": 6,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "enigma at line 166",
+        "124 lines",
+        "complexity 8"
+      ],
+      "file": "ciphers/enigma_machine2.py",
+      "id": "MNT005:ciphers/enigma_machine2.py",
+      "line": 166,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "HillCipher at line 46",
+        "145 lines",
+        "complexity 0"
+      ],
+      "file": "ciphers/hill_cipher.py",
+      "id": "MNT005:ciphers/hill_cipher.py",
+      "line": 46,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "is_prime_low_num at line 28",
+        "183 lines",
+        "complexity 5"
+      ],
+      "file": "ciphers/rabin_miller.py",
+      "id": "MNT005:ciphers/rabin_miller.py",
+      "line": 28,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ShuffledShiftCipher at line 7",
+        "163 lines",
+        "complexity 0"
+      ],
+      "file": "ciphers/shuffled_shift_cipher.py",
+      "id": "MNT005:ciphers/shuffled_shift_cipher.py",
+      "line": 7,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "XORCipher at line 23",
+        "215 lines",
+        "complexity 0"
+      ],
+      "file": "ciphers/xor_cipher.py",
+      "id": "MNT005:ciphers/xor_cipher.py",
+      "line": 23,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "hsv_to_rgb at line 15",
+        "67 lines",
+        "complexity 17"
+      ],
+      "file": "conversions/rgb_hsv_conversion.py",
+      "id": "MNT006:conversions/rgb_hsv_conversion.py",
+      "line": 15,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "weight_conversion at line 62",
+        "252 lines",
+        "complexity 3"
+      ],
+      "file": "conversions/weight_conversion.py",
+      "id": "MNT005:conversions/weight_conversion.py",
+      "line": 62,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CoordinateCompressor at line 8",
+        "124 lines",
+        "complexity 0"
+      ],
+      "file": "data_compression/coordinate_compression.py",
+      "id": "MNT005:data_compression/coordinate_compression.py",
+      "line": 8,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LZ77Compressor at line 59",
+        "152 lines",
+        "complexity 0"
+      ],
+      "file": "data_compression/lz77.py",
+      "id": "MNT005:data_compression/lz77.py",
+      "line": 59,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DynamicArray at line 1",
+        "121 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/arrays/dynamic_array.py",
+      "id": "MNT005:data_structures/arrays/dynamic_array.py",
+      "line": 1,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BinarySearchTree at line 130",
+        "199 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/binary_search_tree.py",
+      "id": "MNT005:data_structures/binary_tree/binary_search_tree.py",
+      "line": 130,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "641 lines",
+        "16.7 KB"
+      ],
+      "file": "data_structures/binary_tree/binary_search_tree_recursive.py",
+      "id": "MNT001:data_structures/binary_tree/binary_search_tree_recursive.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BinarySearchTreeTest at line 279",
+        "265 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/binary_search_tree_recursive.py",
+      "id": "MNT005:data_structures/binary_tree/binary_search_tree_recursive.py",
+      "line": 279,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "FenwickTree at line 4",
+        "238 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/fenwick_tree.py",
+      "id": "MNT005:data_structures/binary_tree/fenwick_tree.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SegmentTree at line 6",
+        "117 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/lazy_segment_tree.py",
+      "id": "MNT005:data_structures/binary_tree/lazy_segment_tree.py",
+      "line": 6,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MaxFenwickTree at line 1",
+        "147 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/maximum_fenwick_tree.py",
+      "id": "MNT005:data_structures/binary_tree/maximum_fenwick_tree.py",
+      "line": 1,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "PersistentSegmentTree at line 13",
+        "117 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/persistent_segment_tree.py",
+      "id": "MNT005:data_structures/binary_tree/persistent_segment_tree.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "716 lines",
+        "24.9 KB"
+      ],
+      "file": "data_structures/binary_tree/red_black_tree.py",
+      "id": "MNT001:data_structures/binary_tree/red_black_tree.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SegmentTree at line 24",
+        "193 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/segment_tree_other.py",
+      "id": "MNT005:data_structures/binary_tree/segment_tree_other.py",
+      "line": 24,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SplayTree at line 37",
+        "195 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/binary_tree/splay_tree.py",
+      "id": "MNT005:data_structures/binary_tree/splay_tree.py",
+      "line": 37,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "HashTable at line 7",
+        "271 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/hashing/hash_table.py",
+      "id": "MNT005:data_structures/hashing/hash_table.py",
+      "line": 7,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BinomialHeap.merge_heaps at line 131",
+        "74 lines",
+        "complexity 19"
+      ],
+      "file": "data_structures/heap/binomial_heap.py",
+      "id": "MNT006:data_structures/heap/binomial_heap.py",
+      "line": 131,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Heap at line 4",
+        "125 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/heap/heap_generic.py",
+      "id": "MNT005:data_structures/heap/heap_generic.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MinHeap at line 17",
+        "116 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/heap/min_heap.py",
+      "id": "MNT005:data_structures/heap/min_heap.py",
+      "line": 17,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 20",
+        "114 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/__init__.py",
+      "id": "MNT005:data_structures/linked_list/__init__.py",
+      "line": 20,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CircularLinkedList at line 15",
+        "134 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/circular_linked_list.py",
+      "id": "MNT005:data_structures/linked_list/circular_linked_list.py",
+      "line": 15,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DoublyLinkedList at line 20",
+        "189 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/doubly_linked_list.py",
+      "id": "MNT005:data_structures/linked_list/doubly_linked_list.py",
+      "line": 20,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 13",
+        "128 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/kth_element_from_end.py",
+      "id": "MNT005:data_structures/linked_list/kth_element_from_end.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 13",
+        "163 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/partition_linked_list.py",
+      "id": "MNT005:data_structures/linked_list/partition_linked_list.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 19",
+        "112 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/remove_nth_node_from_end_of_list.py",
+      "id": "MNT005:data_structures/linked_list/remove_nth_node_from_end_of_list.py",
+      "line": 19,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "536 lines",
+        "16.5 KB"
+      ],
+      "file": "data_structures/linked_list/singly_linked_list.py",
+      "id": "MNT001:data_structures/linked_list/singly_linked_list.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 40",
+        "331 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/singly_linked_list.py",
+      "id": "MNT005:data_structures/linked_list/singly_linked_list.py",
+      "line": 40,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SortedLinkedList at line 24",
+        "279 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/sorted_linked_list.py",
+      "id": "MNT005:data_structures/linked_list/sorted_linked_list.py",
+      "line": 24,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedList at line 15",
+        "117 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/linked_list/swap_nodes.py",
+      "id": "MNT005:data_structures/linked_list/swap_nodes.py",
+      "line": 15,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CircularQueue at line 4",
+        "106 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/queues/circular_queue.py",
+      "id": "MNT005:data_structures/queues/circular_queue.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CircularQueueLinkedList at line 9",
+        "140 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/queues/circular_queue_linked_list.py",
+      "id": "MNT005:data_structures/queues/circular_queue_linked_list.py",
+      "line": 9,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Deque at line 12",
+        "444 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/queues/double_ended_queue.py",
+      "id": "MNT005:data_structures/queues/double_ended_queue.py",
+      "line": 12,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LinkedQueue at line 18",
+        "133 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/queues/linked_queue.py",
+      "id": "MNT005:data_structures/queues/linked_queue.py",
+      "line": 18,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "infix_2_postfix at line 18",
+        "107 lines",
+        "complexity 14"
+      ],
+      "file": "data_structures/stacks/infix_to_prefix_conversion.py",
+      "id": "MNT005:data_structures/stacks/infix_to_prefix_conversion.py",
+      "line": 18,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "evaluate at line 64",
+        "124 lines",
+        "complexity 15"
+      ],
+      "file": "data_structures/stacks/postfix_evaluation.py",
+      "id": "MNT005:data_structures/stacks/postfix_evaluation.py",
+      "line": 64,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MinMaxStack at line 24",
+        "146 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/stacks/stack_tracking_min_max.py",
+      "id": "MNT005:data_structures/stacks/stack_tracking_min_max.py",
+      "line": 24,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RadixNode at line 10",
+        "189 lines",
+        "complexity 0"
+      ],
+      "file": "data_structures/trie/radix_tree.py",
+      "id": "MNT005:data_structures/trie/radix_tree.py",
+      "line": 10,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "suppress_non_maximum at line 21",
+        "50 lines",
+        "complexity 20"
+      ],
+      "file": "digital_image_processing/edge_detection/canny.py",
+      "id": "MNT006:digital_image_processing/edge_detection/canny.py",
+      "line": 21,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "579 lines",
+        "19.8 KB"
+      ],
+      "file": "digital_image_processing/index_calculation.py",
+      "id": "MNT001:digital_image_processing/index_calculation.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "IndexCalculation at line 11",
+        "523 lines",
+        "complexity 0"
+      ],
+      "file": "digital_image_processing/index_calculation.py",
+      "id": "MNT005:digital_image_processing/index_calculation.py",
+      "line": 11,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "506 lines",
+        "16.4 KB"
+      ],
+      "file": "divide_and_conquer/convex_hull.py",
+      "id": "MNT001:divide_and_conquer/convex_hull.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "needleman_wunsch at line 42",
+        "140 lines",
+        "complexity 16"
+      ],
+      "file": "dynamic_programming/needleman_wunsch.py",
+      "id": "MNT006:dynamic_programming/needleman_wunsch.py",
+      "line": 42,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "find_optimal_binary_search_tree at line 68",
+        "73 lines",
+        "complexity 21"
+      ],
+      "file": "dynamic_programming/optimal_binary_search_tree.py",
+      "id": "MNT006:dynamic_programming/optimal_binary_search_tree.py",
+      "line": 68,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "viterbi at line 4",
+        "173 lines",
+        "complexity 9"
+      ],
+      "file": "dynamic_programming/viterbi.py",
+      "id": "MNT005:dynamic_programming/viterbi.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "FuzzySet at line 16",
+        "151 lines",
+        "complexity 0"
+      ],
+      "file": "fuzzy_logic/fuzzy_operations.py",
+      "id": "MNT005:fuzzy_logic/fuzzy_operations.py",
+      "line": 16,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BraikMac at line 36",
+        "119 lines",
+        "complexity 0"
+      ],
+      "file": "geometry/braik_mac_construction.py",
+      "id": "MNT005:geometry/braik_mac_construction.py",
+      "line": 36,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Polygon at line 207",
+        "116 lines",
+        "complexity 0"
+      ],
+      "file": "geometry/geometry.py",
+      "id": "MNT005:geometry/geometry.py",
+      "line": 207,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "graham_scan at line 113",
+        "110 lines",
+        "complexity 10"
+      ],
+      "file": "geometry/graham_scan.py",
+      "id": "MNT005:geometry/graham_scan.py",
+      "line": 113,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BezierCurve at line 8",
+        "117 lines",
+        "complexity 0"
+      ],
+      "file": "graphics/bezier_curve.py",
+      "id": "MNT005:graphics/bezier_curve.py",
+      "line": 8,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "search at line 12",
+        "94 lines",
+        "complexity 20"
+      ],
+      "file": "graphs/a_star.py",
+      "id": "MNT006:graphs/a_star.py",
+      "line": 12,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Graph at line 33",
+        "106 lines",
+        "complexity 0"
+      ],
+      "file": "graphs/boruvka.py",
+      "id": "MNT005:graphs/boruvka.py",
+      "line": 33,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "AdjacencyList at line 22",
+        "116 lines",
+        "complexity 0"
+      ],
+      "file": "graphs/breadth_first_search_zero_one_shortest_path.py",
+      "id": "MNT005:graphs/breadth_first_search_zero_one_shortest_path.py",
+      "line": 22,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Graph at line 6",
+        "104 lines",
+        "complexity 0"
+      ],
+      "file": "graphs/depth_first_search_2.py",
+      "id": "MNT005:graphs/depth_first_search_2.py",
+      "line": 6,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Graph.dijkstra at line 277",
+        "102 lines",
+        "complexity 7"
+      ],
+      "file": "graphs/dijkstra_algorithm.py",
+      "id": "MNT005:graphs/dijkstra_algorithm.py",
+      "line": 277,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "615 lines",
+        "18.8 KB"
+      ],
+      "file": "graphs/directed_and_undirected_weighted_graph.py",
+      "id": "MNT001:graphs/directed_and_undirected_weighted_graph.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DirectedGraph at line 9",
+        "335 lines",
+        "complexity 0"
+      ],
+      "file": "graphs/directed_and_undirected_weighted_graph.py",
+      "id": "MNT005:graphs/directed_and_undirected_weighted_graph.py",
+      "line": 9,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "EdmondsBlossomAlgorithm.maximum_matching at line 64",
+        "107 lines",
+        "complexity 17"
+      ],
+      "file": "graphs/edmonds_blossom_algorithm.py",
+      "id": "MNT006:graphs/edmonds_blossom_algorithm.py",
+      "line": 64,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "597 lines",
+        "21.8 KB"
+      ],
+      "file": "graphs/graph_adjacency_list.py",
+      "id": "MNT001:graphs/graph_adjacency_list.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "609 lines",
+        "22.2 KB"
+      ],
+      "file": "graphs/graph_adjacency_matrix.py",
+      "id": "MNT001:graphs/graph_adjacency_matrix.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Graph at line 1",
+        "196 lines",
+        "complexity 0"
+      ],
+      "file": "graphs/minimum_spanning_tree_boruvka.py",
+      "id": "MNT005:graphs/minimum_spanning_tree_boruvka.py",
+      "line": 1,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "travelling_salesman_dynamic_programming at line 124",
+        "79 lines",
+        "complexity 16"
+      ],
+      "file": "graphs/travelling_salesman_problem.py",
+      "id": "MNT006:graphs/travelling_salesman_problem.py",
+      "line": 124,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "receptor_converter at line 147",
+        "85 lines",
+        "complexity 18"
+      ],
+      "file": "hashes/hamming_code.py",
+      "id": "MNT006:hashes/hamming_code.py",
+      "line": 147,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "md5_me at line 297",
+        "142 lines",
+        "complexity 7"
+      ],
+      "file": "hashes/md5.py",
+      "id": "MNT005:hashes/md5.py",
+      "line": 297,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SHA256 at line 23",
+        "172 lines",
+        "complexity 0"
+      ],
+      "file": "hashes/sha256.py",
+      "id": "MNT005:hashes/sha256.py",
+      "line": 23,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "jacobi_iteration_method at line 13",
+        "153 lines",
+        "complexity 7"
+      ],
+      "file": "linear_algebra/jacobi_iteration_method.py",
+      "id": "MNT005:linear_algebra/jacobi_iteration_method.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Matrix at line 244",
+        "185 lines",
+        "complexity 0"
+      ],
+      "file": "linear_algebra/src/lib.py",
+      "id": "MNT005:linear_algebra/src/lib.py",
+      "line": 244,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "points_to_polynomial at line 1",
+        "103 lines",
+        "complexity 23"
+      ],
+      "file": "linear_algebra/src/polynom_for_points.py",
+      "id": "MNT006:linear_algebra/src/polynom_for_points.py",
+      "line": 1,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Tableau.run_simplex at line 210",
+        "109 lines",
+        "complexity 4"
+      ],
+      "file": "linear_programming/simplex.py",
+      "id": "MNT005:linear_programming/simplex.py",
+      "line": 210,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "GradientTracker at line 154",
+        "170 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/automatic_differentiation.py",
+      "id": "MNT005:machine_learning/automatic_differentiation.py",
+      "line": 154,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "dbscan at line 73",
+        "121 lines",
+        "complexity 15"
+      ],
+      "file": "machine_learning/dbscan.py",
+      "id": "MNT005:machine_learning/dbscan.py",
+      "line": 73,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DecisionTree at line 10",
+        "143 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/decision_tree.py",
+      "id": "MNT005:machine_learning/decision_tree.py",
+      "line": 10,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "t_distributed_stochastic_neighbor_embedding at line 164",
+        "182 lines",
+        "complexity 11"
+      ],
+      "file": "machine_learning/dimensionality_reduction.py",
+      "id": "MNT005:machine_learning/dimensionality_reduction.py",
+      "line": 164,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "GaussianMixture at line 37",
+        "248 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/gaussian_mixture_model.py",
+      "id": "MNT005:machine_learning/gaussian_mixture_model.py",
+      "line": 37,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "report_generator at line 251",
+        "140 lines",
+        "complexity 2"
+      ],
+      "file": "machine_learning/k_means_clust.py",
+      "id": "MNT005:machine_learning/k_means_clust.py",
+      "line": 251,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "929 lines",
+        "35.0 KB"
+      ],
+      "file": "machine_learning/loss_functions.py",
+      "id": "MNT001:machine_learning/loss_functions.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "connectionist_temporal_classification_loss at line 782",
+        "102 lines",
+        "complexity 11"
+      ],
+      "file": "machine_learning/loss_functions.py",
+      "id": "MNT005:machine_learning/loss_functions.py",
+      "line": 782,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "mean_shift at line 151",
+        "104 lines",
+        "complexity 11"
+      ],
+      "file": "machine_learning/mean_shift.py",
+      "id": "MNT005:machine_learning/mean_shift.py",
+      "line": 151,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "517 lines",
+        "17.9 KB"
+      ],
+      "file": "machine_learning/multilayer_perceptron_classifier.py",
+      "id": "MNT001:machine_learning/multilayer_perceptron_classifier.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MLP at line 105",
+        "407 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/multilayer_perceptron_classifier.py",
+      "id": "MNT005:machine_learning/multilayer_perceptron_classifier.py",
+      "line": 105,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "NaiveBayesTextClassifier at line 20",
+        "148 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/naive_bayes_text_classification.py",
+      "id": "MNT005:machine_learning/naive_bayes_text_classification.py",
+      "line": 20,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "PolynomialRegression at line 41",
+        "140 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/polynomial_regression.py",
+      "id": "MNT005:machine_learning/polynomial_regression.py",
+      "line": 41,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RidgeRegression at line 5",
+        "142 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/ridge_regression.py",
+      "id": "MNT005:machine_learning/ridge_regression.py",
+      "line": 5,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "622 lines",
+        "20.4 KB"
+      ],
+      "file": "machine_learning/sequential_minimum_optimization.py",
+      "id": "MNT001:machine_learning/sequential_minimum_optimization.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SmoSVM at line 47",
+        "355 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/sequential_minimum_optimization.py",
+      "id": "MNT005:machine_learning/sequential_minimum_optimization.py",
+      "line": 47,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "similarity_search at line 37",
+        "104 lines",
+        "complexity 9"
+      ],
+      "file": "machine_learning/similarity_search.py",
+      "id": "MNT005:machine_learning/similarity_search.py",
+      "line": 37,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SVC at line 27",
+        "175 lines",
+        "complexity 0"
+      ],
+      "file": "machine_learning/support_vector_machines.py",
+      "id": "MNT005:machine_learning/support_vector_machines.py",
+      "line": 27,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "682 lines",
+        "22.8 KB"
+      ],
+      "file": "maths/area.py",
+      "id": "MNT001:maths/area.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "is_ipv6_address_valid at line 75",
+        "44 lines",
+        "complexity 21"
+      ],
+      "file": "maths/is_ipv6_address_valid.py",
+      "id": "MNT006:maths/is_ipv6_address_valid.py",
+      "line": 75,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "is_keith_number at line 28",
+        "103 lines",
+        "complexity 6"
+      ],
+      "file": "maths/keith_number.py",
+      "id": "MNT005:maths/keith_number.py",
+      "line": 28,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "AdamsBashforth at line 15",
+        "211 lines",
+        "complexity 0"
+      ],
+      "file": "maths/numerical_analysis/adams_bashforth.py",
+      "id": "MNT005:maths/numerical_analysis/adams_bashforth.py",
+      "line": 15,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "brent_method at line 4",
+        "112 lines",
+        "complexity 15"
+      ],
+      "file": "maths/numerical_analysis/brent_method.py",
+      "id": "MNT005:maths/numerical_analysis/brent_method.py",
+      "line": 4,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "nth_root at line 27",
+        "123 lines",
+        "complexity 10"
+      ],
+      "file": "maths/numerical_analysis/nth_root.py",
+      "id": "MNT005:maths/numerical_analysis/nth_root.py",
+      "line": 27,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "perfect at line 17",
+        "126 lines",
+        "complexity 6"
+      ],
+      "file": "maths/perfect_number.py",
+      "id": "MNT005:maths/perfect_number.py",
+      "line": 17,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "pollard_rho at line 6",
+        "117 lines",
+        "complexity 8"
+      ],
+      "file": "maths/pollard_rho.py",
+      "id": "MNT005:maths/pollard_rho.py",
+      "line": 6,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Polynomial at line 15",
+        "175 lines",
+        "complexity 0"
+      ],
+      "file": "maths/polynomials/single_indeterminate_operations.py",
+      "id": "MNT005:maths/polynomials/single_indeterminate_operations.py",
+      "line": 15,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "841 lines",
+        "20.8 KB"
+      ],
+      "file": "maths/primelib.py",
+      "id": "MNT001:maths/primelib.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "kg_v at line 447",
+        "86 lines",
+        "complexity 17"
+      ],
+      "file": "maths/primelib.py",
+      "id": "MNT006:maths/primelib.py",
+      "line": 447,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "FFT at line 9",
+        "163 lines",
+        "complexity 0"
+      ],
+      "file": "maths/radix2_fft.py",
+      "id": "MNT005:maths/radix2_fft.py",
+      "line": 9,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "sieve_of_atkin at line 18",
+        "83 lines",
+        "complexity 20"
+      ],
+      "file": "maths/sieve_of_atkin.py",
+      "id": "MNT006:maths/sieve_of_atkin.py",
+      "line": 18,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solve_simultaneous at line 57",
+        "71 lines",
+        "complexity 20"
+      ],
+      "file": "maths/simultaneous_linear_equation_solver.py",
+      "id": "MNT006:maths/simultaneous_linear_equation_solver.py",
+      "line": 57,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "softmax at line 17",
+        "109 lines",
+        "complexity 6"
+      ],
+      "file": "maths/softmax.py",
+      "id": "MNT005:maths/softmax.py",
+      "line": 17,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "594 lines",
+        "19.4 KB"
+      ],
+      "file": "maths/volume.py",
+      "id": "MNT001:maths/volume.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "zeller at line 5",
+        "143 lines",
+        "complexity 9"
+      ],
+      "file": "maths/zellers_congruence.py",
+      "id": "MNT005:maths/zellers_congruence.py",
+      "line": 5,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "inverse_of_matrix at line 8",
+        "154 lines",
+        "complexity 17"
+      ],
+      "file": "matrix/inverse_of_matrix.py",
+      "id": "MNT006:matrix/inverse_of_matrix.py",
+      "line": 8,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Matrix at line 6",
+        "359 lines",
+        "complexity 0"
+      ],
+      "file": "matrix/matrix_class.py",
+      "id": "MNT005:matrix/matrix_class.py",
+      "line": 6,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Matrix at line 6",
+        "235 lines",
+        "complexity 0"
+      ],
+      "file": "matrix/sherman_morrison.py",
+      "id": "MNT005:matrix/sherman_morrison.py",
+      "line": 6,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "is_valid_sudoku_board at line 28",
+        "131 lines",
+        "complexity 10"
+      ],
+      "file": "matrix/validate_sudoku_board.py",
+      "id": "MNT005:matrix/validate_sudoku_board.py",
+      "line": 28,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Dinic at line 24",
+        "137 lines",
+        "complexity 0"
+      ],
+      "file": "networking_flow/dinic.py",
+      "id": "MNT005:networking_flow/dinic.py",
+      "line": 24,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "PushRelabel.max_flow at line 90",
+        "47 lines",
+        "complexity 16"
+      ],
+      "file": "networking_flow/push_relabel.py",
+      "id": "MNT006:networking_flow/push_relabel.py",
+      "line": 90,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CNN at line 23",
+        "330 lines",
+        "complexity 0"
+      ],
+      "file": "neural_network/convolution_neural_network.py",
+      "id": "MNT005:neural_network/convolution_neural_network.py",
+      "line": 23,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "521 lines",
+        "19.0 KB"
+      ],
+      "file": "neural_network/lstm.py",
+      "id": "MNT001:neural_network/lstm.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LongShortTermMemory.backward_pass at line 326",
+        "110 lines",
+        "complexity 3"
+      ],
+      "file": "neural_network/lstm.py",
+      "id": "MNT005:neural_network/lstm.py",
+      "line": 326,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Perceptron at line 16",
+        "140 lines",
+        "complexity 0"
+      ],
+      "file": "neural_network/perceptron.py",
+      "id": "MNT005:neural_network/perceptron.py",
+      "line": 16,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TwoHiddenLayerNeuralNetwork at line 11",
+        "213 lines",
+        "complexity 0"
+      ],
+      "file": "neural_network/two_hidden_layers_neural_network.py",
+      "id": "MNT005:neural_network/two_hidden_layers_neural_network.py",
+      "line": 11,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BankersAlgorithm at line 40",
+        "183 lines",
+        "complexity 0"
+      ],
+      "file": "other/bankers_algorithm.py",
+      "id": "MNT005:other/bankers_algorithm.py",
+      "line": 40,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DancingLinks at line 38",
+        "122 lines",
+        "complexity 0"
+      ],
+      "file": "other/dancing_links.py",
+      "id": "MNT005:other/dancing_links.py",
+      "line": 38,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "NumberContainer at line 12",
+        "163 lines",
+        "complexity 0"
+      ],
+      "file": "other/number_container_system.py",
+      "id": "MNT005:other/number_container_system.py",
+      "line": 12,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "WordSearch at line 20",
+        "325 lines",
+        "complexity 0"
+      ],
+      "file": "other/word_search.py",
+      "id": "MNT005:other/word_search.py",
+      "line": 20,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "rainfall_intensity at line 17",
+        "121 lines",
+        "complexity 7"
+      ],
+      "file": "physics/rainfall_intensity.py",
+      "id": "MNT005:physics/rainfall_intensity.py",
+      "line": 17,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solution at line 95",
+        "55 lines",
+        "complexity 20"
+      ],
+      "file": "project_euler/problem_049/sol1.py",
+      "id": "MNT006:project_euler/problem_049/sol1.py",
+      "line": 95,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "PokerHand at line 49",
+        "316 lines",
+        "complexity 0"
+      ],
+      "file": "project_euler/problem_054/sol1.py",
+      "id": "MNT005:project_euler/problem_054/sol1.py",
+      "line": 49,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solution at line 19",
+        "82 lines",
+        "complexity 17"
+      ],
+      "file": "project_euler/problem_092/sol1.py",
+      "id": "MNT006:project_euler/problem_092/sol1.py",
+      "line": 19,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solution at line 49",
+        "48 lines",
+        "complexity 16"
+      ],
+      "file": "project_euler/problem_111/sol1.py",
+      "id": "MNT006:project_euler/problem_111/sol1.py",
+      "line": 49,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solution at line 29",
+        "48 lines",
+        "complexity 17"
+      ],
+      "file": "project_euler/problem_142/sol1.py",
+      "id": "MNT006:project_euler/problem_142/sol1.py",
+      "line": 29,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "next_term at line 20",
+        "87 lines",
+        "complexity 20"
+      ],
+      "file": "project_euler/problem_551/sol1.py",
+      "id": "MNT006:project_euler/problem_551/sol1.py",
+      "line": 20,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "solution at line 46",
+        "107 lines",
+        "complexity 4"
+      ],
+      "file": "project_euler/problem_686/sol1.py",
+      "id": "MNT005:project_euler/problem_686/sol1.py",
+      "line": 46,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SchedulerEngine at line 13",
+        "211 lines",
+        "complexity 0"
+      ],
+      "file": "scheduling/cpuschedulingalgorithms.py",
+      "id": "MNT005:scheduling/cpuschedulingalgorithms.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MLFQ at line 15",
+        "250 lines",
+        "complexity 0"
+      ],
+      "file": "scheduling/multi_level_feedback_queue.py",
+      "id": "MNT005:scheduling/multi_level_feedback_queue.py",
+      "line": 15,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "weighted_interval_scheduling at line 79",
+        "109 lines",
+        "complexity 7"
+      ],
+      "file": "scheduling/weighted_interval_scheduling.py",
+      "id": "MNT005:scheduling/weighted_interval_scheduling.py",
+      "line": 79,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "hill_climbing at line 93",
+        "74 lines",
+        "complexity 16"
+      ],
+      "file": "searches/hill_climbing.py",
+      "id": "MNT006:searches/hill_climbing.py",
+      "line": 93,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "simulated_annealing at line 9",
+        "86 lines",
+        "complexity 16"
+      ],
+      "file": "searches/simulated_annealing.py",
+      "id": "MNT006:searches/simulated_annealing.py",
+      "line": 9,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "flash_sort at line 29",
+        "105 lines",
+        "complexity 12"
+      ],
+      "file": "sorts/flash_sort.py",
+      "id": "MNT005:sorts/flash_sort.py",
+      "line": 29,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BoyerMooreSearch at line 25",
+        "101 lines",
+        "complexity 0"
+      ],
+      "file": "strings/boyer_moore_search.py",
+      "id": "MNT005:strings/boyer_moore_search.py",
+      "line": 25,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "min_window at line 1",
+        "89 lines",
+        "complexity 18"
+      ],
+      "file": "strings/min_window_substring.py",
+      "id": "MNT006:strings/min_window_substring.py",
+      "line": 1,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SuffixAutomaton at line 25",
+        "147 lines",
+        "complexity 0"
+      ],
+      "file": "strings/suffix_automaton.py",
+      "id": "MNT005:strings/suffix_automaton.py",
+      "line": 25,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "716 lines",
+        "complexity 31",
+        "no importing test found"
+      ],
+      "file": "data_structures/binary_tree/red_black_tree.py",
+      "id": "TST003:data_structures/binary_tree/red_black_tree.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "403 lines",
+        "complexity 19",
+        "no importing test found"
+      ],
+      "file": "data_structures/heap/binomial_heap.py",
+      "id": "TST003:data_structures/heap/binomial_heap.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "150 lines",
+        "complexity 21",
+        "no importing test found"
+      ],
+      "file": "dynamic_programming/optimal_binary_search_tree.py",
+      "id": "TST003:dynamic_programming/optimal_binary_search_tree.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "116 lines",
+        "complexity 23",
+        "no importing test found"
+      ],
+      "file": "linear_algebra/src/polynom_for_points.py",
+      "id": "TST003:linear_algebra/src/polynom_for_points.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "841 lines",
+        "complexity 17",
+        "no importing test found"
+      ],
+      "file": "maths/primelib.py",
+      "id": "TST003:maths/primelib.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "1 manifest(s)",
+        "no lockfile found"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP002:pyproject.toml",
+      "line": 1,
+      "recommendation": "Generate and commit the lockfile for the package manager in use.",
+      "rule_id": "DEP002",
+      "severity": "low",
+      "title": "Manifest present but no lockfile",
+      "why": "A lockfile makes installs reproducible across machines and CI."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "16 unpinned dependency string(s)",
+        "beautifulsoup4>=4.15",
+        "cython>=3.1.2",
+        "fake-useragent>=1.5.1",
+        "httpx2>=2.0.1",
+        "imageio>=2.36.1"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP003:pyproject.toml",
+      "line": 1,
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives.",
+      "rule_id": "DEP003",
+      "severity": "low",
+      "title": "Unpinned direct dependencies",
+      "why": "Loose dependency ranges make builds drift over time."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "1571 source modules",
+        "threshold 60",
+        "max complexity 31"
+      ],
+      "file": null,
+      "id": "ARCH005:project",
+      "line": 1,
+      "recommendation": "Split cohesive subpackages behind clear interfaces, raise test coverage on the highest-churn modules, and document the module boundaries.",
+      "rule_id": "ARCH005",
+      "severity": "medium",
+      "title": "High architectural load across a large, intricate codebase",
+      "why": "A codebase this large and intricate is expensive to change safely: coordination, review latency and blast radius all grow with structural load even when no single defect is present."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "37 test files",
+        "1571 source files",
+        "ratio 0.02 (expected >= 0.35)"
+      ],
+      "file": null,
+      "id": "TST002:project",
+      "line": 1,
+      "recommendation": "Add focused tests for the highest-risk modules before broad refactoring.",
+      "rule_id": "TST002",
+      "severity": "medium",
+      "title": "Test/source ratio below expected for this repository shape",
+      "why": "A low test/source ratio suggests large parts of the codebase have no direct tests."
+    }
+  ],
+  "generated_at": "2026-10-24T12:03:48+01:00",
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "13 file(s) were skipped; see coverage.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies.",
+    "Low confidence: 90 source parse error(s)."
+  ],
+  "metrics": {
+    "archetype": "library",
+    "max_complexity": 31,
+    "oversized_source_files": 17,
+    "parse_errors": 90,
+    "source_files": 1571,
+    "source_lines": 149322,
+    "source_todos": 4,
+    "test_files": 37,
+    "test_lines": 2560,
+    "test_to_source_file_ratio": 0.02,
+    "test_to_source_line_ratio": 0.02
+  },
+  "project": {
+    "git": {
+      "branch": "master",
+      "commit": "6e03a48",
+      "dirty": true
+    },
+    "name": "thealgorithms-python",
+    "root": "."
+  },
+  "rules_version": "quality-rules-2",
+  "scan": {
+    "coverage": {
+      "docs": "metadata",
+      "examples": "excluded",
+      "generated": "none",
+      "source": "100%",
+      "tests": "100%",
+      "vendor": "none"
+    },
+    "duration_ms": 334,
+    "files_analyzed": 0,
+    "files_cached": 1716,
+    "files_skipped": 13,
+    "files_total": 1729,
+    "finished_at": "2026-10-24T12:03:48+01:00",
+    "index_size_bytes": 4917280,
+    "index_size_label": "4.7 MB",
+    "mode": "incremental",
+    "started_at": "2026-10-24T12:03:48+01:00"
+  },
+  "schema_version": 2,
+  "summary": {
+    "band": "adequate",
+    "confidence": "low",
+    "confidence_reasons": [
+      "90 source parse error(s)"
+    ],
+    "grade_ceiling": "A+",
+    "headline": "250 finding(s); weakest dimension: Maintainability.",
+    "overall_score": 72,
+    "provisional": true
+  }
+}

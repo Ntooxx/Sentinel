@@ -1,0 +1,1227 @@
+{
+  "run": "2026-10-24T10:55:30+00:00",
+  "freeze": {
+    "frozen_at": "2026-10-24T10:54:19+00:00",
+    "git_commit": "939bee9e092f39ab21f4e159ea51b9752d6aa821",
+    "analysis_version": 9,
+    "package_sha256": "0a6b142390db3dd96294f47dd1a71620e8c5214053e2067a49fad770b11693d4",
+    "package_files": 21,
+    "tool_versions": {
+      "sentinel": "project-sentinel 2.0.0",
+      "ruff": "ruff 0.16.6",
+      "bandit": "bandit 1.9.4",
+      "semgrep": "1.182.1"
+    },
+    "rule": "The analysis package is not modified while a benchmark round is running. Any change to src/sentinel2 requires a new freeze and a new result directory."
+  },
+  "environment": {
+    "python": "3.11.14",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "cpu_count": 24,
+    "tools": {
+      "sentinel": "project-sentinel 2.0.0",
+      "ruff": "ruff 0.16.6",
+      "bandit": "bandit 1.9.4",
+      "semgrep": "1.182.1"
+    },
+    "rss_method": "sum of process-tree working sets sampled at 50 ms"
+  },
+  "defects": [
+    {
+      "id": "D01",
+      "title": "eval() on untrusted input",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC002",
+          "line": 20,
+          "evidence": "Dangerous dynamic execution pattern"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B307",
+          "line": 20,
+          "evidence": "Use of possibly insecure function - consider using safer ast.literal_eval."
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "python.lang.security.audit.eval-detected",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D02",
+      "title": "subprocess with shell=True and interpolation",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC002",
+          "line": 20,
+          "evidence": "Dangerous dynamic execution pattern"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B602",
+          "line": 25,
+          "evidence": "subprocess call with shell=True identified, security issue."
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "python.lang.security.audit.subprocess-shell-true",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D03",
+      "title": "os.system with interpolated input",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC002",
+          "line": 20,
+          "evidence": "Dangerous dynamic execution pattern"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B605",
+          "line": 30,
+          "evidence": "Starting a process with a shell, possible injection detected, security issue."
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "python.lang.security.audit.subprocess-shell-true",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D04",
+      "title": "pickle.loads on an untrusted payload",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC002",
+          "line": 20,
+          "evidence": "Dangerous dynamic execution pattern"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B301",
+          "line": 35,
+          "evidence": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue."
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "python.lang.security.audit.pickle-pickles-modules",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D05",
+      "title": "Hardcoded password-style literal",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC001",
+          "line": 13,
+          "evidence": "Secret-like string in a tracked file"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B105",
+          "line": 12,
+          "evidence": "Possible hardcoded password: 'Sup3rSecret!Passw0rd'"
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "generic.secrets.security.hardcoded-password",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D06",
+      "title": "Hardcoded provider-shaped token",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC001",
+          "line": 13,
+          "evidence": "Secret-like string in a tracked file"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B105",
+          "line": 12,
+          "evidence": "Possible hardcoded password: 'Sup3rSecret!Passw0rd'"
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "generic.secrets.security.detected-github-pat",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D07",
+      "title": "DEBUG = True committed in source",
+      "file": "app/security.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "SEC003",
+          "line": 15,
+          "evidence": "Hardcoded debug mode"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D08",
+      "title": "Bare except swallows SystemExit and KeyboardInterrupt",
+      "file": "app/views.py",
+      "category": "correctness",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "hit",
+          "expected": "E722",
+          "line": 12,
+          "evidence": "Do not use bare `except`"
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D09",
+      "title": "Imported module never used",
+      "file": "app/views.py",
+      "category": "correctness",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "hit",
+          "expected": "F401",
+          "line": 18,
+          "evidence": "`socket` imported but unused"
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D10",
+      "title": "Name defined only on a branch, used unconditionally",
+      "file": "app/views.py",
+      "category": "correctness",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "miss",
+          "expected": "F821",
+          "line": null,
+          "evidence": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D11",
+      "title": "Untrusted value interpolated into SQL",
+      "file": "app/views.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B608",
+          "line": 32,
+          "evidence": "Possible SQL injection vector through string-based query construction."
+        },
+        "semgrep": {
+          "status": "miss",
+          "expected": "python.lang.security.audit.sqlalchemy.sql-string-format",
+          "line": null,
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "D12",
+      "title": "Predictable world-writable temp path",
+      "file": "app/views.py",
+      "category": "security",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "hit",
+          "expected": "B108",
+          "line": 38,
+          "evidence": "Probable insecure usage of temp file/directory."
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D13",
+      "title": "Cyclomatic complexity above 25",
+      "file": "app/utils.py",
+      "category": "maintainability",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "MNT007",
+          "line": 4,
+          "evidence": "Very high cyclomatic complexity"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D14",
+      "title": "TODO/FIXME density above threshold in one source file",
+      "file": "app/utils.py",
+      "category": "maintainability",
+      "tools": {
+        "sentinel": {
+          "status": "miss",
+          "expected": "MNT008",
+          "line": null,
+          "evidence": null
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D15",
+      "title": "Direct dependencies with no version constraint",
+      "file": "requirements.txt",
+      "category": "dependencies",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "DEP003",
+          "line": 1,
+          "evidence": "Unpinned direct dependencies"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D16",
+      "title": "File does not parse",
+      "file": "app/broken.py",
+      "category": "correctness",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "MNT009",
+          "line": 1,
+          "evidence": "Python parse error"
+        },
+        "ruff": {
+          "status": "miss",
+          "expected": "E999",
+          "line": null,
+          "evidence": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D17",
+      "title": "Import cycle between two source modules",
+      "file": "app/cycle_a.py",
+      "category": "architecture",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "ARCH002",
+          "line": 1,
+          "evidence": "Import cycle between 2 source modules"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D18",
+      "title": "Source file over 2,000 lines and 250 KB",
+      "file": "app/huge_module.py",
+      "category": "maintainability",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "MNT002",
+          "line": 1,
+          "evidence": "Very large source file"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D19",
+      "title": "Function over 100 lines",
+      "file": "app/long_function.py",
+      "category": "maintainability",
+      "tools": {
+        "sentinel": {
+          "status": "miss",
+          "expected": "MNT005",
+          "line": null,
+          "evidence": null
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D20",
+      "title": "Repository has no test files at all",
+      "file": ".",
+      "category": "tests",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "TST001",
+          "line": 1,
+          "evidence": "No test files detected"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D21",
+      "title": "Repository has no README",
+      "file": ".",
+      "category": "documentation",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "DOC001",
+          "line": 1,
+          "evidence": "No README found"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D22",
+      "title": "No .gitignore",
+      "file": ".",
+      "category": "hygiene",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "HYG001",
+          "line": 1,
+          "evidence": "No .gitignore"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "D23",
+      "title": "Manifest with no lockfile",
+      "file": ".",
+      "category": "dependencies",
+      "tools": {
+        "sentinel": {
+          "status": "hit",
+          "expected": "DEP002",
+          "line": 1,
+          "evidence": "Manifest present but no lockfile"
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    },
+    {
+      "id": "DECOY1",
+      "title": "MD5 used with usedforsecurity=False as a non-security checksum",
+      "file": "app/security.py",
+      "category": "decoy",
+      "tools": {
+        "sentinel": {
+          "status": "out",
+          "expected": null
+        },
+        "ruff": {
+          "status": "out",
+          "expected": null
+        },
+        "bandit": {
+          "status": "out",
+          "expected": null
+        },
+        "semgrep": {
+          "status": "out",
+          "expected": null
+        }
+      }
+    }
+  ],
+  "recall": {
+    "sentinel": {
+      "in_scope": 18,
+      "hits": 16,
+      "misses": 2,
+      "recall": 0.889,
+      "out_of_scope": 6,
+      "missed_ids": [
+        "D14",
+        "D19"
+      ]
+    },
+    "ruff": {
+      "in_scope": 4,
+      "hits": 2,
+      "misses": 2,
+      "recall": 0.5,
+      "out_of_scope": 20,
+      "missed_ids": [
+        "D10",
+        "D16"
+      ]
+    },
+    "bandit": {
+      "in_scope": 8,
+      "hits": 8,
+      "misses": 0,
+      "recall": 1.0,
+      "out_of_scope": 16,
+      "missed_ids": []
+    },
+    "semgrep": {
+      "in_scope": 7,
+      "hits": 0,
+      "misses": 7,
+      "recall": 0.0,
+      "out_of_scope": 17,
+      "missed_ids": [
+        "D01",
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06",
+        "D11"
+      ]
+    }
+  },
+  "runs": {
+    "sentinel": {
+      "ok": true,
+      "returncode": 0,
+      "wall_ms": 219.9,
+      "peak_rss_bytes": 31064064,
+      "rss_method": "sum of process-tree working sets sampled at 50 ms (Windows)",
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "command": [
+        "C:\\Users\\anton\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe",
+        "-m",
+        "sentinel2",
+        "scan",
+        "C:\\Users\\anton\\AppData\\Local\\Temp\\sentinel-defects-h4y16da2\\defect_corpus",
+        "--format",
+        "json",
+        "--out",
+        "benchmarks\\results\\dryrun\\sentinel-defects.json",
+        "--quiet"
+      ],
+      "repeats": 1,
+      "wall_ms_all": [
+        219.9
+      ],
+      "findings": 17,
+      "band": "unmaintained",
+      "overall_score": 56,
+      "confidence": "low",
+      "mode": "cold",
+      "files_total": 11,
+      "files_analyzed": 11,
+      "files_cached": 0,
+      "index_bytes": 420056,
+      "coverage": {
+        "source": "100%",
+        "tests": "100%",
+        "docs": "metadata",
+        "vendor": "none",
+        "generated": "none",
+        "examples": "none"
+      }
+    },
+    "ruff": {
+      "ok": true,
+      "returncode": 1,
+      "wall_ms": 68.8,
+      "peak_rss_bytes": 11513856,
+      "rss_method": "sum of process-tree working sets sampled at 50 ms (Windows)",
+      "stderr": "",
+      "error": null,
+      "command": [
+        "ruff",
+        "check",
+        "--isolated",
+        "--no-cache",
+        "--output-format",
+        "json",
+        "C:\\Users\\anton\\AppData\\Local\\Temp\\sentinel-defects-h4y16da2\\defect_corpus"
+      ],
+      "repeats": 1,
+      "wall_ms_all": [
+        68.8
+      ],
+      "findings": 7,
+      "severity": {
+        "info": 0,
+        "low": 1,
+        "medium": 6,
+        "high": 0
+      },
+      "files_flagged": 4
+    },
+    "bandit": {
+      "ok": true,
+      "returncode": 1,
+      "wall_ms": 371.2,
+      "peak_rss_bytes": 36888576,
+      "rss_method": "sum of process-tree working sets sampled at 50 ms (Windows)",
+      "stderr": "",
+      "error": null,
+      "command": [
+        "bandit",
+        "-r",
+        "C:\\Users\\anton\\AppData\\Local\\Temp\\sentinel-defects-h4y16da2\\defect_corpus",
+        "-f",
+        "json",
+        "-q"
+      ],
+      "repeats": 1,
+      "wall_ms_all": [
+        371.2
+      ],
+      "findings": 11,
+      "severity": {
+        "info": 0,
+        "low": 4,
+        "medium": 4,
+        "high": 3
+      },
+      "files_flagged": 2
+    },
+    "semgrep": {
+      "ok": true,
+      "returncode": 0,
+      "wall_ms": 5738.8,
+      "peak_rss_bytes": 505978880,
+      "rss_method": "sum of process-tree working sets sampled at 50 ms (Windows)",
+      "stderr": "",
+      "error": null,
+      "command": [
+        "semgrep",
+        "scan",
+        "C:\\Users\\anton\\AppData\\Local\\Temp\\sentinel-defects-h4y16da2\\defect_corpus",
+        "--config",
+        "p/default",
+        "--json",
+        "--quiet",
+        "--metrics=off",
+        "--timeout",
+        "30",
+        "--jobs",
+        "4"
+      ],
+      "repeats": 1,
+      "wall_ms_all": [
+        5738.8
+      ],
+      "findings": 5,
+      "severity": {
+        "info": 0,
+        "low": 0,
+        "medium": 3,
+        "high": 2
+      },
+      "files_flagged": 2
+    }
+  },
+  "findings": {
+    "sentinel": [
+      {
+        "tool": "sentinel",
+        "rule": "MNT009",
+        "file": "app/broken.py",
+        "line": 1,
+        "severity": "high",
+        "title": "Python parse error",
+        "rank": 1
+      },
+      {
+        "tool": "sentinel",
+        "rule": "MNT002",
+        "file": "app/huge_module.py",
+        "line": 1,
+        "severity": "high",
+        "title": "Very large source file",
+        "rank": 2
+      },
+      {
+        "tool": "sentinel",
+        "rule": "MNT007",
+        "file": "app/long_function.py",
+        "line": 4,
+        "severity": "high",
+        "title": "Very high cyclomatic complexity",
+        "rank": 3
+      },
+      {
+        "tool": "sentinel",
+        "rule": "MNT007",
+        "file": "app/utils.py",
+        "line": 4,
+        "severity": "high",
+        "title": "Very high cyclomatic complexity",
+        "rank": 4
+      },
+      {
+        "tool": "sentinel",
+        "rule": "SEC001",
+        "file": "app/security.py",
+        "line": 13,
+        "severity": "high",
+        "title": "Secret-like string in a tracked file",
+        "rank": 5
+      },
+      {
+        "tool": "sentinel",
+        "rule": "ARCH002",
+        "file": "app/cycle_a.py",
+        "line": 1,
+        "severity": "medium",
+        "title": "Import cycle between 2 source modules",
+        "rank": 6
+      },
+      {
+        "tool": "sentinel",
+        "rule": "SEC002",
+        "file": "app/security.py",
+        "line": 20,
+        "severity": "medium",
+        "title": "Dangerous dynamic execution pattern",
+        "rank": 7
+      },
+      {
+        "tool": "sentinel",
+        "rule": "SEC003",
+        "file": "app/security.py",
+        "line": 15,
+        "severity": "medium",
+        "title": "Hardcoded debug mode",
+        "rank": 8
+      },
+      {
+        "tool": "sentinel",
+        "rule": "DEP002",
+        "file": "requirements.txt",
+        "line": 1,
+        "severity": "low",
+        "title": "Manifest present but no lockfile",
+        "rank": 9
+      },
+      {
+        "tool": "sentinel",
+        "rule": "DEP003",
+        "file": "requirements.txt",
+        "line": 1,
+        "severity": "low",
+        "title": "Unpinned direct dependencies",
+        "rank": 10
+      },
+      {
+        "tool": "sentinel",
+        "rule": "TST001",
+        "file": "",
+        "line": 1,
+        "severity": "high",
+        "title": "No test files detected",
+        "rank": 11
+      },
+      {
+        "tool": "sentinel",
+        "rule": "ARCH001",
+        "file": "",
+        "line": 1,
+        "severity": "medium",
+        "title": "Application has no clear entry point",
+        "rank": 12
+      },
+      {
+        "tool": "sentinel",
+        "rule": "TST002",
+        "file": "",
+        "line": 1,
+        "severity": "medium",
+        "title": "Test/source ratio below expected for this repository shape",
+        "rank": 13
+      },
+      {
+        "tool": "sentinel",
+        "rule": "DOC001",
+        "file": "",
+        "line": 1,
+        "severity": "medium",
+        "title": "No README found",
+        "rank": 14
+      },
+      {
+        "tool": "sentinel",
+        "rule": "DEP004",
+        "file": "",
+        "line": 1,
+        "severity": "medium",
+        "title": "No license file",
+        "rank": 15
+      },
+      {
+        "tool": "sentinel",
+        "rule": "HYG001",
+        "file": "",
+        "line": 1,
+        "severity": "low",
+        "title": "No .gitignore",
+        "rank": 16
+      },
+      {
+        "tool": "sentinel",
+        "rule": "HYG002",
+        "file": "",
+        "line": 1,
+        "severity": "low",
+        "title": "No CI configuration",
+        "rank": 17
+      }
+    ],
+    "ruff": [
+      {
+        "tool": "ruff",
+        "rule": "RUF022",
+        "file": "app/__init__.py",
+        "line": 8,
+        "severity": "medium",
+        "title": "`__all__` is not sorted"
+      },
+      {
+        "tool": "ruff",
+        "rule": "invalid-syntax",
+        "file": "app/broken.py",
+        "line": 4,
+        "severity": "medium",
+        "title": "Expected a parameter or the end of the parameter list"
+      },
+      {
+        "tool": "ruff",
+        "rule": "invalid-syntax",
+        "file": "app/broken.py",
+        "line": 4,
+        "severity": "medium",
+        "title": "Expected `)`, found newline"
+      },
+      {
+        "tool": "ruff",
+        "rule": "PLW1510",
+        "file": "app/security.py",
+        "line": 25,
+        "severity": "medium",
+        "title": "`subprocess.run` without explicit `check` argument"
+      },
+      {
+        "tool": "ruff",
+        "rule": "E722",
+        "file": "app/views.py",
+        "line": 12,
+        "severity": "medium",
+        "title": "Do not use bare `except`"
+      },
+      {
+        "tool": "ruff",
+        "rule": "F401",
+        "file": "app/views.py",
+        "line": 18,
+        "severity": "low",
+        "title": "`socket` imported but unused"
+      },
+      {
+        "tool": "ruff",
+        "rule": "UP031",
+        "file": "app/views.py",
+        "line": 32,
+        "severity": "medium",
+        "title": "Use format specifiers instead of percent format"
+      }
+    ],
+    "bandit": [
+      {
+        "tool": "bandit",
+        "rule": "B403",
+        "file": "app/security.py",
+        "line": 9,
+        "severity": "low",
+        "title": "Consider possible security implications associated with pickle module.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B404",
+        "file": "app/security.py",
+        "line": 10,
+        "severity": "low",
+        "title": "Consider possible security implications associated with the subprocess module.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B105",
+        "file": "app/security.py",
+        "line": 12,
+        "severity": "low",
+        "title": "Possible hardcoded password: 'Sup3rSecret!Passw0rd'",
+        "confidence": "medium"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B105",
+        "file": "app/security.py",
+        "line": 13,
+        "severity": "low",
+        "title": "Possible hardcoded password: 'ghp_a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8'",
+        "confidence": "medium"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B307",
+        "file": "app/security.py",
+        "line": 20,
+        "severity": "medium",
+        "title": "Use of possibly insecure function - consider using safer ast.literal_eval.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B602",
+        "file": "app/security.py",
+        "line": 25,
+        "severity": "high",
+        "title": "subprocess call with shell=True identified, security issue.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B605",
+        "file": "app/security.py",
+        "line": 30,
+        "severity": "high",
+        "title": "Starting a process with a shell, possible injection detected, security issue.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B301",
+        "file": "app/security.py",
+        "line": 35,
+        "severity": "medium",
+        "title": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B324",
+        "file": "app/security.py",
+        "line": 40,
+        "severity": "high",
+        "title": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "confidence": "high"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B608",
+        "file": "app/views.py",
+        "line": 32,
+        "severity": "medium",
+        "title": "Possible SQL injection vector through string-based query construction.",
+        "confidence": "low"
+      },
+      {
+        "tool": "bandit",
+        "rule": "B108",
+        "file": "app/views.py",
+        "line": 38,
+        "severity": "medium",
+        "title": "Probable insecure usage of temp file/directory.",
+        "confidence": "medium"
+      }
+    ],
+    "semgrep": [
+      {
+        "tool": "semgrep",
+        "rule": "python.lang.security.audit.eval-detected.eval-detected",
+        "file": "app/security.py",
+        "line": 20,
+        "severity": "medium",
+        "title": "Detected the use of eval(). eval() can be dangerous if used to evaluate dynamic content. If this content can be input from outside the program, this may be a code injection vulnerability. Ensure evaluated content is not definable by external sources."
+      },
+      {
+        "tool": "semgrep",
+        "rule": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+        "file": "app/security.py",
+        "line": 25,
+        "severity": "high",
+        "title": "Found 'subprocess' function 'run' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+      },
+      {
+        "tool": "semgrep",
+        "rule": "python.lang.security.deserialization.pickle.avoid-pickle",
+        "file": "app/security.py",
+        "line": 35,
+        "severity": "medium",
+        "title": "Avoid using `pickle`, which is known to lead to code execution vulnerabilities. When unpickling, the serialized data could be manipulated to run arbitrary code. Instead, consider serializing the relevant data as JSON or a similar text-based serialization format."
+      },
+      {
+        "tool": "semgrep",
+        "rule": "python.lang.security.audit.formatted-sql-query.formatted-sql-query",
+        "file": "app/views.py",
+        "line": 33,
+        "severity": "medium",
+        "title": "Detected possible formatted SQL query. Use parameterized queries instead."
+      },
+      {
+        "tool": "semgrep",
+        "rule": "python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query",
+        "file": "app/views.py",
+        "line": 33,
+        "severity": "high",
+        "title": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option."
+      }
+    ]
+  }
+}

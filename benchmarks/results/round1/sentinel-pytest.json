@@ -1,0 +1,2050 @@
+{
+  "actions": [
+    {
+      "effort": "high",
+      "impact": "high",
+      "rank": 1,
+      "title": "Reduce oversized source files in small, test-backed moves",
+      "why": "Large files dominate review cost and make changes riskier."
+    },
+    {
+      "effort": "high",
+      "impact": "medium",
+      "rank": 2,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely."
+    },
+    {
+      "effort": "medium",
+      "impact": "medium",
+      "rank": 3,
+      "title": "Break import cycles before adding features",
+      "why": "Cycles make startup order and layering fragile."
+    }
+  ],
+  "architecture": {
+    "archetype": "cli",
+    "components": [
+      "_pytest",
+      "bench",
+      "doc",
+      "extra",
+      "pytest",
+      "scripts",
+      "src"
+    ],
+    "entry_points": [
+      "src/pytest/__main__.py",
+      "testing/example_scripts/doctest/main_py/__main__.py"
+    ],
+    "hotspots": [
+      "src/_pytest/raises.py",
+      "src/_pytest/config/__init__.py",
+      "src/_pytest/fixtures.py",
+      "src/_pytest/_py/path.py",
+      "src/_pytest/terminal.py"
+    ]
+  },
+  "changes": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 0,
+    "quality_delta": 0,
+    "since_scan_id": 3
+  },
+  "dimensions": [
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/_pytest/__init__.py",
+        "src/_pytest/assertion/__init__.py"
+      ],
+      "grade": "A+",
+      "id": "architecture",
+      "score": 98,
+      "summary": "cli; src/pytest/__main__.py; 2 import cycle(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/_pytest/_code/code.py",
+        "src/_pytest/_code/source.py",
+        "src/_pytest/_io/pprint.py"
+      ],
+      "grade": "C",
+      "id": "maintainability",
+      "score": 75,
+      "summary": "94 source files; 26 over 500 lines; 47 TODOs; max complexity 37; 0 parse error(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/_pytest/_py/path.py",
+        "src/pytest/__main__.py",
+        "testing/_py/test_local.py"
+      ],
+      "grade": "A+",
+      "id": "tests",
+      "score": 99,
+      "summary": "180 test files; ratio 1.91; 2 test-signal finding(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [],
+      "grade": "A+",
+      "id": "docs",
+      "score": 100,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "doc/en/requirements.txt",
+        "pyproject.toml"
+      ],
+      "grade": "A",
+      "id": "dependencies",
+      "score": 94,
+      "summary": "2 dependency/hygiene finding(s); no lockfile; 1 unpinned dependency string(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "bench/empty.py",
+        "bench/unit_test.py",
+        "bench/xunit.py"
+      ],
+      "grade": "A+",
+      "id": "security",
+      "score": 99,
+      "summary": "Basic pattern checks only; 0 secret-like match(es); 19 dynamic-execution and 0 debug finding(s)."
+    }
+  ],
+  "exclusions": {
+    "docs_translations": 0,
+    "examples": 46,
+    "generated": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality.",
+    "vendor": 0
+  },
+  "findings": [
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LocalPath.make_numbered_dir at line 1275",
+        "160 lines",
+        "complexity 26"
+      ],
+      "file": "src/_pytest/_py/path.py",
+      "id": "MNT007:src/_pytest/_py/path.py",
+      "line": 1275,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "2,501 lines",
+        "92.3 KB"
+      ],
+      "file": "src/_pytest/config/__init__.py",
+      "id": "MNT002:src/_pytest/config/__init__.py",
+      "line": 1,
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time.",
+      "rule_id": "MNT002",
+      "severity": "high",
+      "title": "Very large source file",
+      "why": "Very large modules are hard to review, test and change safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "2,613 lines",
+        "103.1 KB"
+      ],
+      "file": "src/_pytest/fixtures.py",
+      "id": "MNT002:src/_pytest/fixtures.py",
+      "line": 1,
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time.",
+      "rule_id": "MNT002",
+      "severity": "high",
+      "title": "Very large source file",
+      "why": "Very large modules are hard to review, test and change safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Session.collect at line 926",
+        "123 lines",
+        "complexity 27"
+      ],
+      "file": "src/_pytest/main.py",
+      "id": "MNT007:src/_pytest/main.py",
+      "line": 926,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RaisesGroup._check_exceptions at line 1255",
+        "142 lines",
+        "complexity 37"
+      ],
+      "file": "src/_pytest/raises.py",
+      "id": "MNT007:src/_pytest/raises.py",
+      "line": 1255,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "1 modules in cycle",
+        "_pytest -> _pytest"
+      ],
+      "file": "src/_pytest/__init__.py",
+      "id": "ARCH002:cycle:_pytest",
+      "line": 1,
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module.",
+      "rule_id": "ARCH002",
+      "severity": "medium",
+      "title": "Import cycle between 1 source modules",
+      "why": "Import cycles make startup order fragile and prevent clean layering."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "33 modules in cycle",
+        "_pytest.assertion -> _pytest.assertion.rewrite -> _pytest.assertion.truncate -> _pytest.assertion.util -> _pytest.cacheprovider -> _pytest.capture -> _pytest.config -> _pytest.debugging -> _pytest.doctest -> _pytest.fixtures -> _pytest.helpconfig -> _pytest.hookspec -> _pytest.legacypath -> _pytest.logging -> _pytest.main -> _pytest.mark -> _pytest.mark.structures -> _pytest.monkeypatch -> _pytest.nodes -> _pytest.pytester -> _pytest.pytester_assertions -> _pytest.python -> _pytest.raises -> _pytest.recwarn -> _pytest.reports -> _pytest.runner -> _pytest.subtests -> _pytest.terminal -> _pytest.timing -> _pytest.tmpdir -> _pytest.unraisableexception -> _pytest.warnings -> pytest -> _pytest.assertion"
+      ],
+      "file": "src/_pytest/assertion/__init__.py",
+      "id": "ARCH002:cycle:_pytest.assertion,_pytest.assertion.rewrite,_pytest.assertion.truncate,_pytest.assertion.util,_pytest.cacheprovider,_pytest.capture,_pytest.config,_pytest.debugging,_pytest.doctest,_pytest.fixtures,_pytest.helpconfig,_pytest.hookspec,_pytest.legacypath,_pytest.logging,_pytest.main,_pytest.mark,_pytest.mark.structures,_pytest.monkeypatch,_pytest.nodes,_pytest.pytester,_pytest.pytester_assertions,_pytest.python,_pytest.raises,_pytest.recwarn,_pytest.reports,_pytest.runner,_pytest.subtests,_pytest.terminal,_pytest.timing,_pytest.tmpdir,_pytest.unraisableexception,_pytest.warnings,pytest",
+      "line": 1,
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module.",
+      "rule_id": "ARCH002",
+      "severity": "medium",
+      "title": "Import cycle between 33 source modules",
+      "why": "Import cycles make startup order fragile and prevent clean layering."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,690 lines",
+        "61.6 KB"
+      ],
+      "file": "src/_pytest/_code/code.py",
+      "id": "MNT001:src/_pytest/_code/code.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ExceptionInfoFormatter at line 885",
+        "385 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/_code/code.py",
+      "id": "MNT005:src/_pytest/_code/code.py",
+      "line": 885,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Source at line 17",
+        "104 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/_code/source.py",
+      "id": "MNT005:src/_pytest/_code/source.py",
+      "line": 17,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "698 lines",
+        "21.6 KB"
+      ],
+      "file": "src/_pytest/_io/pprint.py",
+      "id": "MNT001:src/_pytest/_io/pprint.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "PrettyPrinter._safe_repr at line 615",
+        "57 lines",
+        "complexity 21"
+      ],
+      "file": "src/_pytest/_io/pprint.py",
+      "id": "MNT006:src/_pytest/_io/pprint.py",
+      "line": 615,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TerminalWriter at line 51",
+        "208 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/_io/terminalwriter.py",
+      "id": "MNT005:src/_pytest/_io/terminalwriter.py",
+      "line": 51,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,475 lines",
+        "49.5 KB"
+      ],
+      "file": "src/_pytest/_py/path.py",
+      "id": "MNT001:src/_pytest/_py/path.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,142 lines",
+        "44.6 KB"
+      ],
+      "file": "src/_pytest/approx.py",
+      "id": "MNT001:src/_pytest/approx.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ApproxTimedelta.__init__ at line 689",
+        "58 lines",
+        "complexity 19"
+      ],
+      "file": "src/_pytest/approx.py",
+      "id": "MNT006:src/_pytest/approx.py",
+      "line": 689,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "_compare_eq_cls at line 87",
+        "53 lines",
+        "complexity 19"
+      ],
+      "file": "src/_pytest/assertion/_compare_any.py",
+      "id": "MNT006:src/_pytest/assertion/_compare_any.py",
+      "line": 87,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,221 lines",
+        "49.3 KB"
+      ],
+      "file": "src/_pytest/assertion/rewrite.py",
+      "id": "MNT001:src/_pytest/assertion/rewrite.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "AssertionRewriter.run at line 701",
+        "71 lines",
+        "complexity 19"
+      ],
+      "file": "src/_pytest/assertion/rewrite.py",
+      "id": "MNT006:src/_pytest/assertion/rewrite.py",
+      "line": 701,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "663 lines",
+        "23.8 KB"
+      ],
+      "file": "src/_pytest/cacheprovider.py",
+      "id": "MNT001:src/_pytest/cacheprovider.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Cache at line 92",
+        "162 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/cacheprovider.py",
+      "id": "MNT005:src/_pytest/cacheprovider.py",
+      "line": 92,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,157 lines",
+        "37.8 KB"
+      ],
+      "file": "src/_pytest/capture.py",
+      "id": "MNT001:src/_pytest/capture.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "CaptureManager at line 735",
+        "185 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/capture.py",
+      "id": "MNT005:src/_pytest/capture.py",
+      "line": 735,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Config._getini_toml at line 2075",
+        "83 lines",
+        "complexity 21"
+      ],
+      "file": "src/_pytest/config/__init__.py",
+      "id": "MNT006:src/_pytest/config/__init__.py",
+      "line": 2075,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "659 lines",
+        "24.5 KB"
+      ],
+      "file": "src/_pytest/config/argparsing.py",
+      "id": "MNT001:src/_pytest/config/argparsing.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Parser at line 112",
+        "255 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/config/argparsing.py",
+      "id": "MNT005:src/_pytest/config/argparsing.py",
+      "line": 112,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "501 lines",
+        "18.2 KB"
+      ],
+      "file": "src/_pytest/config/findpaths.py",
+      "id": "MNT001:src/_pytest/config/findpaths.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "determine_setup at line 395",
+        "99 lines",
+        "complexity 19"
+      ],
+      "file": "src/_pytest/config/findpaths.py",
+      "id": "MNT006:src/_pytest/config/findpaths.py",
+      "line": 395,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "pytestPDB at line 92",
+        "192 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/debugging.py",
+      "id": "MNT005:src/_pytest/debugging.py",
+      "line": 92,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "752 lines",
+        "26.3 KB"
+      ],
+      "file": "src/_pytest/doctest.py",
+      "id": "MNT001:src/_pytest/doctest.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "DoctestItem at line 252",
+        "137 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/doctest.py",
+      "id": "MNT005:src/_pytest/doctest.py",
+      "line": 252,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "reorder_items_atscope at line 337",
+        "63 lines",
+        "complexity 18"
+      ],
+      "file": "src/_pytest/fixtures.py",
+      "id": "MNT006:src/_pytest/fixtures.py",
+      "line": 337,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,298 lines",
+        "42.4 KB"
+      ],
+      "file": "src/_pytest/hookspec.py",
+      "id": "MNT001:src/_pytest/hookspec.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "761 lines",
+        "28.0 KB"
+      ],
+      "file": "src/_pytest/junitxml.py",
+      "id": "MNT001:src/_pytest/junitxml.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "LogXML.pytest_runtest_logreport at line 587",
+        "94 lines",
+        "complexity 19"
+      ],
+      "file": "src/_pytest/junitxml.py",
+      "id": "MNT006:src/_pytest/junitxml.py",
+      "line": 587,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Testdir at line 42",
+        "209 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/legacypath.py",
+      "id": "MNT005:src/_pytest/legacypath.py",
+      "line": 42,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "988 lines",
+        "36.6 KB"
+      ],
+      "file": "src/_pytest/logging.py",
+      "id": "MNT001:src/_pytest/logging.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "pytest_addoption at line 234",
+        "106 lines",
+        "complexity 1"
+      ],
+      "file": "src/_pytest/logging.py",
+      "id": "MNT005:src/_pytest/logging.py",
+      "line": 234,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,242 lines",
+        "44.3 KB"
+      ],
+      "file": "src/_pytest/main.py",
+      "id": "MNT001:src/_pytest/main.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "708 lines",
+        "25.2 KB"
+      ],
+      "file": "src/_pytest/mark/structures.py",
+      "id": "MNT001:src/_pytest/mark/structures.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ParameterSet at line 83",
+        "177 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/mark/structures.py",
+      "id": "MNT005:src/_pytest/mark/structures.py",
+      "line": 83,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "MonkeyPatch at line 128",
+        "329 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/monkeypatch.py",
+      "id": "MNT005:src/_pytest/monkeypatch.py",
+      "line": 128,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "797 lines",
+        "28.1 KB"
+      ],
+      "file": "src/_pytest/nodes.py",
+      "id": "MNT001:src/_pytest/nodes.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Node at line 121",
+        "378 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/nodes.py",
+      "id": "MNT005:src/_pytest/nodes.py",
+      "line": 121,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,105 lines",
+        "39.6 KB"
+      ],
+      "file": "src/_pytest/pathlib.py",
+      "id": "MNT001:src/_pytest/pathlib.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "import_path at line 546",
+        "119 lines",
+        "complexity 17"
+      ],
+      "file": "src/_pytest/pathlib.py",
+      "id": "MNT006:src/_pytest/pathlib.py",
+      "line": 546,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,815 lines",
+        "63.8 KB"
+      ],
+      "file": "src/_pytest/pytester.py",
+      "id": "MNT001:src/_pytest/pytester.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Pytester at line 665",
+        "899 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/pytester.py",
+      "id": "MNT005:src/_pytest/pytester.py",
+      "line": 665,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,857 lines",
+        "72.1 KB"
+      ],
+      "file": "src/_pytest/python.py",
+      "id": "MNT001:src/_pytest/python.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Metafunc.parametrize at line 1307",
+        "199 lines",
+        "complexity 21"
+      ],
+      "file": "src/_pytest/python.py",
+      "id": "MNT006:src/_pytest/python.py",
+      "line": 1307,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,507 lines",
+        "59.9 KB"
+      ],
+      "file": "src/_pytest/raises.py",
+      "id": "MNT001:src/_pytest/raises.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "WarningsChecker.__exit__ at line 298",
+        "81 lines",
+        "complexity 18"
+      ],
+      "file": "src/_pytest/recwarn.py",
+      "id": "MNT006:src/_pytest/recwarn.py",
+      "line": 298,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "734 lines",
+        "24.6 KB"
+      ],
+      "file": "src/_pytest/reports.py",
+      "id": "MNT001:src/_pytest/reports.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "BaseReport at line 63",
+        "199 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/reports.py",
+      "id": "MNT005:src/_pytest/reports.py",
+      "line": 63,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "593 lines",
+        "20.4 KB"
+      ],
+      "file": "src/_pytest/runner.py",
+      "id": "MNT001:src/_pytest/runner.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SetupState at line 439",
+        "145 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/runner.py",
+      "id": "MNT005:src/_pytest/runner.py",
+      "line": 439,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "StepwisePlugin at line 100",
+        "120 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/stepwise.py",
+      "id": "MNT005:src/_pytest/stepwise.py",
+      "line": 100,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,819 lines",
+        "67.3 KB"
+      ],
+      "file": "src/_pytest/terminal.py",
+      "id": "MNT001:src/_pytest/terminal.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TerminalReporter.pytest_runtest_logreport at line 639",
+        "76 lines",
+        "complexity 22"
+      ],
+      "file": "src/_pytest/terminal.py",
+      "id": "MNT006:src/_pytest/terminal.py",
+      "line": 639,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TempPathFactory at line 45",
+        "181 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/tmpdir.py",
+      "id": "MNT005:src/_pytest/tmpdir.py",
+      "line": 45,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "651 lines",
+        "25.1 KB"
+      ],
+      "file": "src/_pytest/unittest.py",
+      "id": "MNT001:src/_pytest/unittest.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TestCaseFunction at line 228",
+        "276 lines",
+        "complexity 0"
+      ],
+      "file": "src/_pytest/unittest.py",
+      "id": "MNT005:src/_pytest/unittest.py",
+      "line": 228,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,475 lines",
+        "complexity 26",
+        "no importing test found"
+      ],
+      "file": "src/_pytest/_py/path.py",
+      "id": "TST003:src/_pytest/_py/path.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "src/pytest/__main__.py"
+      ],
+      "file": "src/pytest/__main__.py",
+      "id": "TST006:src/pytest/__main__.py",
+      "line": 1,
+      "recommendation": "Add one smoke test that exercises the documented entry point.",
+      "rule_id": "TST006",
+      "severity": "medium",
+      "title": "No test exercises the main entry path",
+      "why": "The main entry path is the first thing users run, but no test imports it."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 5: exec"
+      ],
+      "file": "bench/empty.py",
+      "id": "SEC002:bench/empty.py",
+      "line": 5,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 5: exec"
+      ],
+      "file": "bench/xunit.py",
+      "id": "SEC002:bench/xunit.py",
+      "line": 5,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 166: eval",
+        "line 175: eval",
+        "line 328: eval"
+      ],
+      "file": "src/_pytest/_code/code.py",
+      "id": "SEC002:src/_pytest/_code/code.py",
+      "line": 166,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 1153: exec"
+      ],
+      "file": "src/_pytest/_py/path.py",
+      "id": "SEC002:src/_pytest/_py/path.py",
+      "line": 1153,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 185: exec"
+      ],
+      "file": "src/_pytest/assertion/rewrite.py",
+      "id": "SEC002:src/_pytest/assertion/rewrite.py",
+      "line": 185,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 1118: os.system",
+        "line 1146: os.system"
+      ],
+      "file": "src/_pytest/capture.py",
+      "id": "SEC002:src/_pytest/capture.py",
+      "line": 1118,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 68: eval"
+      ],
+      "file": "src/_pytest/mark/__init__.py",
+      "id": "SEC002:src/_pytest/mark/__init__.py",
+      "line": 68,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 297: eval",
+        "line 363: eval"
+      ],
+      "file": "src/_pytest/mark/expression.py",
+      "id": "SEC002:src/_pytest/mark/expression.py",
+      "line": 297,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 296: eval"
+      ],
+      "file": "src/_pytest/pytester.py",
+      "id": "SEC002:src/_pytest/pytester.py",
+      "line": 296,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 92: eval",
+        "line 119: eval"
+      ],
+      "file": "src/_pytest/skipping.py",
+      "id": "SEC002:src/_pytest/skipping.py",
+      "line": 92,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,580 lines"
+      ],
+      "file": "testing/_py/test_local.py",
+      "id": "TST004:testing/_py/test_local.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,769 lines"
+      ],
+      "file": "testing/acceptance_test.py",
+      "id": "TST004:testing/acceptance_test.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "2,298 lines"
+      ],
+      "file": "testing/code/test_excinfo.py",
+      "id": "TST004:testing/code/test_excinfo.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,628 lines"
+      ],
+      "file": "testing/logging/test_reporting.py",
+      "id": "TST004:testing/logging/test_reporting.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,768 lines"
+      ],
+      "file": "testing/python/approx.py",
+      "id": "TST004:testing/python/approx.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,751 lines"
+      ],
+      "file": "testing/python/collect.py",
+      "id": "TST004:testing/python/collect.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "6,326 lines"
+      ],
+      "file": "testing/python/fixtures.py",
+      "id": "TST004:testing/python/fixtures.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "2,526 lines"
+      ],
+      "file": "testing/python/metafunc.py",
+      "id": "TST004:testing/python/metafunc.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,370 lines"
+      ],
+      "file": "testing/python/raises_group.py",
+      "id": "TST004:testing/python/raises_group.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "3,157 lines"
+      ],
+      "file": "testing/test_assertion.py",
+      "id": "TST004:testing/test_assertion.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "2,455 lines"
+      ],
+      "file": "testing/test_assertrewrite.py",
+      "id": "TST004:testing/test_assertrewrite.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,231 lines"
+      ],
+      "file": "testing/test_assertrewrite_coverage.py",
+      "id": "TST004:testing/test_assertrewrite_coverage.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,481 lines"
+      ],
+      "file": "testing/test_cacheprovider.py",
+      "id": "TST004:testing/test_cacheprovider.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,772 lines"
+      ],
+      "file": "testing/test_capture.py",
+      "id": "TST004:testing/test_capture.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "2,809 lines"
+      ],
+      "file": "testing/test_collection.py",
+      "id": "TST004:testing/test_collection.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "3,647 lines"
+      ],
+      "file": "testing/test_config.py",
+      "id": "TST004:testing/test_config.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,086 lines"
+      ],
+      "file": "testing/test_conftest.py",
+      "id": "TST004:testing/test_conftest.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,445 lines"
+      ],
+      "file": "testing/test_debugging.py",
+      "id": "TST004:testing/test_debugging.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,876 lines"
+      ],
+      "file": "testing/test_doctest.py",
+      "id": "TST004:testing/test_doctest.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,968 lines"
+      ],
+      "file": "testing/test_junitxml.py",
+      "id": "TST004:testing/test_junitxml.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,679 lines"
+      ],
+      "file": "testing/test_mark.py",
+      "id": "TST004:testing/test_mark.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,791 lines"
+      ],
+      "file": "testing/test_pathlib.py",
+      "id": "TST004:testing/test_pathlib.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,279 lines"
+      ],
+      "file": "testing/test_runner.py",
+      "id": "TST004:testing/test_runner.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,569 lines"
+      ],
+      "file": "testing/test_skipping.py",
+      "id": "TST004:testing/test_skipping.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,098 lines"
+      ],
+      "file": "testing/test_subtests.py",
+      "id": "TST004:testing/test_subtests.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "3,731 lines"
+      ],
+      "file": "testing/test_terminal.py",
+      "id": "TST004:testing/test_terminal.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,743 lines"
+      ],
+      "file": "testing/test_unittest.py",
+      "id": "TST004:testing/test_unittest.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,172 lines"
+      ],
+      "file": "testing/test_warnings.py",
+      "id": "TST004:testing/test_warnings.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 7: exec",
+        "in test or fixture context"
+      ],
+      "file": "bench/unit_test.py",
+      "id": "SEC002:bench/unit_test.py",
+      "line": 7,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 417: exec",
+        "line 422: eval",
+        "line 696: exec",
+        "line 714: exec",
+        "line 1810: exec",
+        "in test or fixture context"
+      ],
+      "file": "testing/code/test_excinfo.py",
+      "id": "SEC002:testing/code/test_excinfo.py",
+      "line": 417,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 341: eval",
+        "line 366: eval",
+        "in test or fixture context"
+      ],
+      "file": "testing/code/test_source.py",
+      "id": "SEC002:testing/code/test_source.py",
+      "line": 341,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 1206: exec",
+        "line 1238: exec",
+        "in test or fixture context"
+      ],
+      "file": "testing/python/collect.py",
+      "id": "SEC002:testing/python/collect.py",
+      "line": 1206,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 1210: eval",
+        "in test or fixture context"
+      ],
+      "file": "testing/python/raises_group.py",
+      "id": "SEC002:testing/python/raises_group.py",
+      "line": 1210,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 60: exec",
+        "line 178: exec",
+        "line 183: exec",
+        "in test or fixture context"
+      ],
+      "file": "testing/test_assertrewrite.py",
+      "id": "SEC002:testing/test_assertrewrite.py",
+      "line": 60,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 47: exec",
+        "in test or fixture context"
+      ],
+      "file": "testing/test_assertrewrite_coverage.py",
+      "id": "SEC002:testing/test_assertrewrite_coverage.py",
+      "line": 47,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 681: pickle.loads",
+        "line 743: pickle.loads",
+        "in test or fixture context"
+      ],
+      "file": "testing/test_pathlib.py",
+      "id": "SEC002:testing/test_pathlib.py",
+      "line": 681,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 2961: exec",
+        "in test or fixture context"
+      ],
+      "file": "testing/test_terminal.py",
+      "id": "SEC002:testing/test_terminal.py",
+      "line": 2961,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "2 manifest(s)",
+        "no lockfile found"
+      ],
+      "file": "doc/en/requirements.txt",
+      "id": "DEP002:doc/en/requirements.txt",
+      "line": 1,
+      "recommendation": "Generate and commit the lockfile for the package manager in use.",
+      "rule_id": "DEP002",
+      "severity": "low",
+      "title": "Manifest present but no lockfile",
+      "why": "A lockfile makes installs reproducible across machines and CI."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "1 unpinned dependency string(s)",
+        ",\r\n    "
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP003:pyproject.toml",
+      "line": 1,
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives.",
+      "rule_id": "DEP003",
+      "severity": "low",
+      "title": "Unpinned direct dependencies",
+      "why": "Loose dependency ranges make builds drift over time."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "94 source modules",
+        "threshold 60",
+        "max complexity 37"
+      ],
+      "file": null,
+      "id": "ARCH005:project",
+      "line": 1,
+      "recommendation": "Split cohesive subpackages behind clear interfaces, raise test coverage on the highest-churn modules, and document the module boundaries.",
+      "rule_id": "ARCH005",
+      "severity": "medium",
+      "title": "High architectural load across a large, intricate codebase",
+      "why": "A codebase this large and intricate is expensive to change safely: coordination, review latency and blast radius all grow with structural load even when no single defect is present."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "27 markers across 180 test files"
+      ],
+      "file": null,
+      "id": "TST005:project",
+      "line": 1,
+      "recommendation": "Resolve or convert test TODOs into tracked issues.",
+      "rule_id": "TST005",
+      "severity": "low",
+      "title": "Many TODO/FIXME markers in tests",
+      "why": "A large number of test TODOs suggests deferred coverage or flaky cases."
+    }
+  ],
+  "generated_at": "2026-10-24T12:03:06+01:00",
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "9 file(s) were skipped; see coverage.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies."
+  ],
+  "metrics": {
+    "archetype": "cli",
+    "max_complexity": 37,
+    "oversized_source_files": 26,
+    "parse_errors": 0,
+    "source_files": 94,
+    "source_lines": 41126,
+    "source_todos": 47,
+    "test_files": 180,
+    "test_lines": 75255,
+    "test_to_source_file_ratio": 1.91,
+    "test_to_source_line_ratio": 1.83
+  },
+  "project": {
+    "git": {
+      "branch": "main",
+      "commit": "4088e1a",
+      "dirty": true
+    },
+    "name": "pytest",
+    "root": "."
+  },
+  "rules_version": "quality-rules-2",
+  "scan": {
+    "coverage": {
+      "docs": "metadata",
+      "examples": "excluded",
+      "generated": "none",
+      "source": "100%",
+      "tests": "100%",
+      "vendor": "none"
+    },
+    "duration_ms": 271,
+    "files_analyzed": 0,
+    "files_cached": 675,
+    "files_skipped": 9,
+    "files_total": 684,
+    "finished_at": "2026-10-24T12:03:06+01:00",
+    "index_size_bytes": 4131248,
+    "index_size_label": "3.9 MB",
+    "mode": "incremental",
+    "started_at": "2026-10-24T12:03:06+01:00"
+  },
+  "schema_version": 2,
+  "summary": {
+    "band": "maintained",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "grade_ceiling": "A+",
+    "headline": "115 finding(s); weakest dimension: Maintainability.",
+    "overall_score": 92,
+    "provisional": true
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "version": 2,
+  "description": "Seeded-defect corpus for measuring detection recall. Every defect here was written on purpose, its evidence location is recorded up front, and `expected` names the rule each analyzer is documented to carry for it. A tool is scored as a MISS only on defects inside its own documented scope; defects it has no rule for are recorded as OUT and excluded from its denominator.",
+  "methodology": "Expectations were registered from each tool's published rule catalogue before the benchmark ran: the p/default ruleset (1,073 rules) was downloaded and inspected, bandit's default plugin set was read from its installed source, and ruff was run with --isolated to establish its effective default set. Where a capability probe on a separate probe file showed that a catalogue rule does not actually fire in the shipped configuration, the entry is marked OUT with that fact recorded in `rationale` rather than counted as a miss - a tool cannot be scored against a rule it never runs. No expectation was edited to make any tool look better or worse.",
+  "scope_note": "Sentinel scope = the rule catalogue in sentinel_2.md section 4.4. Ruff scope = `ruff check --isolated` defaults (0.16.6, observed to include E4/E7/E9/F and the UP, PL and RUF families). Bandit scope = default configuration. Semgrep scope = the p/default ruleset in OSS scan mode.",
+  "generated": [
+    {
+      "id": "D18",
+      "file": "app/huge_module.py",
+      "note": "Written by the harness at run time (~2,100 lines) so the committed fixture stays small."
+    },
+    {
+      "id": "D19",
+      "file": "app/long_function.py",
+      "note": "Written by the harness at run time (117-line straight-line function) so the committed fixture stays small."
+    }
+  ],
+  "defects": [
+    {
+      "id": "D01",
+      "file": "app/security.py",
+      "line": 25,
+      "title": "eval() on untrusted input",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC002",
+        "bandit": "B307",
+        "semgrep": "python.lang.security.audit.eval-detected.eval-detected"
+      },
+      "rationale": "Sentinel's dangerous-pattern list names eval; bandit's B307 is the canonical eval rule; p/default ships an eval audit rule (verified by probe before the run)."
+    },
+    {
+      "id": "D02",
+      "file": "app/security.py",
+      "line": 30,
+      "title": "subprocess with shell=True and string interpolation",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC002",
+        "bandit": "B602",
+        "semgrep": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true"
+      },
+      "rationale": "Sentinel matches subprocess(...shell=True); bandit B602 is shell injection; p/default ships a shell=True rule."
+    },
+    {
+      "id": "D03",
+      "file": "app/security.py",
+      "line": 35,
+      "title": "os.system with interpolated input",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC002",
+        "bandit": "B605"
+      },
+      "rationale": "os.system is named in Sentinel's pattern list and is bandit B605 (start process with a shell). Semgrep's p/default shell rule matches only subprocess(..., shell=True); a probe confirmed no p/default rule fires on os.system, so semgrep is OUT here rather than a miss."
+    },
+    {
+      "id": "D04",
+      "file": "app/security.py",
+      "line": 40,
+      "title": "pickle.loads on an untrusted payload",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC002",
+        "bandit": "B301",
+        "semgrep": "python.lang.security.deserialization.pickle.avoid-pickle"
+      },
+      "rationale": "pickle.loads is in Sentinel's dangerous-pattern list and is bandit B301; p/default ships an avoid-pickle rule."
+    },
+    {
+      "id": "D05",
+      "file": "app/security.py",
+      "line": 15,
+      "title": "Hardcoded password-style literal",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC001",
+        "bandit": "B105"
+      },
+      "rationale": "Sentinel's assigned-credential heuristic covers PASSWORD = \"...\"; bandit B105 is hardcoded_password_string. p/default has no generic hardcoded-password rule for a Python assignment (its secret rules are provider-shaped or entropy-gated behind the separate secrets engine), so semgrep is OUT."
+    },
+    {
+      "id": "D06",
+      "file": "app/security.py",
+      "line": 17,
+      "title": "Hardcoded provider-shaped token",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC001",
+        "bandit": "B105"
+      },
+      "rationale": "Sentinel weights provider-shaped tokens (ghp_...) as high confidence and bandit's password-name heuristic matches API_TOKEN. Semgrep carries generic.secrets.security.detected-github-token in p/default, but a probe with a realistic PAT did not fire in OSS scan mode (secrets detection is gated), so semgrep is OUT rather than credited or penalised."
+    },
+    {
+      "id": "D07",
+      "file": "app/security.py",
+      "line": 20,
+      "title": "DEBUG = True committed in source",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC003"
+      },
+      "rationale": "Sentinel names DEBUG = True explicitly. Bandit has no default rule for it; semgrep's only DEBUG rule targets Flask config assignment ($M.config['DEBUG'] = True), not a module-level constant, so both are OUT."
+    },
+    {
+      "id": "D08",
+      "file": "app/views.py",
+      "line": 12,
+      "title": "Bare except swallows SystemExit and KeyboardInterrupt",
+      "category": "correctness",
+      "expected": {
+        "ruff": "E722"
+      },
+      "rationale": "E722 is in ruff's default set. Sentinel has no bare-except rule in its published catalogue, so this is OUT for Sentinel."
+    },
+    {
+      "id": "D09",
+      "file": "app/views.py",
+      "line": 18,
+      "title": "Imported module never used",
+      "category": "correctness",
+      "expected": {
+        "ruff": "F401"
+      },
+      "rationale": "F401 is in ruff's default set. Dead-code detection is not in Sentinel's catalogue."
+    },
+    {
+      "id": "D10",
+      "file": "app/views.py",
+      "line": 25,
+      "title": "Name used that is never defined",
+      "category": "correctness",
+      "expected": {
+        "ruff": "F821"
+      },
+      "rationale": "F821 is in ruff's default set. Sentinel parses with ast and does not resolve names, so this is OUT for Sentinel. (The first draft of this defect used a conditionally-assigned name, which pyflakes correctly does not report; the fixture was corrected to contain a genuinely undefined name before the scored run.)"
+    },
+    {
+      "id": "D11",
+      "file": "app/views.py",
+      "line": 30,
+      "title": "Untrusted value interpolated into SQL",
+      "category": "security",
+      "expected": {
+        "bandit": "B608",
+        "semgrep": "python.lang.security.audit.formatted-sql-query.formatted-sql-query"
+      },
+      "rationale": "bandit B608 is hardcoded SQL expression construction; p/default's formatted-sql-query rule matches a formatted string passed to execute(). Not in Sentinel's three security rules."
+    },
+    {
+      "id": "D12",
+      "file": "app/views.py",
+      "line": 36,
+      "title": "Predictable world-writable temp path",
+      "category": "security",
+      "expected": {
+        "bandit": "B108"
+      },
+      "rationale": "bandit B108 is hardcoded_insecure_temp_directory. Not in Sentinel's catalogue and not in p/default."
+    },
+    {
+      "id": "D13",
+      "file": "app/utils.py",
+      "line": 4,
+      "title": "Cyclomatic complexity above 25",
+      "category": "maintainability",
+      "expected": {
+        "sentinel": "MNT007"
+      },
+      "rationale": "MNT007 fires above complexity 25. Ruff's complexity rule C901 is not in its default set; bandit and semgrep do not measure complexity."
+    },
+    {
+      "id": "D14",
+      "file": ".",
+      "line": 0,
+      "title": "TODO/FIXME density above the project threshold",
+      "category": "maintainability",
+      "expected": {
+        "sentinel": "MNT008"
+      },
+      "rationale": "MNT008 is a project-level density rule (at least 5 markers and more than 8 per 1,000 source lines); it reports the top files in its evidence rather than a single file. All 24 seeded markers live in app/utils.py. No other tool in this set counts TODO density.",
+      "evidence_files": [
+        "app/utils.py"
+      ]
+    },
+    {
+      "id": "D15",
+      "file": "requirements.txt",
+      "line": 2,
+      "title": "Direct dependencies with no version constraint",
+      "category": "dependencies",
+      "expected": {
+        "sentinel": "DEP003"
+      },
+      "rationale": "DEP003 is unpinned direct dependencies. Ruff, bandit and semgrep do not read manifests."
+    },
+    {
+      "id": "D16",
+      "file": "app/broken.py",
+      "line": 4,
+      "title": "File does not parse",
+      "category": "correctness",
+      "expected": {
+        "sentinel": "MNT009",
+        "ruff": "invalid-syntax"
+      },
+      "rationale": "Sentinel records a parse error per file. Ruff reports parse failures under the code `invalid-syntax` (0.16.6), not E999, so the expectation uses the code the tool actually emits. Bandit skips unparseable files rather than reporting them; semgrep reports them under paths.errors, not as findings."
+    },
+    {
+      "id": "D17",
+      "file": "app/cycle_a.py",
+      "line": 7,
+      "title": "Import cycle between two source modules",
+      "category": "architecture",
+      "expected": {
+        "sentinel": "ARCH002"
+      },
+      "rationale": "ARCH002 is Sentinel's import-cycle rule. No default rule in the other three tools detects module cycles."
+    },
+    {
+      "id": "D18",
+      "file": "app/huge_module.py",
+      "line": 1,
+      "title": "Source file over 2,000 lines",
+      "category": "maintainability",
+      "expected": {
+        "sentinel": "MNT002"
+      },
+      "rationale": "MNT002 fires above 2,000 lines. No competitor in this set measures file size as a finding."
+    },
+    {
+      "id": "D19",
+      "file": "app/long_function.py",
+      "line": 4,
+      "title": "Function over 100 lines",
+      "category": "maintainability",
+      "expected": {
+        "sentinel": "MNT005"
+      },
+      "rationale": "MNT005 is the long-function rule; ruff's default set has no function-length rule. The generated function is deliberately straight-line: Sentinel reports a symbol through a single rule chain (MNT007 > MNT006 > MNT005), so a long and complex function is reported as complexity only."
+    },
+    {
+      "id": "D20",
+      "file": ".",
+      "line": 0,
+      "title": "Repository has no test files at all",
+      "category": "tests",
+      "expected": {
+        "sentinel": "TST001"
+      },
+      "rationale": "TST001 fires when a project has source but no tests. Test-presence detection is outside ruff, bandit and semgrep."
+    },
+    {
+      "id": "D21",
+      "file": ".",
+      "line": 0,
+      "title": "Repository has no README",
+      "category": "documentation",
+      "expected": {
+        "sentinel": "DOC001"
+      },
+      "rationale": "DOC001 is the no-README rule; none of the other tools read documentation."
+    },
+    {
+      "id": "D22",
+      "file": ".",
+      "line": 0,
+      "title": "No .gitignore",
+      "category": "hygiene",
+      "expected": {
+        "sentinel": "HYG001"
+      },
+      "rationale": "HYG001 is repository hygiene, outside the code-analyzer tools."
+    },
+    {
+      "id": "D23",
+      "file": ".",
+      "line": 0,
+      "title": "Manifest with no lockfile",
+      "category": "dependencies",
+      "expected": {
+        "sentinel": "DEP002"
+      },
+      "rationale": "DEP002 is manifest present, lockfile missing."
+    },
+    {
+      "id": "D24",
+      "file": "app/security.py",
+      "line": 45,
+      "title": "MD5 used to hash a password",
+      "category": "security",
+      "expected": {
+        "bandit": "B324"
+      },
+      "rationale": "bandit B324 flags MD5 used for a security-relevant digest. Sentinel's catalogue has no weak-hash rule and p/default's md5 rules target the cryptography/pycryptodome APIs, so both are OUT."
+    },
+    {
+      "id": "D25",
+      "file": "app/security.py",
+      "line": 56,
+      "title": "yaml.load without a safe loader",
+      "category": "security",
+      "expected": {
+        "sentinel": "SEC002",
+        "bandit": "B506"
+      },
+      "rationale": "Sentinel's dangerous-pattern list names yaml.load without SafeLoader; bandit B506 is unsafe yaml load. Semgrep ships python.lang.security.deserialization.avoid-pyyaml-load in p/default, but a probe on a plain yaml.load(blob) call did not fire in OSS mode, so semgrep is OUT rather than a miss."
+    },
+    {
+      "id": "DECOY1",
+      "file": "app/security.py",
+      "line": 49,
+      "title": "MD5 used with usedforsecurity=False as a non-security checksum",
+      "category": "decoy",
+      "expected": {},
+      "rationale": "Not a defect. A tool that reports it is producing noise on this fixture; recorded so a high recall cannot be bought by flagging everything. Bandit's B324 explicitly exempts usedforsecurity=False, which is the behaviour we want to observe."
+    }
+  ]
+}

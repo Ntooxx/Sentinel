@@ -1,0 +1,3 @@
+﻿Found existing installation: bandit 1.9.4
+Uninstalling bandit-1.9.4:
+  Successfully uninstalled bandit-1.9.4

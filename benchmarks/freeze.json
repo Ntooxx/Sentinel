@@ -1,0 +1,14 @@
+{
+  "frozen_at": "2026-10-24T10:54:19+00:00",
+  "git_commit": "939bee9e092f39ab21f4e159ea51b9752d6aa821",
+  "analysis_version": 9,
+  "package_sha256": "0a6b142390db3dd96294f47dd1a71620e8c5214053e2067a49fad770b11693d4",
+  "package_files": 21,
+  "tool_versions": {
+    "sentinel": "project-sentinel 2.0.0",
+    "ruff": "ruff 0.16.6",
+    "bandit": "bandit 1.9.4",
+    "semgrep": "1.182.1"
+  },
+  "rule": "The analysis package is not modified while a benchmark round is running. Any change to src/sentinel2 requires a new freeze and a new result directory."
+}

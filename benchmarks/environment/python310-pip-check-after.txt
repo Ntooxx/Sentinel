@@ -1,0 +1,13 @@
+﻿ace-step 0.2.0 has requirement datasets==3.4.1, but you have datasets 4.8.4.
+ace-step 0.2.0 has requirement transformers==4.50.0, but you have transformers 5.3.0.
+audio-separator 0.36.1 has requirement beartype<0.19.0,>=0.18.5, but you have beartype 0.14.1.
+blendmodes 2022 has requirement numpy<2,>=1.22.1, but you have numpy 2.2.6.
+blendmodes 2022 has requirement Pillow<10,>=9.0.0, but you have pillow 10.4.0.
+descript-audiotools 0.7.2 has requirement protobuf<3.20,>=3.9.2, but you have protobuf 6.33.4.
+gradio-rangeslider 0.0.6 has requirement gradio<5.0,>=4.0, but you have gradio 6.10.0.
+matrix-nio 0.25.2 has requirement aiofiles~=24.1, but you have aiofiles 23.2.1.
+open-clip-torch 2.20.0 has requirement protobuf<4, but you have protobuf 6.33.4.
+pyvers 0.1.0 has requirement packaging<26.0,>=25.0, but you have packaging 26.0.
+transformer-lens 2.17.0 has requirement huggingface-hub<1.0,>=0.23.2, but you have huggingface-hub 1.7.2.
+transformer-lens 2.17.0 has requirement numpy<2,>=1.24; python_version >= "3.9" and python_version < "3.12", but you have numpy 2.2.6.
+mediapipe 0.10.31 is not supported on this platform

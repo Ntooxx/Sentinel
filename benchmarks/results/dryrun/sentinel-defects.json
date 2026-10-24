@@ -1,0 +1,457 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-10-24T11:55:24+01:00",
+  "project": {
+    "name": "defect_corpus",
+    "root": ".",
+    "git": {
+      "commit": null,
+      "branch": null,
+      "dirty": false
+    }
+  },
+  "scan": {
+    "mode": "cold",
+    "duration_ms": 63,
+    "files_total": 11,
+    "files_analyzed": 11,
+    "files_cached": 0,
+    "files_skipped": 0,
+    "started_at": "2026-10-24T11:55:24+01:00",
+    "finished_at": "2026-10-24T11:55:24+01:00",
+    "index_size_bytes": 420056,
+    "index_size_label": "410.2 KB",
+    "coverage": {
+      "source": "100%",
+      "tests": "100%",
+      "docs": "metadata",
+      "vendor": "none",
+      "generated": "none",
+      "examples": "none"
+    }
+  },
+  "summary": {
+    "band": "unmaintained",
+    "overall_score": 56,
+    "confidence": "low",
+    "provisional": true,
+    "headline": "17 finding(s); weakest dimension: Tests.",
+    "confidence_reasons": [
+      "1 source parse error(s)"
+    ],
+    "grade_ceiling": "A+"
+  },
+  "dimensions": [
+    {
+      "id": "architecture",
+      "grade": "A+?",
+      "score": 97,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "web app; no clear entry point; 1 import cycle(s).",
+      "evidence": [
+        "app/cycle_a.py"
+      ]
+    },
+    {
+      "id": "maintainability",
+      "grade": "B-?",
+      "score": 82,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "9 source files; 1 over 500 lines; 15 TODOs; max complexity 117; 1 parse error(s).",
+      "evidence": [
+        "app/broken.py",
+        "app/huge_module.py",
+        "app/long_function.py"
+      ]
+    },
+    {
+      "id": "tests",
+      "grade": "F?",
+      "score": 40,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "0 test files; ratio 0.00; 1 test-signal finding(s).",
+      "evidence": []
+    },
+    {
+      "id": "docs",
+      "grade": "A-?",
+      "score": 92,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "No canonical documentation files detected.",
+      "evidence": []
+    },
+    {
+      "id": "dependencies",
+      "grade": "A-?",
+      "score": 90,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "5 dependency/hygiene finding(s); no lockfile; 2 unpinned dependency string(s).",
+      "evidence": [
+        "requirements.txt"
+      ]
+    },
+    {
+      "id": "security",
+      "grade": "C?",
+      "score": 73,
+      "confidence": "low",
+      "assessed": true,
+      "summary": "Basic pattern checks only; 1 secret-like match(es); 1 dynamic-execution and 1 debug finding(s).",
+      "evidence": [
+        "app/security.py"
+      ]
+    }
+  ],
+  "metrics": {
+    "source_files": 9,
+    "test_files": 0,
+    "source_lines": 5047,
+    "test_lines": 0,
+    "test_to_source_file_ratio": 0.0,
+    "test_to_source_line_ratio": 0.0,
+    "source_todos": 15,
+    "parse_errors": 1,
+    "max_complexity": 117,
+    "oversized_source_files": 1,
+    "archetype": "web_app"
+  },
+  "findings": [
+    {
+      "id": "MNT009:app/broken.py",
+      "rule_id": "MNT009",
+      "dimension": "maintainability",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Python parse error",
+      "file": "app/broken.py",
+      "line": 1,
+      "evidence": [
+        "invalid syntax (line 4)"
+      ],
+      "why": "A file that does not parse cannot be analysed or imported safely.",
+      "recommendation": "Fix the syntax error and re-scan to restore full analysis coverage."
+    },
+    {
+      "id": "MNT002:app/huge_module.py",
+      "rule_id": "MNT002",
+      "dimension": "maintainability",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Very large source file",
+      "file": "app/huge_module.py",
+      "line": 1,
+      "evidence": [
+        "4,723 lines",
+        "102.5 KB"
+      ],
+      "why": "Very large modules are hard to review, test and change safely.",
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time."
+    },
+    {
+      "id": "MNT007:app/long_function.py",
+      "rule_id": "MNT007",
+      "dimension": "maintainability",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Very high cyclomatic complexity",
+      "file": "app/long_function.py",
+      "line": 4,
+      "evidence": [
+        "process at line 4",
+        "119 lines",
+        "complexity 117"
+      ],
+      "why": "Very high branching complexity makes a function hard to test exhaustively.",
+      "recommendation": "Split the function by responsibility and add regression tests for each branch."
+    },
+    {
+      "id": "MNT007:app/utils.py",
+      "rule_id": "MNT007",
+      "dimension": "maintainability",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Very high cyclomatic complexity",
+      "file": "app/utils.py",
+      "line": 4,
+      "evidence": [
+        "classify at line 4",
+        "58 lines",
+        "complexity 29"
+      ],
+      "why": "Very high branching complexity makes a function hard to test exhaustively.",
+      "recommendation": "Split the function by responsibility and add regression tests for each branch."
+    },
+    {
+      "id": "SEC001:app/security.py:13:GitHub token",
+      "rule_id": "SEC001",
+      "dimension": "security",
+      "severity": "high",
+      "confidence": "high",
+      "title": "Secret-like string in a tracked file",
+      "file": "app/security.py",
+      "line": 13,
+      "evidence": [
+        "GitHub token: ghp...[REDACTED]"
+      ],
+      "why": "A credential committed to source should be treated as compromised.",
+      "recommendation": "Remove the value from history, rotate the credential and load it from the environment."
+    },
+    {
+      "id": "ARCH002:cycle:app.cycle_a,app.cycle_b",
+      "rule_id": "ARCH002",
+      "dimension": "architecture",
+      "severity": "medium",
+      "confidence": "high",
+      "title": "Import cycle between 2 source modules",
+      "file": "app/cycle_a.py",
+      "line": 1,
+      "evidence": [
+        "2 modules in cycle",
+        "app.cycle_a -> app.cycle_b -> app.cycle_a"
+      ],
+      "why": "Import cycles make startup order fragile and prevent clean layering.",
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module."
+    },
+    {
+      "id": "SEC002:app/security.py",
+      "rule_id": "SEC002",
+      "dimension": "security",
+      "severity": "medium",
+      "confidence": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "file": "app/security.py",
+      "line": 20,
+      "evidence": [
+        "line 20: eval",
+        "line 25: subprocess shell=True",
+        "line 30: os.system",
+        "line 35: pickle.loads"
+      ],
+      "why": "Dynamic execution is a common path for injection bugs.",
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required."
+    },
+    {
+      "id": "SEC003:app/security.py",
+      "rule_id": "SEC003",
+      "dimension": "security",
+      "severity": "medium",
+      "confidence": "medium",
+      "title": "Hardcoded debug mode",
+      "file": "app/security.py",
+      "line": 15,
+      "evidence": [
+        "line 15: debug mode enabled"
+      ],
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state.",
+      "recommendation": "Drive debug settings from environment configuration and default to off."
+    },
+    {
+      "id": "DEP002:requirements.txt",
+      "rule_id": "DEP002",
+      "dimension": "dependencies",
+      "severity": "low",
+      "confidence": "high",
+      "title": "Manifest present but no lockfile",
+      "file": "requirements.txt",
+      "line": 1,
+      "evidence": [
+        "1 manifest(s)",
+        "no lockfile found"
+      ],
+      "why": "A lockfile makes installs reproducible across machines and CI.",
+      "recommendation": "Generate and commit the lockfile for the package manager in use."
+    },
+    {
+      "id": "DEP003:requirements.txt",
+      "rule_id": "DEP003",
+      "dimension": "dependencies",
+      "severity": "low",
+      "confidence": "high",
+      "title": "Unpinned direct dependencies",
+      "file": "requirements.txt",
+      "line": 1,
+      "evidence": [
+        "2 unpinned dependency string(s)",
+        "click",
+        "flask"
+      ],
+      "why": "Loose dependency ranges make builds drift over time.",
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives."
+    },
+    {
+      "id": "TST001:project",
+      "rule_id": "TST001",
+      "dimension": "tests",
+      "severity": "high",
+      "confidence": "high",
+      "title": "No test files detected",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "9 source files",
+        "0 test files"
+      ],
+      "why": "Without tests, changes to source behaviour cannot be verified automatically.",
+      "recommendation": "Add a small test suite around the main entry path and the riskiest modules."
+    },
+    {
+      "id": "ARCH001:project",
+      "rule_id": "ARCH001",
+      "dimension": "architecture",
+      "severity": "medium",
+      "confidence": "high",
+      "title": "Application has no clear entry point",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "9 source files",
+        "no main/CLI entry point found"
+      ],
+      "why": "Without an entry point it is harder to see how the application starts and where behaviour begins.",
+      "recommendation": "Add or document a single entry point (for example main.py, __main__.py or a console script)."
+    },
+    {
+      "id": "TST002:project",
+      "rule_id": "TST002",
+      "dimension": "tests",
+      "severity": "medium",
+      "confidence": "high",
+      "title": "Test/source ratio below expected for this repository shape",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "0 test files",
+        "9 source files",
+        "ratio 0.00 (expected >= 0.40)"
+      ],
+      "why": "A low test/source ratio suggests large parts of the codebase have no direct tests.",
+      "recommendation": "Add focused tests for the highest-risk modules before broad refactoring."
+    },
+    {
+      "id": "DOC001:project",
+      "rule_id": "DOC001",
+      "dimension": "docs",
+      "severity": "medium",
+      "confidence": "high",
+      "title": "No README found",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "no README.md, README.rst or README.txt at the repository root"
+      ],
+      "why": "A repository without a README gives a new developer no starting point.",
+      "recommendation": "Add a short README that states what the project is, how to run it and how to test it."
+    },
+    {
+      "id": "DEP004:project",
+      "rule_id": "DEP004",
+      "dimension": "dependencies",
+      "severity": "medium",
+      "confidence": "high",
+      "title": "No license file",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "no LICENSE, COPYING or NOTICE file found"
+      ],
+      "why": "A repository without a license is not legally reusable by others.",
+      "recommendation": "Add the license you intend to use and reference it from the README."
+    },
+    {
+      "id": "HYG001:project",
+      "rule_id": "HYG001",
+      "dimension": "dependencies",
+      "severity": "low",
+      "confidence": "high",
+      "title": "No .gitignore",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "no .gitignore at the repository root"
+      ],
+      "why": "Without ignore rules, local state and build output can be committed by accident.",
+      "recommendation": "Add a .gitignore for the toolchain in use."
+    },
+    {
+      "id": "HYG002:project",
+      "rule_id": "HYG002",
+      "dimension": "dependencies",
+      "severity": "low",
+      "confidence": "high",
+      "title": "No CI configuration",
+      "file": null,
+      "line": 1,
+      "evidence": [
+        "no GitHub Actions, GitLab CI or equivalent configuration"
+      ],
+      "why": "Automated checks catch regressions that a local scan cannot.",
+      "recommendation": "Add a minimal CI job that runs tests and quality checks."
+    }
+  ],
+  "changes": {
+    "since_scan_id": null,
+    "added": 11,
+    "modified": 0,
+    "deleted": 0,
+    "quality_delta": 0
+  },
+  "architecture": {
+    "archetype": "web_app",
+    "components": [
+      "app"
+    ],
+    "entry_points": [],
+    "hotspots": [
+      "app/long_function.py",
+      "app/huge_module.py",
+      "app/utils.py",
+      "app/views.py",
+      "app/security.py"
+    ]
+  },
+  "actions": [
+    {
+      "rank": 1,
+      "title": "Remove and rotate hardcoded secrets",
+      "why": "Committed credentials must be treated as compromised before any other refactor.",
+      "impact": "high",
+      "effort": "low"
+    },
+    {
+      "rank": 2,
+      "title": "Reduce oversized source files in small, test-backed moves",
+      "why": "Large files dominate review cost and make changes riskier.",
+      "impact": "high",
+      "effort": "high"
+    },
+    {
+      "rank": 3,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely.",
+      "impact": "medium",
+      "effort": "high"
+    }
+  ],
+  "exclusions": {
+    "vendor": 0,
+    "generated": 0,
+    "docs_translations": 0,
+    "examples": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality."
+  },
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "Churn requires a git repository; hotspot churn rules were skipped.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies.",
+    "Low confidence: 1 source parse error(s)."
+  ],
+  "rules_version": "quality-rules-2"
+}

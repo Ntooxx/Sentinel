@@ -1,0 +1,911 @@
+{
+  "actions": [
+    {
+      "effort": "medium",
+      "impact": "high",
+      "rank": 1,
+      "title": "Add tests around the top hotspots",
+      "why": "The riskiest source paths have no direct static test evidence."
+    },
+    {
+      "effort": "high",
+      "impact": "high",
+      "rank": 2,
+      "title": "Reduce oversized source files in small, test-backed moves",
+      "why": "Large files dominate review cost and make changes riskier."
+    },
+    {
+      "effort": "high",
+      "impact": "medium",
+      "rank": 3,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely."
+    }
+  ],
+  "architecture": {
+    "archetype": "framework_library",
+    "components": [
+      ".devcontainer",
+      "flask"
+    ],
+    "entry_points": [
+      "pyproject.toml",
+      "src/flask/__main__.py"
+    ],
+    "hotspots": [
+      "src/flask/app.py",
+      "src/flask/sansio/blueprints.py",
+      "src/flask/cli.py",
+      "src/flask/sansio/app.py",
+      "src/flask/sansio/scaffold.py"
+    ]
+  },
+  "changes": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 0,
+    "quality_delta": 0,
+    "since_scan_id": 3
+  },
+  "dimensions": [
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/flask/__init__.py"
+      ],
+      "grade": "A+",
+      "id": "architecture",
+      "score": 99,
+      "summary": "framework library; pyproject.toml; 1 import cycle(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py"
+      ],
+      "grade": "B-",
+      "id": "maintainability",
+      "score": 81,
+      "summary": "25 source files; 7 over 500 lines; 0 TODOs; max complexity 23; 0 parse error(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/flask/__main__.py",
+        "src/flask/app.py",
+        "src/flask/ctx.py"
+      ],
+      "grade": "A+",
+      "id": "tests",
+      "score": 99,
+      "summary": "61 test files; ratio 2.44; 6 test-signal finding(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [],
+      "grade": "A+",
+      "id": "docs",
+      "score": 100,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "pyproject.toml"
+      ],
+      "grade": "A",
+      "id": "dependencies",
+      "score": 94,
+      "summary": "2 dependency/hygiene finding(s); no lockfile; 6 unpinned dependency string(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/flask/app.py",
+        "src/flask/cli.py",
+        "src/flask/config.py"
+      ],
+      "grade": "A+",
+      "id": "security",
+      "score": 99,
+      "summary": "Basic pattern checks only; 0 secret-like match(es); 2 dynamic-execution and 8 debug finding(s)."
+    }
+  ],
+  "exclusions": {
+    "docs_translations": 0,
+    "examples": 43,
+    "generated": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality.",
+    "vendor": 0
+  },
+  "findings": [
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "20 modules in cycle",
+        "flask -> flask.app -> flask.blueprints -> flask.cli -> flask.config -> flask.ctx -> flask.debughelpers -> flask.globals -> flask.helpers -> flask.json -> flask.json.provider -> flask.json.tag -> flask.logging -> flask.sansio.app -> flask.sansio.blueprints -> flask.sansio.scaffold -> flask.sessions -> flask.templating -> flask.testing -> flask.wrappers -> flask"
+      ],
+      "file": "src/flask/__init__.py",
+      "id": "ARCH002:cycle:flask,flask.app,flask.blueprints,flask.cli,flask.config,flask.ctx,flask.debughelpers,flask.globals,flask.helpers,flask.json,flask.json.provider,flask.json.tag,flask.logging,flask.sansio.app,flask.sansio.blueprints,flask.sansio.scaffold,flask.sessions,flask.templating,flask.testing,flask.wrappers",
+      "line": 1,
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module.",
+      "rule_id": "ARCH002",
+      "severity": "medium",
+      "title": "Import cycle between 20 source modules",
+      "why": "Import cycles make startup order fragile and prevent clean layering."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,625 lines",
+        "65.4 KB"
+      ],
+      "file": "src/flask/app.py",
+      "id": "MNT001:src/flask/app.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Flask.make_response at line 1224",
+        "141 lines",
+        "complexity 16"
+      ],
+      "file": "src/flask/app.py",
+      "id": "MNT006:src/flask/app.py",
+      "line": 1224,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Blueprint at line 18",
+        "111 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/blueprints.py",
+      "id": "MNT005:src/flask/blueprints.py",
+      "line": 18,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,126 lines",
+        "37.0 KB"
+      ],
+      "file": "src/flask/cli.py",
+      "id": "MNT001:src/flask/cli.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "routes_command at line 1060",
+        "47 lines",
+        "complexity 18"
+      ],
+      "file": "src/flask/cli.py",
+      "id": "MNT006:src/flask/cli.py",
+      "line": 1060,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Config at line 50",
+        "318 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/config.py",
+      "id": "MNT005:src/flask/config.py",
+      "line": 50,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "540 lines",
+        "18.4 KB"
+      ],
+      "file": "src/flask/ctx.py",
+      "id": "MNT001:src/flask/ctx.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "AppContext at line 260",
+        "266 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/ctx.py",
+      "id": "MNT005:src/flask/ctx.py",
+      "line": 260,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "679 lines",
+        "24.6 KB"
+      ],
+      "file": "src/flask/helpers.py",
+      "id": "MNT001:src/flask/helpers.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "send_file at line 417",
+        "124 lines",
+        "complexity 1"
+      ],
+      "file": "src/flask/helpers.py",
+      "id": "MNT005:src/flask/helpers.py",
+      "line": 417,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "TaggedJSONSerializer at line 219",
+        "109 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/json/tag.py",
+      "id": "MNT005:src/flask/json/tag.py",
+      "line": 219,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,014 lines",
+        "39.6 KB"
+      ],
+      "file": "src/flask/sansio/app.py",
+      "id": "MNT001:src/flask/sansio/app.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "App.__init__ at line 280",
+        "130 lines",
+        "complexity 3"
+      ],
+      "file": "src/flask/sansio/app.py",
+      "id": "MNT005:src/flask/sansio/app.py",
+      "line": 280,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "692 lines",
+        "27.1 KB"
+      ],
+      "file": "src/flask/sansio/blueprints.py",
+      "id": "MNT001:src/flask/sansio/blueprints.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Blueprint.register at line 273",
+        "105 lines",
+        "complexity 23"
+      ],
+      "file": "src/flask/sansio/blueprints.py",
+      "id": "MNT006:src/flask/sansio/blueprints.py",
+      "line": 273,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "800 lines",
+        "30.7 KB"
+      ],
+      "file": "src/flask/sansio/scaffold.py",
+      "id": "MNT001:src/flask/sansio/scaffold.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Scaffold.__init__ at line 75",
+        "141 lines",
+        "complexity 2"
+      ],
+      "file": "src/flask/sansio/scaffold.py",
+      "id": "MNT005:src/flask/sansio/scaffold.py",
+      "line": 75,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SessionInterface at line 100",
+        "171 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/sessions.py",
+      "id": "MNT005:src/flask/sessions.py",
+      "line": 100,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "FlaskClient at line 109",
+        "154 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/testing.py",
+      "id": "MNT005:src/flask/testing.py",
+      "line": 109,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "View at line 16",
+        "120 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/views.py",
+      "id": "MNT005:src/flask/views.py",
+      "line": 16,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Request at line 18",
+        "202 lines",
+        "complexity 0"
+      ],
+      "file": "src/flask/wrappers.py",
+      "id": "MNT005:src/flask/wrappers.py",
+      "line": 18,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "src/flask/__main__.py"
+      ],
+      "file": "src/flask/__main__.py",
+      "id": "TST006:src/flask/__main__.py",
+      "line": 1,
+      "recommendation": "Add one smoke test that exercises the documented entry point.",
+      "rule_id": "TST006",
+      "severity": "medium",
+      "title": "No test exercises the main entry path",
+      "why": "The main entry path is the first thing users run, but no test imports it."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,625 lines",
+        "complexity 16",
+        "no importing test found"
+      ],
+      "file": "src/flask/app.py",
+      "id": "TST003:src/flask/app.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "540 lines",
+        "complexity 7",
+        "no importing test found"
+      ],
+      "file": "src/flask/ctx.py",
+      "id": "TST003:src/flask/ctx.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,014 lines",
+        "complexity 13",
+        "no importing test found"
+      ],
+      "file": "src/flask/sansio/app.py",
+      "id": "TST003:src/flask/sansio/app.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "692 lines",
+        "complexity 23",
+        "no importing test found"
+      ],
+      "file": "src/flask/sansio/blueprints.py",
+      "id": "TST003:src/flask/sansio/blueprints.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "800 lines",
+        "complexity 10",
+        "no importing test found"
+      ],
+      "file": "src/flask/sansio/scaffold.py",
+      "id": "TST003:src/flask/sansio/scaffold.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 661: debug mode enabled"
+      ],
+      "file": "src/flask/app.py",
+      "id": "SEC003:src/flask/app.py",
+      "line": 661,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "medium",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 1022: eval"
+      ],
+      "file": "src/flask/cli.py",
+      "id": "SEC002:src/flask/cli.py",
+      "line": 1022,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 209: exec"
+      ],
+      "file": "src/flask/config.py",
+      "id": "SEC002:src/flask/config.py",
+      "line": 209,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "medium",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "medium",
+      "dimension": "security",
+      "evidence": [
+        "line 65: debug mode enabled"
+      ],
+      "file": "src/flask/config.py",
+      "id": "SEC003:src/flask/config.py",
+      "line": 65,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "medium",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,974 lines"
+      ],
+      "file": "tests/test_basic.py",
+      "id": "TST004:tests/test_basic.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,115 lines"
+      ],
+      "file": "tests/test_blueprints.py",
+      "id": "TST004:tests/test_blueprints.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 1132: debug mode enabled",
+        "line 1708: debug mode enabled",
+        "line 1743: debug mode enabled",
+        "line 1902: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_basic.py",
+      "id": "SEC003:tests/test_basic.py",
+      "line": 1132,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 368: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_cli.py",
+      "id": "SEC003:tests/test_cli.py",
+      "line": 368,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 271: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_json.py",
+      "id": "SEC003:tests/test_json.py",
+      "line": 271,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 43: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_logging.py",
+      "id": "SEC003:tests/test_logging.py",
+      "line": 43,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 484: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_templating.py",
+      "id": "SEC003:tests/test_templating.py",
+      "line": 484,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 183: debug mode enabled",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_views.py",
+      "id": "SEC003:tests/test_views.py",
+      "line": 183,
+      "recommendation": "Drive debug settings from environment configuration and default to off.",
+      "rule_id": "SEC003",
+      "severity": "low",
+      "title": "Hardcoded debug mode",
+      "why": "Debug mode enabled in tracked code can leak stack traces and internal state."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "1 manifest(s)",
+        "no lockfile found"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP002:pyproject.toml",
+      "line": 1,
+      "recommendation": "Generate and commit the lockfile for the package manager in use.",
+      "rule_id": "DEP002",
+      "severity": "low",
+      "title": "Manifest present but no lockfile",
+      "why": "A lockfile makes installs reproducible across machines and CI."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "6 unpinned dependency string(s)",
+        "blinker>=1.9.0",
+        "click>=8.1.3",
+        "itsdangerous>=2.2.0",
+        "jinja2>=3.1.2",
+        "markupsafe>=2.1.1"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP003:pyproject.toml",
+      "line": 1,
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives.",
+      "rule_id": "DEP003",
+      "severity": "low",
+      "title": "Unpinned direct dependencies",
+      "why": "Loose dependency ranges make builds drift over time."
+    }
+  ],
+  "generated_at": "2026-10-24T12:02:05+01:00",
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "5 file(s) were skipped; see coverage.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies."
+  ],
+  "metrics": {
+    "archetype": "framework_library",
+    "max_complexity": 23,
+    "oversized_source_files": 7,
+    "parse_errors": 0,
+    "source_files": 25,
+    "source_lines": 9514,
+    "source_todos": 0,
+    "test_files": 61,
+    "test_lines": 7999,
+    "test_to_source_file_ratio": 2.44,
+    "test_to_source_line_ratio": 0.84
+  },
+  "project": {
+    "git": {
+      "branch": "main",
+      "commit": "d086db8",
+      "dirty": true
+    },
+    "name": "Flask",
+    "root": "."
+  },
+  "rules_version": "quality-rules-2",
+  "scan": {
+    "coverage": {
+      "docs": "metadata",
+      "examples": "excluded",
+      "generated": "none",
+      "source": "100%",
+      "tests": "100%",
+      "vendor": "none"
+    },
+    "duration_ms": 201,
+    "files_analyzed": 0,
+    "files_cached": 188,
+    "files_skipped": 5,
+    "files_total": 193,
+    "finished_at": "2026-10-24T12:02:05+01:00",
+    "index_size_bytes": 1066024,
+    "index_size_label": "1.0 MB",
+    "mode": "incremental",
+    "skipped": [
+      {
+        "path": "docs/_static/debugger.png",
+        "reason": "binary",
+        "size": 207889
+      },
+      {
+        "path": "docs/_static/pycharm-run-config.png",
+        "reason": "binary",
+        "size": 99654
+      },
+      {
+        "path": "docs/tutorial/flaskr_edit.png",
+        "reason": "binary",
+        "size": 13259
+      },
+      {
+        "path": "docs/tutorial/flaskr_index.png",
+        "reason": "binary",
+        "size": 11675
+      },
+      {
+        "path": "docs/tutorial/flaskr_login.png",
+        "reason": "binary",
+        "size": 7455
+      }
+    ],
+    "started_at": "2026-10-24T12:02:05+01:00"
+  },
+  "schema_version": 2,
+  "summary": {
+    "band": "maintained",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "grade_ceiling": "A+",
+    "headline": "42 finding(s); weakest dimension: Maintainability.",
+    "overall_score": 94,
+    "provisional": true
+  }
+}

@@ -1,0 +1,546 @@
+{
+  "actions": [
+    {
+      "effort": "medium",
+      "impact": "high",
+      "rank": 1,
+      "title": "Add tests around the top hotspots",
+      "why": "The riskiest source paths have no direct static test evidence."
+    },
+    {
+      "effort": "high",
+      "impact": "high",
+      "rank": 2,
+      "title": "Reduce oversized source files in small, test-backed moves",
+      "why": "Large files dominate review cost and make changes riskier."
+    },
+    {
+      "effort": "high",
+      "impact": "medium",
+      "rank": 3,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely."
+    }
+  ],
+  "architecture": {
+    "archetype": "library",
+    "components": [
+      "requests"
+    ],
+    "entry_points": [],
+    "hotspots": [
+      "src/requests/models.py",
+      "src/requests/utils.py",
+      "src/requests/adapters.py",
+      "src/requests/sessions.py",
+      "src/requests/auth.py"
+    ]
+  },
+  "changes": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 0,
+    "quality_delta": 0,
+    "since_scan_id": 3
+  },
+  "dimensions": [
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/requests/__init__.py"
+      ],
+      "grade": "A+",
+      "id": "architecture",
+      "score": 98,
+      "summary": "library; no clear entry point; 1 import cycle(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/requests/adapters.py",
+        "src/requests/auth.py",
+        "src/requests/cookies.py"
+      ],
+      "grade": "B",
+      "id": "maintainability",
+      "score": 86,
+      "summary": "18 source files; 5 over 500 lines; 5 TODOs; max complexity 21; 0 parse error(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "src/requests/status_codes.py",
+        "tests/test_requests.py"
+      ],
+      "grade": "A+",
+      "id": "tests",
+      "score": 100,
+      "summary": "42 test files; ratio 2.33; 1 test-signal finding(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [],
+      "grade": "A+",
+      "id": "docs",
+      "score": 100,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "docs/requirements.txt",
+        "pyproject.toml"
+      ],
+      "grade": "A",
+      "id": "dependencies",
+      "score": 94,
+      "summary": "2 dependency/hygiene finding(s); no lockfile; 10 unpinned dependency string(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "tests/certs/expired/ca/ca-private.key",
+        "tests/certs/expired/server/server.key",
+        "tests/certs/mtls/client/client.key"
+      ],
+      "grade": "A+",
+      "id": "security",
+      "score": 97,
+      "summary": "Basic pattern checks only; 4 secret-like match(es); 1 dynamic-execution and 0 debug finding(s)."
+    }
+  ],
+  "exclusions": {
+    "docs_translations": 0,
+    "examples": 2,
+    "generated": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality.",
+    "vendor": 0
+  },
+  "findings": [
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "7 modules in cycle",
+        "requests -> requests.adapters -> requests.api -> requests.auth -> requests.models -> requests.sessions -> requests.utils -> requests"
+      ],
+      "file": "src/requests/__init__.py",
+      "id": "ARCH002:cycle:requests,requests.adapters,requests.api,requests.auth,requests.models,requests.sessions,requests.utils",
+      "line": 1,
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module.",
+      "rule_id": "ARCH002",
+      "severity": "medium",
+      "title": "Import cycle between 7 source modules",
+      "why": "Import cycles make startup order fragile and prevent clean layering."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "697 lines",
+        "26.2 KB"
+      ],
+      "file": "src/requests/adapters.py",
+      "id": "MNT001:src/requests/adapters.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "HTTPAdapter.send at line 591",
+        "107 lines",
+        "complexity 19"
+      ],
+      "file": "src/requests/adapters.py",
+      "id": "MNT006:src/requests/adapters.py",
+      "line": 591,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "HTTPDigestAuth.build_digest_header at line 126",
+        "109 lines",
+        "complexity 19"
+      ],
+      "file": "src/requests/auth.py",
+      "id": "MNT006:src/requests/auth.py",
+      "line": 126,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "561 lines",
+        "18.7 KB"
+      ],
+      "file": "src/requests/cookies.py",
+      "id": "MNT001:src/requests/cookies.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RequestsCookieJar at line 176",
+        "262 lines",
+        "complexity 0"
+      ],
+      "file": "src/requests/cookies.py",
+      "id": "MNT005:src/requests/cookies.py",
+      "line": 176,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,046 lines",
+        "35.9 KB"
+      ],
+      "file": "src/requests/models.py",
+      "id": "MNT001:src/requests/models.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "RequestEncodingMixin._encode_files at line 139",
+        "67 lines",
+        "complexity 21"
+      ],
+      "file": "src/requests/models.py",
+      "id": "MNT006:src/requests/models.py",
+      "line": 139,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "833 lines",
+        "30.7 KB"
+      ],
+      "file": "src/requests/sessions.py",
+      "id": "MNT001:src/requests/sessions.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "SessionRedirectMixin.resolve_redirects at line 160",
+        "121 lines",
+        "complexity 15"
+      ],
+      "file": "src/requests/sessions.py",
+      "id": "MNT005:src/requests/sessions.py",
+      "line": 160,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,083 lines",
+        "33.3 KB"
+      ],
+      "file": "src/requests/utils.py",
+      "id": "MNT001:src/requests/utils.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "should_bypass_proxies at line 752",
+        "59 lines",
+        "complexity 17"
+      ],
+      "file": "src/requests/utils.py",
+      "id": "MNT006:src/requests/utils.py",
+      "line": 752,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "128 lines",
+        "complexity 6",
+        "no importing test found"
+      ],
+      "file": "src/requests/status_codes.py",
+      "id": "TST003:src/requests/status_codes.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "3,052 lines"
+      ],
+      "file": "tests/test_requests.py",
+      "id": "TST004:tests/test_requests.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "private key: ---...[REDACTED]",
+        "likely deliberate test material"
+      ],
+      "file": "tests/certs/expired/ca/ca-private.key",
+      "id": "SEC001:tests/certs/expired/ca/ca-private.key:1:private key",
+      "line": 1,
+      "recommendation": "Confirm the value is a fake test fixture; otherwise remove it, rotate the credential and load it from the environment.",
+      "rule_id": "SEC001",
+      "severity": "low",
+      "title": "Secret-like string in a test fixture",
+      "why": "A credential committed to source should be treated as compromised."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "private key: ---...[REDACTED]",
+        "likely deliberate test material"
+      ],
+      "file": "tests/certs/expired/server/server.key",
+      "id": "SEC001:tests/certs/expired/server/server.key:1:private key",
+      "line": 1,
+      "recommendation": "Confirm the value is a fake test fixture; otherwise remove it, rotate the credential and load it from the environment.",
+      "rule_id": "SEC001",
+      "severity": "low",
+      "title": "Secret-like string in a test fixture",
+      "why": "A credential committed to source should be treated as compromised."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "private key: ---...[REDACTED]",
+        "likely deliberate test material"
+      ],
+      "file": "tests/certs/mtls/client/client.key",
+      "id": "SEC001:tests/certs/mtls/client/client.key:1:private key",
+      "line": 1,
+      "recommendation": "Confirm the value is a fake test fixture; otherwise remove it, rotate the credential and load it from the environment.",
+      "rule_id": "SEC001",
+      "severity": "low",
+      "title": "Secret-like string in a test fixture",
+      "why": "A credential committed to source should be treated as compromised."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "private key: ---...[REDACTED]",
+        "likely deliberate test material"
+      ],
+      "file": "tests/certs/valid/server/server.key",
+      "id": "SEC001:tests/certs/valid/server/server.key:1:private key",
+      "line": 1,
+      "recommendation": "Confirm the value is a fake test fixture; otherwise remove it, rotate the credential and load it from the environment.",
+      "rule_id": "SEC001",
+      "severity": "low",
+      "title": "Secret-like string in a test fixture",
+      "why": "A credential committed to source should be treated as compromised."
+    },
+    {
+      "confidence": "low",
+      "dimension": "security",
+      "evidence": [
+        "line 1524: pickle.loads",
+        "line 1528: pickle.loads",
+        "line 1536: pickle.loads",
+        "line 1552: pickle.loads",
+        "line 1567: pickle.loads",
+        "in test or fixture context"
+      ],
+      "file": "tests/test_requests.py",
+      "id": "SEC002:tests/test_requests.py",
+      "line": 1524,
+      "recommendation": "Prefer explicit calls or strict allow-lists; document why dynamic execution is required.",
+      "rule_id": "SEC002",
+      "severity": "low",
+      "title": "Dangerous dynamic execution pattern",
+      "why": "Dynamic execution is a common path for injection bugs."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "4 manifest(s)",
+        "no lockfile found"
+      ],
+      "file": "docs/requirements.txt",
+      "id": "DEP002:docs/requirements.txt",
+      "line": 1,
+      "recommendation": "Generate and commit the lockfile for the package manager in use.",
+      "rule_id": "DEP002",
+      "severity": "low",
+      "title": "Manifest present but no lockfile",
+      "why": "A lockfile makes installs reproducible across machines and CI."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "10 unpinned dependency string(s)",
+        "-e .[socks]",
+        "certifi>=2023.5.7",
+        "charset_normalizer>=2,<4",
+        "httpbin~=0.10.0",
+        "idna>=2.5,<4"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP003:pyproject.toml",
+      "line": 1,
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives.",
+      "rule_id": "DEP003",
+      "severity": "low",
+      "title": "Unpinned direct dependencies",
+      "why": "Loose dependency ranges make builds drift over time."
+    }
+  ],
+  "generated_at": "2026-10-24T12:01:54+01:00",
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "5 file(s) were skipped; see coverage.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies."
+  ],
+  "metrics": {
+    "archetype": "library",
+    "max_complexity": 21,
+    "oversized_source_files": 5,
+    "parse_errors": 0,
+    "source_files": 18,
+    "source_lines": 5630,
+    "source_todos": 5,
+    "test_files": 42,
+    "test_lines": 5608,
+    "test_to_source_file_ratio": 2.33,
+    "test_to_source_line_ratio": 1.0
+  },
+  "project": {
+    "git": {
+      "branch": "main",
+      "commit": "6ec76b4",
+      "dirty": true
+    },
+    "name": "requests",
+    "root": "."
+  },
+  "rules_version": "quality-rules-2",
+  "scan": {
+    "coverage": {
+      "docs": "metadata",
+      "examples": "excluded",
+      "generated": "none",
+      "source": "100%",
+      "tests": "100%",
+      "vendor": "none"
+    },
+    "duration_ms": 190,
+    "files_analyzed": 0,
+    "files_cached": 119,
+    "files_skipped": 5,
+    "files_total": 124,
+    "finished_at": "2026-10-24T12:01:54+01:00",
+    "index_size_bytes": 713408,
+    "index_size_label": "696.7 KB",
+    "mode": "incremental",
+    "skipped": [
+      {
+        "path": "docs/_static/requests-sidebar.png",
+        "reason": "binary",
+        "size": 306086
+      }
+    ],
+    "started_at": "2026-10-24T12:01:54+01:00"
+  },
+  "schema_version": 2,
+  "summary": {
+    "band": "maintained",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "grade_ceiling": "A+",
+    "headline": "21 finding(s); weakest dimension: Maintainability.",
+    "overall_score": 95,
+    "provisional": true
+  }
+}

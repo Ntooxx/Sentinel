@@ -1,0 +1,2 @@
+﻿hermes-agent 0.18.2 has requirement certifi==2026.5.20, but you have certifi 2026.10.23.
+hermes-agent 0.18.2 has requirement PyJWT[crypto]==2.13.0, but you have pyjwt 2.15.1.

@@ -1,0 +1,12 @@
+﻿Found existing installation: semgrep 1.182.1
+Uninstalling semgrep-1.182.1:
+  Successfully uninstalled semgrep-1.182.1
+Found existing installation: ruff 0.16.6
+Uninstalling ruff-0.16.6:
+  Successfully uninstalled ruff-0.16.6
+Found existing installation: radon 6.0.1
+Uninstalling radon-6.0.1:
+  Successfully uninstalled radon-6.0.1
+Found existing installation: grimp 3.17
+Uninstalling grimp-3.17:
+  Successfully uninstalled grimp-3.17

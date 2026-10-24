@@ -1,0 +1,1370 @@
+{
+  "actions": [
+    {
+      "effort": "medium",
+      "impact": "high",
+      "rank": 1,
+      "title": "Add tests around the top hotspots",
+      "why": "The riskiest source paths have no direct static test evidence."
+    },
+    {
+      "effort": "high",
+      "impact": "high",
+      "rank": 2,
+      "title": "Reduce oversized source files in small, test-backed moves",
+      "why": "Large files dominate review cost and make changes riskier."
+    },
+    {
+      "effort": "high",
+      "impact": "medium",
+      "rank": 3,
+      "title": "Split high-complexity functions and add branch tests",
+      "why": "Complex branching is the most expensive code to change safely."
+    }
+  ],
+  "architecture": {
+    "archetype": "framework_library",
+    "components": [
+      "fastapi",
+      "scripts"
+    ],
+    "entry_points": [
+      "pyproject.toml",
+      "fastapi/__main__.py"
+    ],
+    "hotspots": [
+      "fastapi/routing.py",
+      "fastapi/applications.py",
+      "fastapi/dependencies/utils.py",
+      "fastapi/openapi/utils.py",
+      "fastapi/encoders.py"
+    ]
+  },
+  "changes": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 0,
+    "quality_delta": 0,
+    "since_scan_id": 3
+  },
+  "dimensions": [
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "fastapi/__init__.py"
+      ],
+      "grade": "A+",
+      "id": "architecture",
+      "score": 99,
+      "summary": "framework library; pyproject.toml; 1 import cycle(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "fastapi/_compat/v2.py",
+        "fastapi/applications.py",
+        "fastapi/datastructures.py"
+      ],
+      "grade": "B-",
+      "id": "maintainability",
+      "score": 82,
+      "summary": "79 source files; 9 over 500 lines; 15 TODOs; max complexity 41; 0 parse error(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "fastapi/__main__.py",
+        "fastapi/applications.py",
+        "fastapi/openapi/utils.py"
+      ],
+      "grade": "A+",
+      "id": "tests",
+      "score": 100,
+      "summary": "619 test files; ratio 7.84; 6 test-signal finding(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [],
+      "grade": "A+",
+      "id": "docs",
+      "score": 100,
+      "summary": "0 canonical documentation finding(s); translations excluded from scoring."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [
+        "pyproject.toml"
+      ],
+      "grade": "A",
+      "id": "dependencies",
+      "score": 94,
+      "summary": "2 dependency/hygiene finding(s); no lockfile; 5 unpinned dependency string(s)."
+    },
+    {
+      "assessed": true,
+      "confidence": "high",
+      "evidence": [],
+      "grade": "A+",
+      "id": "security",
+      "score": 100,
+      "summary": "Basic pattern checks only; 0 secret-like match(es); 0 dynamic-execution and 0 debug finding(s)."
+    }
+  ],
+  "exclusions": {
+    "docs_translations": 1375,
+    "examples": 460,
+    "generated": 0,
+    "reason": "Documentation translations, examples, generated files and vendored code do not drive source quality.",
+    "vendor": 0
+  },
+  "findings": [
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "4,691 lines",
+        "181.8 KB"
+      ],
+      "file": "fastapi/applications.py",
+      "id": "MNT002:fastapi/applications.py",
+      "line": 1,
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time.",
+      "rule_id": "MNT002",
+      "severity": "high",
+      "title": "Very large source file",
+      "why": "Very large modules are hard to review, test and change safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "analyze_param at line 393",
+        "167 lines",
+        "complexity 39"
+      ],
+      "file": "fastapi/dependencies/utils.py",
+      "id": "MNT007:fastapi/dependencies/utils.py",
+      "line": 393,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "jsonable_encoder at line 129",
+        "236 lines",
+        "complexity 34"
+      ],
+      "file": "fastapi/encoders.py",
+      "id": "MNT007:fastapi/encoders.py",
+      "line": 129,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "get_openapi_path at line 260",
+        "219 lines",
+        "complexity 41"
+      ],
+      "file": "fastapi/openapi/utils.py",
+      "id": "MNT007:fastapi/openapi/utils.py",
+      "line": 260,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "2,460 lines",
+        "70.4 KB"
+      ],
+      "file": "fastapi/param_functions.py",
+      "id": "MNT002:fastapi/param_functions.py",
+      "line": 1,
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time.",
+      "rule_id": "MNT002",
+      "severity": "high",
+      "title": "Very large source file",
+      "why": "Very large modules are hard to review, test and change safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "4,956 lines",
+        "197.8 KB"
+      ],
+      "file": "fastapi/routing.py",
+      "id": "MNT002:fastapi/routing.py",
+      "line": 1,
+      "recommendation": "Map the relevant tests, then extract one cohesive concern at a time.",
+      "rule_id": "MNT002",
+      "severity": "high",
+      "title": "Very large source file",
+      "why": "Very large modules are hard to review, test and change safely."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "get_request_handler.app at line 382",
+        "346 lines",
+        "complexity 29"
+      ],
+      "file": "fastapi/routing.py",
+      "id": "MNT007:fastapi/routing.py",
+      "line": 382,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "remove_unused_docs_src at line 549",
+        "107 lines",
+        "complexity 29"
+      ],
+      "file": "scripts/docs.py",
+      "id": "MNT007:scripts/docs.py",
+      "line": 549,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "main at line 306",
+        "123 lines",
+        "complexity 28"
+      ],
+      "file": "scripts/notify_translations.py",
+      "id": "MNT007:scripts/notify_translations.py",
+      "line": 306,
+      "recommendation": "Split the function by responsibility and add regression tests for each branch.",
+      "rule_id": "MNT007",
+      "severity": "high",
+      "title": "Very high cyclomatic complexity",
+      "why": "Very high branching complexity makes a function hard to test exhaustively."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "18 modules in cycle",
+        "fastapi -> fastapi._compat -> fastapi._compat.v2 -> fastapi.applications -> fastapi.datastructures -> fastapi.dependencies.models -> fastapi.dependencies.utils -> fastapi.encoders -> fastapi.exception_handlers -> fastapi.openapi.docs -> fastapi.openapi.models -> fastapi.openapi.utils -> fastapi.param_functions -> fastapi.params -> fastapi.routing -> fastapi.security.base -> fastapi.security.oauth2 -> fastapi.utils -> fastapi"
+      ],
+      "file": "fastapi/__init__.py",
+      "id": "ARCH002:cycle:fastapi,fastapi._compat,fastapi._compat.v2,fastapi.applications,fastapi.datastructures,fastapi.dependencies.models,fastapi.dependencies.utils,fastapi.encoders,fastapi.exception_handlers,fastapi.openapi.docs,fastapi.openapi.models,fastapi.openapi.utils,fastapi.param_functions,fastapi.params,fastapi.routing,fastapi.security.base,fastapi.security.oauth2,fastapi.utils",
+      "line": 1,
+      "recommendation": "Break the cycle by moving shared contracts into a lower-level module.",
+      "rule_id": "ARCH002",
+      "severity": "medium",
+      "title": "Import cycle between 18 source modules",
+      "why": "Import cycles make startup order fragile and prevent clean layering."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ModelField at line 114",
+        "131 lines",
+        "complexity 0"
+      ],
+      "file": "fastapi/_compat/v2.py",
+      "id": "MNT005:fastapi/_compat/v2.py",
+      "line": 114,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "FastAPI.__init__ at line 57",
+        "960 lines",
+        "complexity 8"
+      ],
+      "file": "fastapi/applications.py",
+      "id": "MNT005:fastapi/applications.py",
+      "line": 57,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "UploadFile at line 21",
+        "130 lines",
+        "complexity 0"
+      ],
+      "file": "fastapi/datastructures.py",
+      "id": "MNT005:fastapi/datastructures.py",
+      "line": 21,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Dependant at line 32",
+        "162 lines",
+        "complexity 0"
+      ],
+      "file": "fastapi/dependencies/models.py",
+      "id": "MNT005:fastapi/dependencies/models.py",
+      "line": 32,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "1,057 lines",
+        "39.7 KB"
+      ],
+      "file": "fastapi/dependencies/utils.py",
+      "id": "MNT001:fastapi/dependencies/utils.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "get_swagger_ui_html at line 40",
+        "155 lines",
+        "complexity 5"
+      ],
+      "file": "fastapi/openapi/docs.py",
+      "id": "MNT005:fastapi/openapi/docs.py",
+      "line": 40,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "606 lines",
+        "26.2 KB"
+      ],
+      "file": "fastapi/openapi/utils.py",
+      "id": "MNT001:fastapi/openapi/utils.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Path at line 13",
+        "342 lines",
+        "complexity 1"
+      ],
+      "file": "fastapi/param_functions.py",
+      "id": "MNT005:fastapi/param_functions.py",
+      "line": 13,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "754 lines",
+        "26.4 KB"
+      ],
+      "file": "fastapi/params.py",
+      "id": "MNT001:fastapi/params.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "Body.__init__ at line 470",
+        "106 lines",
+        "complexity 11"
+      ],
+      "file": "fastapi/params.py",
+      "id": "MNT005:fastapi/params.py",
+      "line": 470,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "HTTPBasic at line 105",
+        "115 lines",
+        "complexity 0"
+      ],
+      "file": "fastapi/security/http.py",
+      "id": "MNT005:fastapi/security/http.py",
+      "line": 105,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "693 lines",
+        "24.3 KB"
+      ],
+      "file": "fastapi/security/oauth2.py",
+      "id": "MNT001:fastapi/security/oauth2.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "OAuth2PasswordRequestFormStrict.__init__ at line 226",
+        "102 lines",
+        "complexity 1"
+      ],
+      "file": "fastapi/security/oauth2.py",
+      "id": "MNT005:fastapi/security/oauth2.py",
+      "line": 226,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "ServerSentEvent at line 42",
+        "102 lines",
+        "complexity 0"
+      ],
+      "file": "fastapi/sse.py",
+      "id": "MNT005:fastapi/sse.py",
+      "line": 42,
+      "recommendation": "Extract one named step at a time, preserving behaviour with tests.",
+      "rule_id": "MNT005",
+      "severity": "medium",
+      "title": "Long function",
+      "why": "Long functions mix steps that can usually be named and tested separately."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "main at line 25",
+        "121 lines",
+        "complexity 24"
+      ],
+      "file": "scripts/deploy_docs_status.py",
+      "id": "MNT006:scripts/deploy_docs_status.py",
+      "line": 25,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "733 lines",
+        "24.3 KB"
+      ],
+      "file": "scripts/doc_parsing_utils.py",
+      "id": "MNT001:scripts/doc_parsing_utils.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "741 lines",
+        "26.1 KB"
+      ],
+      "file": "scripts/docs.py",
+      "id": "MNT001:scripts/docs.py",
+      "line": 1,
+      "recommendation": "Identify one cohesive boundary to extract, with tests first.",
+      "rule_id": "MNT001",
+      "severity": "medium",
+      "title": "Large source file",
+      "why": "Large modules accumulate responsibilities and slow down review."
+    },
+    {
+      "confidence": "high",
+      "dimension": "maintainability",
+      "evidence": [
+        "get_discussions_experts at line 268",
+        "67 lines",
+        "complexity 16"
+      ],
+      "file": "scripts/people.py",
+      "id": "MNT006:scripts/people.py",
+      "line": 268,
+      "recommendation": "Extract a helper or simplify branches, then add edge-case tests.",
+      "rule_id": "MNT006",
+      "severity": "medium",
+      "title": "High cyclomatic complexity",
+      "why": "High branching complexity raises the cost of safe changes."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "fastapi/__main__.py"
+      ],
+      "file": "fastapi/__main__.py",
+      "id": "TST006:fastapi/__main__.py",
+      "line": 1,
+      "recommendation": "Add one smoke test that exercises the documented entry point.",
+      "rule_id": "TST006",
+      "severity": "medium",
+      "title": "No test exercises the main entry path",
+      "why": "The main entry path is the first thing users run, but no test imports it."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "4,691 lines",
+        "complexity 8",
+        "no importing test found"
+      ],
+      "file": "fastapi/applications.py",
+      "id": "TST003:fastapi/applications.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "606 lines",
+        "complexity 41",
+        "no importing test found"
+      ],
+      "file": "fastapi/openapi/utils.py",
+      "id": "TST003:fastapi/openapi/utils.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "149 lines",
+        "complexity 24",
+        "no importing test found"
+      ],
+      "file": "scripts/deploy_docs_status.py",
+      "id": "TST003:scripts/deploy_docs_status.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "741 lines",
+        "complexity 29",
+        "no importing test found"
+      ],
+      "file": "scripts/docs.py",
+      "id": "TST003:scripts/docs.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "432 lines",
+        "complexity 28",
+        "no importing test found"
+      ],
+      "file": "scripts/notify_translations.py",
+      "id": "TST003:scripts/notify_translations.py",
+      "line": 1,
+      "recommendation": "Add or identify a direct test before editing this module.",
+      "rule_id": "TST003",
+      "severity": "medium",
+      "title": "High-risk hotspot has no statically mapped test",
+      "why": "No test file imports or names this module, so a change here is poorly covered by static evidence."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,285 lines"
+      ],
+      "file": "tests/test_application.py",
+      "id": "TST004:tests/test_application.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,699 lines"
+      ],
+      "file": "tests/test_generate_unique_id_function.py",
+      "id": "TST004:tests/test_generate_unique_id_function.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "7,304 lines"
+      ],
+      "file": "tests/test_include_router_defaults_overrides.py",
+      "id": "TST004:tests/test_include_router_defaults_overrides.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "tests",
+      "evidence": [
+        "1,121 lines"
+      ],
+      "file": "tests/test_response_model_as_return_annotation.py",
+      "id": "TST004:tests/test_response_model_as_return_annotation.py",
+      "line": 1,
+      "recommendation": "Group related tests and move shared setup into fixtures.",
+      "rule_id": "TST004",
+      "severity": "low",
+      "title": "Very large test file",
+      "why": "Very large test files are harder to navigate and selectively run."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "1 manifest(s)",
+        "no lockfile found"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP002:pyproject.toml",
+      "line": 1,
+      "recommendation": "Generate and commit the lockfile for the package manager in use.",
+      "rule_id": "DEP002",
+      "severity": "low",
+      "title": "Manifest present but no lockfile",
+      "why": "A lockfile makes installs reproducible across machines and CI."
+    },
+    {
+      "confidence": "high",
+      "dimension": "dependencies",
+      "evidence": [
+        "5 unpinned dependency string(s)",
+        "annotated-doc>=0.0.2",
+        "pydantic>=2.9.0",
+        "starlette>=0.46.0",
+        "typing-extensions>=4.8.0",
+        "typing-inspection>=0.4.2"
+      ],
+      "file": "pyproject.toml",
+      "id": "DEP003:pyproject.toml",
+      "line": 1,
+      "recommendation": "Pin direct dependencies to tested versions and let the lockfile handle transitives.",
+      "rule_id": "DEP003",
+      "severity": "low",
+      "title": "Unpinned direct dependencies",
+      "why": "Loose dependency ranges make builds drift over time."
+    },
+    {
+      "confidence": "high",
+      "dimension": "architecture",
+      "evidence": [
+        "79 source modules",
+        "threshold 60",
+        "max complexity 41"
+      ],
+      "file": null,
+      "id": "ARCH005:project",
+      "line": 1,
+      "recommendation": "Split cohesive subpackages behind clear interfaces, raise test coverage on the highest-churn modules, and document the module boundaries.",
+      "rule_id": "ARCH005",
+      "severity": "medium",
+      "title": "High architectural load across a large, intricate codebase",
+      "why": "A codebase this large and intricate is expensive to change safely: coordination, review latency and blast radius all grow with structural load even when no single defect is present."
+    }
+  ],
+  "generated_at": "2026-10-24T12:02:24+01:00",
+  "limitations": [
+    "Security checks are basic pattern checks only; they are not a security audit.",
+    "Documentation content is read only for README unless --include-docs is used.",
+    "Churn requires a git repository and recent history.",
+    "Non-Python languages use conservative heuristics, not deep semantic analysis.",
+    "184 file(s) were skipped; see coverage.",
+    "The overall score is capped at A+: the analysed code is too small to demonstrate the sustained quality the top of the scale implies."
+  ],
+  "metrics": {
+    "archetype": "framework_library",
+    "max_complexity": 41,
+    "oversized_source_files": 9,
+    "parse_errors": 0,
+    "source_files": 79,
+    "source_lines": 23860,
+    "source_todos": 15,
+    "test_files": 619,
+    "test_lines": 76558,
+    "test_to_source_file_ratio": 7.84,
+    "test_to_source_line_ratio": 3.21
+  },
+  "project": {
+    "git": {
+      "branch": "master",
+      "commit": "4f64b8f",
+      "dirty": true
+    },
+    "name": "fastapi",
+    "root": "."
+  },
+  "rules_version": "quality-rules-2",
+  "scan": {
+    "coverage": {
+      "docs": "metadata",
+      "examples": "excluded",
+      "generated": "none",
+      "source": "100%",
+      "tests": "100%",
+      "vendor": "none"
+    },
+    "duration_ms": 307,
+    "files_analyzed": 0,
+    "files_cached": 963,
+    "files_skipped": 184,
+    "files_total": 1147,
+    "finished_at": "2026-10-24T12:02:24+01:00",
+    "index_size_bytes": 4644136,
+    "index_size_label": "4.4 MB",
+    "mode": "incremental",
+    "skipped": [
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-01.png",
+        "reason": "binary",
+        "size": 203390
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-02.png",
+        "reason": "binary",
+        "size": 166992
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-03.png",
+        "reason": "binary",
+        "size": 172943
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-04.png",
+        "reason": "binary",
+        "size": 163423
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-05.png",
+        "reason": "binary",
+        "size": 159869
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-06.png",
+        "reason": "binary",
+        "size": 164838
+      },
+      {
+        "path": "docs/en/docs/img/async/concurrent-burgers/concurrent-burgers-07.png",
+        "reason": "binary",
+        "size": 169968
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-01.png",
+        "reason": "binary",
+        "size": 225993
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-02.png",
+        "reason": "binary",
+        "size": 203644
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-03.png",
+        "reason": "binary",
+        "size": 168628
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-04.png",
+        "reason": "binary",
+        "size": 219429
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-05.png",
+        "reason": "binary",
+        "size": 185116
+      },
+      {
+        "path": "docs/en/docs/img/async/parallel-burgers/parallel-burgers-06.png",
+        "reason": "binary",
+        "size": 157113
+      },
+      {
+        "path": "docs/en/docs/img/deployment/concepts/image01.png",
+        "reason": "binary",
+        "size": 124827
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image01.png",
+        "reason": "binary",
+        "size": 39996
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image02.png",
+        "reason": "binary",
+        "size": 48297
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image03.png",
+        "reason": "binary",
+        "size": 52704
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image04.png",
+        "reason": "binary",
+        "size": 49760
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image05.png",
+        "reason": "binary",
+        "size": 33130
+      },
+      {
+        "path": "docs/en/docs/img/deployment/deta/image06.png",
+        "reason": "binary",
+        "size": 105270
+      },
+      {
+        "path": "docs/en/docs/img/fastapi-documentary.jpg",
+        "reason": "binary",
+        "size": 191709
+      },
+      {
+        "path": "docs/en/docs/img/favicon.png",
+        "reason": "binary",
+        "size": 5043
+      },
+      {
+        "path": "docs/en/docs/img/github-social-preview.png",
+        "reason": "binary",
+        "size": 62301
+      },
+      {
+        "path": "docs/en/docs/img/index/index-01-swagger-ui-simple.png",
+        "reason": "binary",
+        "size": 74158
+      },
+      {
+        "path": "docs/en/docs/img/index/index-02-redoc-simple.png",
+        "reason": "binary",
+        "size": 68468
+      },
+      {
+        "path": "docs/en/docs/img/index/index-03-swagger-02.png",
+        "reason": "binary",
+        "size": 75099
+      },
+      {
+        "path": "docs/en/docs/img/index/index-04-swagger-03.png",
+        "reason": "binary",
+        "size": 67572
+      },
+      {
+        "path": "docs/en/docs/img/index/index-05-swagger-04.png",
+        "reason": "binary",
+        "size": 71441
+      },
+      {
+        "path": "docs/en/docs/img/index/index-06-redoc-02.png",
+        "reason": "binary",
+        "size": 78842
+      },
+      {
+        "path": "docs/en/docs/img/logo-margin/logo-teal.png",
+        "reason": "binary",
+        "size": 19843
+      },
+      {
+        "path": "docs/en/docs/img/logo-margin/logo-white-bg.png",
+        "reason": "binary",
+        "size": 20841
+      },
+      {
+        "path": "docs/en/docs/img/pycharm-completion.png",
+        "reason": "binary",
+        "size": 51205
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image01.png",
+        "reason": "binary",
+        "size": 17722
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image02.png",
+        "reason": "binary",
+        "size": 47799
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image03.png",
+        "reason": "binary",
+        "size": 42872
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image04.png",
+        "reason": "binary",
+        "size": 18604
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image05.png",
+        "reason": "binary",
+        "size": 42637
+      },
+      {
+        "path": "docs/en/docs/img/python-types/image06.png",
+        "reason": "binary",
+        "size": 29581
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/blockbee-banner.png",
+        "reason": "binary",
+        "size": 11353
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/blockbee.png",
+        "reason": "binary",
+        "size": 13006
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/bump-sh-banner.png",
+        "reason": "binary",
+        "size": 10139
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/bump-sh.png",
+        "reason": "binary",
+        "size": 18609
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/calmcode.jpg",
+        "reason": "binary",
+        "size": 16949
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/classiq-banner.png",
+        "reason": "binary",
+        "size": 5321
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/classiq.png",
+        "reason": "binary",
+        "size": 6286
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/codacy.png",
+        "reason": "binary",
+        "size": 30480
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/coderabbit-banner.png",
+        "reason": "binary",
+        "size": 9522
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/coderabbit.png",
+        "reason": "binary",
+        "size": 21167
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/coherence-banner.png",
+        "reason": "binary",
+        "size": 18388
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/coherence.png",
+        "reason": "binary",
+        "size": 27886
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/dribia.png",
+        "reason": "binary",
+        "size": 19211
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/exoflare.png",
+        "reason": "binary",
+        "size": 10556
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fastapi-course-bundle-banner.png",
+        "reason": "binary",
+        "size": 16235
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fastapicloud.png",
+        "reason": "binary",
+        "size": 16777
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fern-banner.png",
+        "reason": "binary",
+        "size": 8801
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fern.png",
+        "reason": "binary",
+        "size": 10924
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fine-banner.png",
+        "reason": "binary",
+        "size": 11458
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/fine.png",
+        "reason": "binary",
+        "size": 21925
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/flint.png",
+        "reason": "binary",
+        "size": 10409
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/greptile-banner.png",
+        "reason": "binary",
+        "size": 7222
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/greptile.png",
+        "reason": "binary",
+        "size": 7381
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/ines-course.jpg",
+        "reason": "binary",
+        "size": 11727
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/interviewpal.png",
+        "reason": "binary",
+        "size": 25890
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/jina-ai-banner.png",
+        "reason": "binary",
+        "size": 14153
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/jina-ai.png",
+        "reason": "binary",
+        "size": 26112
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/kong-banner.png",
+        "reason": "binary",
+        "size": 21116
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/kong.png",
+        "reason": "binary",
+        "size": 30723
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/lambdatest.png",
+        "reason": "binary",
+        "size": 6320
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/liblab-banner.png",
+        "reason": "binary",
+        "size": 12453
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/liblab.png",
+        "reason": "binary",
+        "size": 8637
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/mobbai-banner.png",
+        "reason": "binary",
+        "size": 3704
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/mobbai.png",
+        "reason": "binary",
+        "size": 4137
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/mongodb-banner.png",
+        "reason": "binary",
+        "size": 4044
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/mongodb.png",
+        "reason": "binary",
+        "size": 10884
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/permit.png",
+        "reason": "binary",
+        "size": 39234
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/platform-sh-banner.png",
+        "reason": "binary",
+        "size": 6313
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/platform-sh.png",
+        "reason": "binary",
+        "size": 5779
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/porter-banner.png",
+        "reason": "binary",
+        "size": 17260
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/porter.png",
+        "reason": "binary",
+        "size": 23992
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/powens.png",
+        "reason": "binary",
+        "size": 15311
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/propelauth-banner.png",
+        "reason": "binary",
+        "size": 12806
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/propelauth.png",
+        "reason": "binary",
+        "size": 28140
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/railway-banner.png",
+        "reason": "binary",
+        "size": 11596
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/railway.png",
+        "reason": "binary",
+        "size": 26226
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/reflex-banner.png",
+        "reason": "binary",
+        "size": 8143
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/reflex.png",
+        "reason": "binary",
+        "size": 11293
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/requestly.png",
+        "reason": "binary",
+        "size": 18379
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/serpapi-banner.png",
+        "reason": "binary",
+        "size": 6458
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/serpapi.png",
+        "reason": "binary",
+        "size": 10694
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/speakeasy.png",
+        "reason": "binary",
+        "size": 18817
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/stainless.png",
+        "reason": "binary",
+        "size": 29572
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/striveworks-banner.png",
+        "reason": "binary",
+        "size": 9681
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/striveworks.png",
+        "reason": "binary",
+        "size": 22639
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/striveworks2.png",
+        "reason": "binary",
+        "size": 34780
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/talkpython-v2.jpg",
+        "reason": "binary",
+        "size": 9778
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/talkpython.png",
+        "reason": "binary",
+        "size": 14807
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/testmu.png",
+        "reason": "binary",
+        "size": 5725
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/vimso.png",
+        "reason": "binary",
+        "size": 15198
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/zuplo-banner.png",
+        "reason": "binary",
+        "size": 1760
+      },
+      {
+        "path": "docs/en/docs/img/sponsors/zuplo.png",
+        "reason": "binary",
+        "size": 7551
+      }
+    ],
+    "started_at": "2026-10-24T12:02:24+01:00"
+  },
+  "schema_version": 2,
+  "summary": {
+    "band": "maintained",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "grade_ceiling": "A+",
+    "headline": "41 finding(s); weakest dimension: Maintainability.",
+    "overall_score": 95,
+    "provisional": true
+  }
+}

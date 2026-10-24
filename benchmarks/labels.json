@@ -1,0 +1,363 @@
+{
+  "reviewed_on": "2026-10-24",
+  "reviewer": "single reviewer (project owner). Not yet reviewed by a second, independent reviewer - see the limitation note below.",
+  "method": "Each of the 25 top-5 findings from the round1 corpus run was checked against the repository itself, not against Sentinel's own claims. Tools used: `radon` 6.0.1 for an independent cyclomatic-complexity count, `grimp` 3.17 (the engine behind import-linter) plus tools/verify_cycle_claims.py for import graphs, direct line counts for size rules, and Python 3.14.2 for the parse-error findings. Verdicts: `genuine` = the evidence is factually correct and the issue class applies to that code; `debatable` = evidence correct but materially overstated; `not_genuine` = evidence wrong or the finding is noise. `actionable` = a maintainer following the recommendation would make a concrete improvement worth doing in this repository.",
+  "limitation": "Actionability in particular is one reviewer's judgment. It should be re-scored by a second reviewer before any of these numbers are quoted outside this project.",
+  "repos": {
+    "requests": {
+      "findings": [
+        {
+          "rank": 1,
+          "rule_id": "ARCH002",
+          "file": "src/requests/__init__.py",
+          "line": 1,
+          "verdict": "not_genuine",
+          "actionable": false,
+          "reviewer_note": "Claims a 7-module cycle closing with `requests.utils -> requests`. grimp 3.17 builds 55 edges over 18 modules and finds zero cycles; no module in the package imports the package root. tools/verify_cycle_claims.py reproduces it: acyclic under standard relative-import resolution, one 13-module SCC only when `from . import X` is additionally read as an edge to the enclosing package - which is the reading Sentinel takes at analyze.py:162-163. Under that reading nearly any package that imports its own submodules looks cyclic.",
+          "verification": "grimp 3.17 build_graph + own Tarjan SCC; tools/verify_cycle_claims.py (both readings)"
+        },
+        {
+          "rank": 2,
+          "rule_id": "MNT001",
+          "file": "src/requests/adapters.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "File is exactly 697 lines and 26.2 KB by direct count. It is the HTTP transport core with the highest fan-in in the package, so size here is a real review/test cost rather than a formatting artefact.",
+          "verification": "Get-Content count = 697"
+        },
+        {
+          "rank": 3,
+          "rule_id": "MNT006",
+          "file": "src/requests/adapters.py",
+          "line": 591,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "HTTPAdapter.send starts at line 591 as claimed. radon reports complexity 19 over 107 lines - identical to Sentinel's evidence. A 19-branch send path that owns retries, timeouts, proxies and streaming is worth splitting.",
+          "verification": "radon cc_visit: complexity 19, lines 107, lineno 591"
+        },
+        {
+          "rank": 4,
+          "rule_id": "MNT006",
+          "file": "src/requests/auth.py",
+          "line": 126,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "HTTPDigestAuth.build_digest_header starts at line 126. radon agrees exactly: complexity 19 over 109 lines. Digest-auth header construction is genuinely hard to test exhaustively.",
+          "verification": "radon cc_visit: complexity 19, lines 109, lineno 126"
+        },
+        {
+          "rank": 5,
+          "rule_id": "MNT001",
+          "file": "src/requests/cookies.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": false,
+          "reviewer_note": "561 lines by direct count, so the claim is correct and over the 500-line threshold. Not actionable: the module is cohesive (one cookie jar and its policy), the library is stable and well tested, and splitting it would be churn without a measurable risk reduction.",
+          "verification": "Get-Content count = 561"
+        }
+      ]
+    },
+    "flask": {
+      "findings": [
+        {
+          "rank": 1,
+          "rule_id": "ARCH002",
+          "file": "src/flask/__init__.py",
+          "line": 1,
+          "verdict": "debatable",
+          "actionable": false,
+          "reviewer_note": "The cycle is real - grimp finds a strongly connected component of 14 modules (flask.app, flask.globals, flask.ctx, flask.helpers ...) - but Sentinel reports 20 modules. The six extras are joined only through the enclosing-package edge that grimp does not count, so the evidence overstates the cycle by about 40%. Substance true, number not defensible as stated. Breaking this cycle would be a large refactor of a stable framework, so it is not an action item.",
+          "verification": "grimp 3.17: SCC of 14 modules vs the 20 claimed"
+        },
+        {
+          "rank": 2,
+          "rule_id": "MNT001",
+          "file": "src/flask/app.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "1,625 lines by direct count. This is the central application object holding routing, config, response conversion and CLI hooks in one class.",
+          "verification": "Get-Content count = 1625"
+        },
+        {
+          "rank": 3,
+          "rule_id": "MNT006",
+          "file": "src/flask/app.py",
+          "line": 1224,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "Flask.make_response starts at line 1224. radon agrees exactly: complexity 16 over 141 lines. Converting every documented response return type in one method is a real test burden.",
+          "verification": "radon cc_visit: complexity 16, lines 141, lineno 1224"
+        },
+        {
+          "rank": 4,
+          "rule_id": "MNT005",
+          "file": "src/flask/blueprints.py",
+          "line": 18,
+          "verdict": "not_genuine",
+          "actionable": false,
+          "reviewer_note": "Reported as 'Long function: Blueprint at line 18, 111 lines'. The symbol at line 18 is `class Blueprint(SansioBlueprint)`, not a function. Its longest function is `__init__` at 36 lines (19-54); the other three methods are shorter. findings.py:482-490 selects symbols by length/complexity and never filters symbols.kind, so a class body is reported as a long function and the recommendation (extract one named step) does not apply to anything in this file.",
+          "verification": "AST walk: only symbol with span > 60 is the class (111 lines); longest def = 36"
+        },
+        {
+          "rank": 5,
+          "rule_id": "MNT001",
+          "file": "src/flask/cli.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "1,126 lines by direct count. One module holding every built-in CLI command and its helpers; splitting by command is a concrete, low-risk move.",
+          "verification": "Get-Content count = 1126"
+        }
+      ]
+    },
+    "fastapi": {
+      "findings": [
+        {
+          "rank": 1,
+          "rule_id": "MNT002",
+          "file": "fastapi/applications.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "4,691 lines / 181.8 KB by direct count. The application class accumulates routing, DI wiring, OpenAPI config and lifespan handling.",
+          "verification": "Get-Content count = 4691"
+        },
+        {
+          "rank": 2,
+          "rule_id": "MNT007",
+          "file": "fastapi/dependencies/utils.py",
+          "line": 393,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "analyze_param starts at line 393 as claimed, 167 lines. radon measures complexity 45 against Sentinel's 39 - both far above the 25 threshold, so the finding holds either way.",
+          "verification": "radon cc_visit: complexity 45, lines 167, lineno 393"
+        },
+        {
+          "rank": 3,
+          "rule_id": "MNT007",
+          "file": "fastapi/encoders.py",
+          "line": 129,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "jsonable_encoder starts at line 129, 236 lines. radon complexity 35 against Sentinel's 34. A 236-line encoder with 34 branches is the kind of function that grows a new special case per release.",
+          "verification": "radon cc_visit: complexity 35, lines 235, lineno 129"
+        },
+        {
+          "rank": 4,
+          "rule_id": "MNT007",
+          "file": "fastapi/openapi/utils.py",
+          "line": 260,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "get_openapi_path starts at line 260, 219 lines. radon complexity 44 against Sentinel's 41 - the highest complexity in the corpus under either counter.",
+          "verification": "radon cc_visit: complexity 44, lines 219, lineno 260"
+        },
+        {
+          "rank": 5,
+          "rule_id": "MNT002",
+          "file": "fastapi/param_functions.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "2,460 lines by direct count. Mostly declarative parameter helpers, so the right fix is generation or consolidation rather than decomposition - still a real finding, but the recommendation should say so.",
+          "verification": "Get-Content count = 2460"
+        }
+      ]
+    },
+    "pytest": {
+      "findings": [
+        {
+          "rank": 1,
+          "rule_id": "MNT007",
+          "file": "src/_pytest/_py/path.py",
+          "line": 1275,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "LocalPath.make_numbered_dir starts at line 1275, 160 lines. radon agrees exactly: complexity 26. Directory creation with retries, permissions and cleanup branches.",
+          "verification": "radon cc_visit: complexity 26, lines 160, lineno 1275"
+        },
+        {
+          "rank": 2,
+          "rule_id": "MNT002",
+          "file": "src/_pytest/config/__init__.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "2,501 lines / 92.3 KB by direct count. Configuration parsing, ini handling and plugin loading in one module.",
+          "verification": "Get-Content count = 2501"
+        },
+        {
+          "rank": 3,
+          "rule_id": "MNT002",
+          "file": "src/_pytest/fixtures.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "2,613 lines / 103.1 KB by direct count. The fixture engine is pytest's densest subsystem; the size claim is exactly right.",
+          "verification": "Get-Content count = 2613"
+        },
+        {
+          "rank": 4,
+          "rule_id": "MNT007",
+          "file": "src/_pytest/main.py",
+          "line": 926,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "Session.collect starts at line 926, 123 lines. radon complexity 29 against Sentinel's 27 - over the threshold either way.",
+          "verification": "radon cc_visit: complexity 29, lines 123, lineno 926"
+        },
+        {
+          "rank": 5,
+          "rule_id": "MNT007",
+          "file": "src/_pytest/raises.py",
+          "line": 1255,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "RaisesGroup._check_exceptions starts at line 1255, 142 lines. radon complexity 40 against Sentinel's 37 - genuinely hard to test exhaustively.",
+          "verification": "radon cc_visit: complexity 40, lines 142, lineno 1255"
+        }
+      ]
+    },
+    "thealgorithms-python": {
+      "findings": [
+        {
+          "rank": 1,
+          "rule_id": "MNT009",
+          "file": "conversions/endianness.py",
+          "line": 1,
+          "verdict": "not_genuine",
+          "actionable": false,
+          "reviewer_note": "Evidence is 'f-string expression part cannot include a backslash (line 328)'. The file parses cleanly on Python 3.14.2 and the repository declares requires-python >= 3.15, where PEP 701 makes that legal. This is an artefact of Sentinel parsing with its own interpreter (3.11), and Sentinel never states which interpreter parsed the files. 84 of the 90 parse errors reported in this repository are of this kind.",
+          "verification": "python3.14 -c 'ast.parse' succeeds; pyproject requires-python = '>=3.15'"
+        },
+        {
+          "rank": 2,
+          "rule_id": "MNT009",
+          "file": "data_compression/huffman.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "Line 79: `letters = {**letter.bitstring for letter in ...}` - dict unpacking inside a dict comprehension is a syntax error in every Python version, and 3.14 rejects it too. A real broken file.",
+          "verification": "python3.14 ast.parse -> SyntaxError line 79"
+        },
+        {
+          "rank": 3,
+          "rule_id": "MNT009",
+          "file": "data_structures/arrays/sudoku_solver.py",
+          "line": 1,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "Line 41: iterable unpacking inside a comprehension, rejected by Python 3.14 as well. Real broken file.",
+          "verification": "python3.14 ast.parse -> SyntaxError line 41"
+        },
+        {
+          "rank": 4,
+          "rule_id": "MNT009",
+          "file": "data_structures/binary_tree/non_recursive_segment_tree.py",
+          "line": 1,
+          "verdict": "not_genuine",
+          "actionable": false,
+          "reviewer_note": "Evidence is 'invalid syntax (line 47)', which is `class SegmentTree[T]` - PEP 695 generic classes, legal since Python 3.12. Parses fine on 3.14. Interpreter-version artefact, not a defect in the repository.",
+          "verification": "python3.14 ast.parse succeeds; line 47 is `class SegmentTree[T]`"
+        },
+        {
+          "rank": 5,
+          "rule_id": "MNT007",
+          "file": "data_structures/binary_tree/red_black_tree.py",
+          "line": 205,
+          "verdict": "genuine",
+          "actionable": true,
+          "reviewer_note": "RedBlackTree._remove_repair starts at line 205, 72 lines. radon agrees exactly: complexity 31. Red-black deletion repair is legitimately this complex.",
+          "verification": "radon cc_visit: complexity 31, lines 72, lineno 205"
+        }
+      ]
+    }
+  },
+  "competitor_high_severity_review": {
+    "note": "Every high-severity competitor finding that landed on a non-test, non-documentation source file, checked the same way. This is the 'missed problems' side of the benchmark: what the competitors saw in Sentinel's top-5 files, and what they saw that Sentinel did not.",
+    "findings": [
+      {
+        "repo": "thealgorithms-python",
+        "tool": "ruff",
+        "rule": "F821",
+        "file": "data_structures/disjoint_set/disjoint_set.py",
+        "line": 13,
+        "verdict": "genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "`parent: Node | None = None` inside `class Node`. Importing the module raises NameError: name 'Node' is not defined. Sentinel reports 250 findings for this repository and never mentions this file. CONFIRMED REAL BUG MISSED BY SENTINEL."
+      },
+      {
+        "repo": "thealgorithms-python",
+        "tool": "ruff",
+        "rule": "F821",
+        "file": "data_structures/linked_list/merge_sort_linked_list.py",
+        "line": 16,
+        "verdict": "genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "Same pattern; import raises NameError. CONFIRMED REAL BUG MISSED BY SENTINEL."
+      },
+      {
+        "repo": "thealgorithms-python",
+        "tool": "ruff",
+        "rule": "F821",
+        "file": "searches/double_linear_search_recursion.py",
+        "line": 7,
+        "verdict": "genuine",
+        "sentinel_mentions_file": true,
+        "reviewer_note": "ruff parses PEP 695 syntax and flags the class-body annotation; Sentinel instead reports MNT009 for this file (it cannot parse `def search[T]` on 3.11). Both tools correctly identify the file as broken for their own parser."
+      },
+      {
+        "repo": "thealgorithms-python",
+        "tool": "bandit",
+        "rule": "B324",
+        "file": "hashes/sha1.py",
+        "line": 135,
+        "verdict": "not_genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "The file implements SHA-1; bandit flags its own self-test comparison against hashlib.sha1, which the repository already annotates with `# noqa: S324`. False positive."
+      },
+      {
+        "repo": "flask",
+        "tool": "ruff",
+        "rule": "F821",
+        "file": "src/flask/helpers.py",
+        "line": 679,
+        "verdict": "not_genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "`BaseExceptionGroup` is a 3.11 builtin and flask declares requires-python >= 3.11. The finding only appears because the harness runs ruff with --isolated; ruff run inside the repository honours pyproject.toml and reports nothing. Artefact of the harness configuration, not of flask."
+      },
+      {
+        "repo": "flask",
+        "tool": "bandit",
+        "rule": "B324",
+        "file": "src/flask/sessions.py",
+        "line": 281,
+        "verdict": "debatable",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "`digest_method = staticmethod(_lazy_sha1)` - SHA-1 is the session cookie digest. HMAC-SHA1 is not practically broken, and the surrounding code exists for FIPS compatibility, but it is a defensible security note that Sentinel has no rule for."
+      },
+      {
+        "repo": "pytest",
+        "tool": "semgrep",
+        "rule": "python.lang.compatibility.python37.python37-compatibility-importlib2",
+        "file": "src/_pytest/assertion/rewrite.py",
+        "line": 29,
+        "verdict": "not_genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "Flags importlib.resources as 'only available on Python 3.7+'. pytest requires >= 3.9, so the rule is irrelevant to this repository. Semgrep also emitted this on line 35."
+      },
+      {
+        "repo": "fastapi",
+        "tool": "semgrep",
+        "rule": "16 high findings",
+        "file": "docs/*/docs/tutorial/security/oauth2-jwt.md",
+        "line": 0,
+        "verdict": "not_genuine",
+        "sentinel_mentions_file": false,
+        "reviewer_note": "All 16 of semgrep's high-severity hits in fastapi are on translated documentation files, not source. ruff's 10 high hits are on docs_src examples. Sentinel excludes both by design and never ranks them."
+      }
+    ]
+  }
+}

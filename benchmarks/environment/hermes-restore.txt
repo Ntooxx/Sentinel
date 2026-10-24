@@ -1,0 +1,61 @@
+﻿Collecting certifi==2026.5.20
+  Downloading certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+Collecting PyJWT==2.13.0 (from PyJWT[crypto]==2.13.0)
+  Using cached pyjwt-2.13.0-py3-none-any.whl.metadata (3.4 kB)
+Collecting mcp==1.26.0
+  Using cached mcp-1.26.0-py3-none-any.whl.metadata (89 kB)
+Requirement already satisfied: anyio>=4.5 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (4.12.1)
+Requirement already satisfied: httpx-sse>=0.4 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (0.4.3)
+Requirement already satisfied: httpx>=0.27.1 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (0.28.1)
+Requirement already satisfied: jsonschema>=4.20.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (4.25.1)
+Requirement already satisfied: pydantic-settings>=2.5.2 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (2.13.1)
+Requirement already satisfied: pydantic<3.0.0,>=2.11.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (2.13.4)
+Requirement already satisfied: python-multipart>=0.0.9 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (0.0.27)
+Requirement already satisfied: pywin32>=310 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (311)
+Requirement already satisfied: sse-starlette>=1.6.1 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (3.3.2)
+Requirement already satisfied: starlette>=0.27 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (1.0.1)
+Requirement already satisfied: typing-extensions>=4.9.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.1 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (0.4.2)
+Requirement already satisfied: uvicorn>=0.31.1 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from mcp==1.26.0) (0.41.0)
+Requirement already satisfied: cryptography>=3.4.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from PyJWT[crypto]==2.13.0) (46.0.7)
+Requirement already satisfied: idna>=2.8 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from anyio>=4.5->mcp==1.26.0) (3.20)
+Requirement already satisfied: cffi>=2.0.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from cryptography>=3.4.0->PyJWT[crypto]==2.13.0) (2.0.0)
+Requirement already satisfied: httpcore==1.* in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from httpx>=0.27.1->mcp==1.26.0) (1.0.9)
+Requirement already satisfied: h11>=0.16 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from httpcore==1.*->httpx>=0.27.1->mcp==1.26.0) (0.16.0)
+Requirement already satisfied: attrs>=22.2.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from jsonschema>=4.20.0->mcp==1.26.0) (25.4.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from jsonschema>=4.20.0->mcp==1.26.0) (2025.9.1)
+Requirement already satisfied: referencing>=0.28.4 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from jsonschema>=4.20.0->mcp==1.26.0) (0.37.0)
+Requirement already satisfied: rpds-py>=0.7.1 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from jsonschema>=4.20.0->mcp==1.26.0) (0.30.0)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp==1.26.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.46.4 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from pydantic<3.0.0,>=2.11.0->mcp==1.26.0) (2.46.4)
+Requirement already satisfied: python-dotenv>=0.21.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from pydantic-settings>=2.5.2->mcp==1.26.0) (1.2.2)
+Requirement already satisfied: click>=7.0 in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from uvicorn>=0.31.1->mcp==1.26.0) (8.4.2)
+Requirement already satisfied: pycparser in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from cffi>=2.0.0->cryptography>=3.4.0->PyJWT[crypto]==2.13.0) (3.0)
+Requirement already satisfied: colorama in c:\users\anton\appdata\local\hermes\hermes-agent\venv\lib\site-packages (from click>=7.0->uvicorn>=0.31.1->mcp==1.26.0) (0.4.6)
+Downloading certifi-2026.5.20-py3-none-any.whl (134 kB)
+   -------------------------------------- 134.1/134.1 kB 208.6 kB/s eta 0:00:00
+Using cached pyjwt-2.13.0-py3-none-any.whl (31 kB)
+Using cached mcp-1.26.0-py3-none-any.whl (233 kB)
+Installing collected packages: PyJWT, certifi, mcp
+  Attempting uninstall: PyJWT
+    Found existing installation: PyJWT 2.15.1
+    Uninstalling PyJWT-2.15.1:
+      Successfully uninstalled PyJWT-2.15.1
+  Attempting uninstall: certifi
+    Found existing installation: certifi 2026.10.23
+    Uninstalling certifi-2026.10.23:
+      Successfully uninstalled certifi-2026.10.23
+  Attempting uninstall: mcp
+    Found existing installation: mcp 1.29.0
+    Uninstalling mcp-1.29.0:
+      Successfully uninstalled mcp-1.29.0
+Successfully installed PyJWT-2.13.0 certifi-2026.5.20 mcp-1.26.0
+python.exe : 
+At line:5 char:1
++ & "$hv\Scripts\python.exe" -m pip install certifi==2026.5.20 "PyJWT[c ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[notice] A new release of pip is available: 24.0 -> 26.2.1
+[notice] To update, run: python.exe -m pip install --upgrade pip

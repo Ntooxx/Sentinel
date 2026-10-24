@@ -1,0 +1,184 @@
+{
+  "run": "round1",
+  "precision": [
+    {
+      "repo": "requests",
+      "labelled": 5,
+      "genuine": 4,
+      "debatable": 0,
+      "not_genuine": 1,
+      "actionable": 3,
+      "precision_at_5": 0.8
+    },
+    {
+      "repo": "flask",
+      "labelled": 5,
+      "genuine": 3,
+      "debatable": 1,
+      "not_genuine": 1,
+      "actionable": 3,
+      "precision_at_5": 0.6
+    },
+    {
+      "repo": "fastapi",
+      "labelled": 5,
+      "genuine": 5,
+      "debatable": 0,
+      "not_genuine": 0,
+      "actionable": 5,
+      "precision_at_5": 1.0
+    },
+    {
+      "repo": "pytest",
+      "labelled": 5,
+      "genuine": 5,
+      "debatable": 0,
+      "not_genuine": 0,
+      "actionable": 5,
+      "precision_at_5": 1.0
+    },
+    {
+      "repo": "thealgorithms-python",
+      "labelled": 5,
+      "genuine": 3,
+      "debatable": 0,
+      "not_genuine": 2,
+      "actionable": 3,
+      "precision_at_5": 0.6
+    }
+  ],
+  "summary": {
+    "repos_labelled": 5,
+    "precision_at_5_mean": 0.8,
+    "actionable_mean": 3.8,
+    "coverage": {
+      "requests": {
+        "ruff": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        },
+        "bandit": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        },
+        "semgrep": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        }
+      },
+      "flask": {
+        "ruff": {
+          "high_severity_files": 1,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "src/flask/helpers.py"
+          ]
+        },
+        "bandit": {
+          "high_severity_files": 3,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "src/flask/sessions.py",
+            "tests/test_basic.py",
+            "tests/test_templating.py"
+          ]
+        },
+        "semgrep": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        }
+      },
+      "fastapi": {
+        "ruff": {
+          "high_severity_files": 4,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "docs_src/dependencies/tutorial007_py310.py",
+            "docs_src/dependencies/tutorial008_an_py310.py",
+            "docs_src/dependencies/tutorial008_py310.py",
+            "docs_src/dependencies/tutorial010_py310.py"
+          ]
+        },
+        "bandit": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        },
+        "semgrep": {
+          "high_severity_files": 16,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "docs/de/docs/tutorial/security/oauth2-jwt.md",
+            "docs/en/docs/tutorial/security/oauth2-jwt.md",
+            "docs/es/docs/tutorial/security/oauth2-jwt.md",
+            "docs/fr/docs/tutorial/security/oauth2-jwt.md",
+            "docs/ja/docs/tutorial/security/oauth2-jwt.md",
+            "docs/ko/docs/tutorial/security/oauth2-jwt.md",
+            "docs/pt/docs/tutorial/security/oauth2-jwt.md",
+            "docs/ru/docs/tutorial/security/oauth2-jwt.md",
+            "docs/tr/docs/tutorial/security/oauth2-jwt.md",
+            "docs/uk/docs/tutorial/security/oauth2-jwt.md",
+            "docs/zh-hant/docs/tutorial/security/oauth2-jwt.md",
+            "docs/zh/docs/tutorial/security/oauth2-jwt.md",
+            "docs_src/security/tutorial004_an_py310.py",
+            "docs_src/security/tutorial004_py310.py",
+            "docs_src/security/tutorial005_an_py310.py",
+            "docs_src/security/tutorial005_py310.py"
+          ]
+        }
+      },
+      "pytest": {
+        "ruff": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        },
+        "bandit": {
+          "high_severity_files": 4,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "testing/_py/test_local.py",
+            "testing/code/test_excinfo.py",
+            "testing/freeze/create_executable.py",
+            "testing/test_tmpdir.py"
+          ]
+        },
+        "semgrep": {
+          "high_severity_files": 2,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "src/_pytest/assertion/rewrite.py",
+            "testing/freeze/create_executable.py"
+          ]
+        }
+      },
+      "thealgorithms-python": {
+        "ruff": {
+          "high_severity_files": 3,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "data_structures/disjoint_set/disjoint_set.py",
+            "data_structures/linked_list/merge_sort_linked_list.py",
+            "searches/double_linear_search_recursion.py"
+          ]
+        },
+        "bandit": {
+          "high_severity_files": 1,
+          "in_sentinel_top5": 0,
+          "missed": [
+            "hashes/sha1.py"
+          ]
+        },
+        "semgrep": {
+          "high_severity_files": 0,
+          "in_sentinel_top5": 0,
+          "missed": []
+        }
+      }
+    }
+  }
+}
