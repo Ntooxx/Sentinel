@@ -1247,6 +1247,9 @@
     .limits-stamp { display: inline-flex; align-items: center; gap: 8px; margin-top: 26px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 5px; font: 8px var(--mono); letter-spacing: .05em; color: var(--dim); }
     .limits-stamp i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
     .limits-list { border-top: 1px solid var(--line); }
+    .limits-facts { border-top: 1px solid var(--line); }
+    .limit-fact { padding: 17px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13.5px; line-height: 1.75; }
+    .limit-fact b { color: var(--ink); font-weight: 450; }
     .limit { border-bottom: 1px solid var(--line); }
     .limit-head {
       display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 16px; gap: 16px; align-items: center;
@@ -1655,7 +1658,6 @@
 
       <nav class="nav-links" aria-label="Primary">
         <a class="nav-link" href="#product">Product</a>
-        <a class="nav-link" href="#report">Report</a>
         <a class="nav-link" href="#run">Run it</a>
         <a class="nav-link" href="#performance">Performance</a>
         <a class="nav-link" href="#workflow">Workflow</a>
@@ -1681,8 +1683,8 @@
   <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu" inert>
     <div class="mobile-menu-inner">
       <nav aria-label="Mobile">
-        <a class="menu-link" href="#product"><span>01</span> Product</a>
-        <a class="menu-link" href="#report"><span>02</span> Report</a>
+        <a class="menu-link" href="#run"><span>01</span> Try it live</a>
+        <a class="menu-link" href="#product"><span>02</span> Product</a>
         <a class="menu-link" href="#performance"><span>03</span> Performance</a>
         <a class="menu-link" href="#workflow"><span>04</span> Workflow</a>
         <a class="menu-link" href="#open-source"><span>05</span> Open source</a>
@@ -1723,8 +1725,8 @@
                 Scan your repository
                 <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </a>
-              <a class="btn btn-ghost" href="#report">
-                Explore the report
+              <a class="btn btn-ghost" href="#run">
+                Run it in your browser
                 <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </a>
             </div>
@@ -1811,397 +1813,25 @@
         <div class="ticker-group">
           <span class="ticker-item"><i>✦</i> One command</span>
           <span class="ticker-item"><i>✦</i> One page</span>
-          <span class="ticker-item"><i>✦</i> Live quality</span>
-          <span class="ticker-item"><i>✦</i> Source-first</span>
           <span class="ticker-item"><i>✦</i> Top 5 findings</span>
-          <span class="ticker-item"><i>✦</i> Incremental index</span>
           <span class="ticker-item"><i>✦</i> 0 runtime deps</span>
           <span class="ticker-item"><i>✦</i> Apache 2.0</span>
           <span class="ticker-item"><i>✦</i> Local only</span>
           <span class="ticker-item"><i>✦</i> Evidence attached</span>
-          <span class="ticker-item"><i>✦</i> 0.34s warm scan</span>
           <span class="ticker-item"><i>✦</i> No telemetry</span>
         </div>
         <div class="ticker-group">
           <span class="ticker-item"><i>✦</i> One command</span>
           <span class="ticker-item"><i>✦</i> One page</span>
-          <span class="ticker-item"><i>✦</i> Live quality</span>
-          <span class="ticker-item"><i>✦</i> Source-first</span>
           <span class="ticker-item"><i>✦</i> Top 5 findings</span>
-          <span class="ticker-item"><i>✦</i> Incremental index</span>
           <span class="ticker-item"><i>✦</i> 0 runtime deps</span>
           <span class="ticker-item"><i>✦</i> Apache 2.0</span>
           <span class="ticker-item"><i>✦</i> Local only</span>
           <span class="ticker-item"><i>✦</i> Evidence attached</span>
-          <span class="ticker-item"><i>✦</i> 0.34s warm scan</span>
           <span class="ticker-item"><i>✦</i> No telemetry</span>
         </div>
       </div>
     </div>
-
-    <!-- ================= PREMISE ================= -->
-    <section class="premise" id="premise">
-      <div class="container">
-        <div class="premise-top">
-          <span class="premise-index">The premise</span>
-          <span class="eyebrow"><span class="pulse-dot"></span> Evidence over opinion</span>
-        </div>
-        <div class="premise-grid">
-          <p class="premise-text" data-reveal>
-            A quality report is only useful if you can <em class="mark">trust the evidence</em> behind it.
-            <span class="muted"> Sentinel shows what it read, what it skipped, and exactly what to fix first.</span>
-          </p>
-          <aside class="premise-side" data-reveal style="--d:150ms">
-            <p>Source first. Incremental by design. Explicit about confidence. A report you can defend — not a dashboard you have to interpret.</p>
-            <div class="mini-stats">
-              <div class="mini-stat"><span>Dimensions</span><b>06</b></div>
-              <div class="mini-stat"><span>Top findings</span><b>05</b></div>
-              <div class="mini-stat"><span>Runtime deps</span><b>00</b></div>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= PRODUCT ================= -->
-    <section class="section product-section" id="product" data-section>
-      <div class="container">
-        <header class="section-head" data-reveal>
-          <div>
-            <span class="section-tag"><b>01</b> The signal</span>
-            <h2>Everything that matters.<br><span class="faint">Nothing that doesn't.</span></h2>
-          </div>
-          <div class="head-aside">
-            <p>One source-first scan builds a structured model of the repository, then compresses it into a page you can actually act on.</p>
-            <div class="micro-note"><i></i> Top five findings by default · all findings in JSON</div>
-          </div>
-        </header>
-
-        <div class="bento" data-stagger>
-          <article class="bento-card bento-health quality-card" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Health score</span>
-              <span class="card-index">01 / 06</span>
-            </div>
-            <h3 class="card-title">Six dimensions.<br><em>One honest band.</em></h3>
-            <p class="card-copy">Architecture, maintainability, tests, documentation, dependencies, and basic security — weighted, evidence-backed, and explicit about confidence.</p>
-            <div class="quality-hero">
-              <div class="quality-number"><strong data-count="91" data-duration="1500">0</strong><small>/100</small></div>
-              <div class="quality-side">
-                <span class="band-pill"><i></i> MAINTAINED</span>
-                <p>provisional quality band</p>
-              </div>
-            </div>
-            <div class="dim-grid">
-              <div class="dim-cell green"><div class="dim-cell-top"><span>Architecture</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:100%; --sd:.2s"></i></div></div>
-              <div class="dim-cell gold"><div class="dim-cell-top"><span>Maintainability</span><b>C-</b></div><div class="dim-cell-bar"><i style="--w:72%; --sd:.26s"></i></div></div>
-              <div class="dim-cell green"><div class="dim-cell-top"><span>Tests</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:98%; --sd:.32s"></i></div></div>
-              <div class="dim-cell green"><div class="dim-cell-top"><span>Documentation</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:100%; --sd:.38s"></i></div></div>
-              <div class="dim-cell green"><div class="dim-cell-top"><span>Dependencies</span><b>A</b></div><div class="dim-cell-bar"><i style="--w:94%; --sd:.44s"></i></div></div>
-              <div class="dim-cell green"><div class="dim-cell-top"><span>Security</span><b>A</b></div><div class="dim-cell-bar"><i style="--w:96%; --sd:.5s"></i></div></div>
-            </div>
-            <div class="card-note">Not a manufactured letter grade. A coarse band the evidence can defend — <b>per-dimension grades stay visible.</b></div>
-          </article>
-
-          <article class="bento-card bento-findings" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Top findings</span>
-              <span class="card-index">02 / 06</span>
-            </div>
-            <h3 class="card-title">Five risks.<br><em>Ranked by impact.</em></h3>
-            <p class="card-copy">Every finding names the file, the line, the pattern, and a recommendation. No 151-signal wall of noise.</p>
-            <div class="finding-list">
-              <div class="finding-row">
-                <span class="finding-rank">01</span>
-                <div class="finding-main"><strong>Very high cyclomatic complexity</strong><small><span>MNT007</span> · analyze.py:442</small></div>
-                <span class="sev high">HIGH</span>
-              </div>
-              <div class="finding-row">
-                <span class="finding-rank">02</span>
-                <div class="finding-main"><strong>Large source file</strong><small><span>MNT001</span> · analyze.py:1</small></div>
-                <span class="sev med">MED</span>
-              </div>
-              <div class="finding-row">
-                <span class="finding-rank">03</span>
-                <div class="finding-main"><strong>High-risk hotspot has no statically mapped test</strong><small><span>TST003</span> · calibrate.py</small></div>
-                <span class="sev med">MED</span>
-              </div>
-              <div class="finding-row">
-                <span class="finding-rank">04</span>
-                <div class="finding-main"><strong>Dangerous dynamic execution pattern</strong><small><span>SEC002</span> · test_s2_analyze.py:120</small></div>
-                <span class="sev low">LOW</span>
-              </div>
-            </div>
-            <div class="finding-foot"><span><b>5 of 36</b> shown in the terminal</span><span>JSON keeps all</span></div>
-          </article>
-
-          <article class="bento-card bento-evidence" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Evidence</span>
-              <span class="card-index">03 / 06</span>
-            </div>
-            <h3 class="card-title">Down to the line.</h3>
-            <p class="card-copy">Findings carry their source evidence, so you can verify the claim before you change a thing.</p>
-            <div class="code-block">
-              <span class="row hot"><span class="ln">442</span><span class="tk-kw">def</span> <span class="tk-fn">_manifest_meta</span>(analysis: <span class="tk-fn">FileAnalysis</span>, text: <span class="tk-fn">str</span>, kind: <span class="tk-fn">str</span>) -&gt; <span class="tk-kw">None</span>:</span>
-              <span class="row"><span class="ln">443</span>    meta: <span class="tk-fn">dict</span>[<span class="tk-fn">str</span>, <span class="tk-fn">Any</span>] = {<span class="tk-str">"manifest_kind"</span>: kind, <span class="tk-str">"manifest_path"</span>: analysis.path}</span>
-              <span class="row"><span class="ln">444</span>    dependencies: <span class="tk-fn">list</span>[<span class="tk-fn">str</span>] = []</span>
-              <span class="row"><span class="ln">445</span>    has_scripts = <span class="tk-num">False</span></span>
-              <span class="row"><span class="ln">446</span>    name = <span class="tk-str">""</span></span>
-            </div>
-            <div class="code-flag"><span>MNT007</span><b>complexity 41 · 86 lines · _manifest_meta at line 442</b></div>
-          </article>
-
-          <article class="bento-card bento-incremental" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Incremental index</span>
-              <span class="card-index">04 / 06</span>
-            </div>
-            <h3 class="card-title">Only what changed.</h3>
-            <p class="card-copy">A local SQLite index retains file facts between scans. Warm runs re-read only the paths that moved — then render instantly from the snapshot.</p>
-            <div class="inc-layout">
-              <div class="inc-bars">
-                <div class="inc-row cold"><span>Cold scan</span><div class="inc-track"><i style="--w:100%"></i></div><b>1.90s</b></div>
-                <div class="inc-row warm"><span>Warm scan</span><div class="inc-track"><i style="--w:18%"></i></div><b>0.34s</b></div>
-                <div class="inc-row"><span>Report</span><div class="inc-track"><i style="--w:6%"></i></div><b>0.11s</b></div>
-                <div class="inc-statline">
-                  <span>Index · 1,228 files <b>4 MB</b></span>
-                  <span>25k files <b>45 MB</b></span>
-                </div>
-              </div>
-              <div class="file-matrix-wrap" aria-hidden="true">
-                <div class="file-matrix" id="fileMatrix"></div>
-                <div class="matrix-label"><span>source + test cells</span><em>1 changed path</em></div>
-              </div>
-            </div>
-            <div class="card-note">No 431 MB checkpoint. No re-reading the world. <b>Just an incremental index.</b></div>
-          </article>
-
-          <article class="bento-card bento-live" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Watch mode</span>
-              <span class="card-index">05 / 06</span>
-            </div>
-            <h3 class="card-title">Live while you refactor.</h3>
-            <p class="card-copy">Keep the report current without a server, websocket, or cloud worker. It polls locally and rewrites atomically.</p>
-            <div class="live-stage">
-              <div class="live-stage-head">
-                <span class="live-status"><i></i> watching</span>
-                <span>1.0s poll · 300ms debounce</span>
-              </div>
-              <svg class="heartbeat" viewBox="0 0 400 55" preserveAspectRatio="none" aria-hidden="true">
-                <path class="base" d="M0 32 H60 L70 32 L76 18 L82 44 L88 26 L95 32 H155 L163 32 L170 8 L177 49 L184 23 L191 32 H260 L268 32 L275 20 L282 40 L289 28 L296 32 H400"/>
-                <path class="pulse" d="M0 32 H60 L70 32 L76 18 L82 44 L88 26 L95 32 H155 L163 32 L170 8 L177 49 L184 23 L191 32 H260 L268 32 L275 20 L282 40 L289 28 L296 32 H400"/>
-              </svg>
-              <div class="live-rows">
-                <span>changed</span><b>src/sentinel2/analyze.py</b>
-                <span>report</span><b class="accent">.sentinel/quality.html</b>
-              </div>
-              <div class="live-updated"><span><i></i> updated 0.41s after save</span><span>no server</span></div>
-            </div>
-          </article>
-
-          <article class="bento-card bento-json" data-reveal>
-            <div class="card-top">
-              <span class="card-kicker">Stable contract</span>
-              <span class="card-index">06 / 06</span>
-            </div>
-            <h3 class="card-title">One report object. Every format.</h3>
-            <p class="card-copy">Terminal, Markdown, HTML, and JSON are renderings of the same object. Gate your pipeline on the same evidence.</p>
-            <div class="json-terminal">
-              <div class="json-term-head"><span>project-sentinel scan . --format json</span><span class="tag-live">valid</span></div>
-              <pre class="json-code"><span class="brace">{</span>
-  <span class="key">"schema_version"</span>: <span class="num">2</span>,
-  <span class="key">"summary"</span>: <span class="brace">{</span> <span class="key">"band"</span>: <span class="str">"maintained"</span>,
-    <span class="key">"overall_score"</span>: <span class="num">91</span>, <span class="key">"provisional"</span>: <span class="num">true</span> <span class="brace">}</span>,
-  <span class="key">"findings"</span>: <span class="brace">[</span>
-    <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"MNT007:src/sentinel2/analyze.py"</span>,
-      <span class="key">"line"</span>: <span class="num">442</span>, <span class="key">"severity"</span>: <span class="str">"high"</span> <span class="brace">}]</span>,
-  <span class="key">"dimensions"</span>: <span class="brace">[</span> <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"architecture"</span>, <span class="key">"score"</span>: <span class="num">100</span>, <span class="key">"grade"</span>: <span class="str">"A+"</span> <span class="brace">}</span>,
-                  <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"maintainability"</span>, <span class="key">"score"</span>: <span class="num">72</span>, <span class="key">"grade"</span>: <span class="str">"C-"</span> <span class="brace">}</span> <span class="brace">]</span>
-<span class="brace">}</span></pre>
-              <div class="json-gate"><span><i></i> --fail-under maintained</span><span>exit <b>0</b></span></div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= REPORT ================= -->
-    <section class="section report-section" id="report" data-section>
-      <div class="container">
-        <header class="section-head" data-reveal>
-          <div>
-            <span class="section-tag"><b>02</b> The output</span>
-            <h2>One page.<br><span class="faint">Every answer.</span></h2>
-          </div>
-          <div class="head-aside">
-            <p>Identity, health, top source risks, changes since the last scan, and what to do next. Self-contained HTML or stable JSON — your choice.</p>
-            <div class="micro-note"><i></i> Same object behind every renderer</div>
-          </div>
-        </header>
-
-        <div class="report-wrap" data-reveal>
-          <span class="report-annot report-annot--one"><i></i> SELF-CONTAINED HTML</span>
-          <span class="report-annot report-annot--two"><i></i> NO SERVER · NO TELEMETRY</span>
-          <div class="report-shell" id="reportShell">
-            <div class="rep-chrome">
-              <div class="rep-chrome-left">
-                <span class="rep-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span class="rep-url"><b>file://</b>/repo/.sentinel/quality.html</span>
-              </div>
-              <div class="rep-tabs" role="tablist" aria-label="Report preview">
-                <button class="rep-tab" type="button" id="repTabOverview" role="tab" aria-selected="true" aria-controls="repPaneOverview" data-report-tab="overview">Overview</button>
-                <button class="rep-tab" type="button" id="repTabFindings" role="tab" aria-selected="false" aria-controls="repPaneFindings" data-report-tab="findings" tabindex="-1">Findings</button>
-                <button class="rep-tab" type="button" id="repTabJson" role="tab" aria-selected="false" aria-controls="repPaneJson" data-report-tab="json" tabindex="-1">JSON</button>
-              </div>
-              <span class="rep-chrome-right"><i></i><span>self-contained</span></span>
-            </div>
-            <div class="rep-viewport">
-              <div class="rep-pane" id="repPaneOverview" role="tabpanel" aria-labelledby="repTabOverview">
-                <div class="rep-hero">
-                  <div class="rep-id">
-                    <span class="rep-kicker">Sentinel quality report</span>
-                    <h3>sentinel-agent</h3>
-                    <div class="rep-meta"><span>ca708b0 on main</span><span class="dirty">dirty</span><span>36 findings</span></div>
-                    <div class="rep-chips">
-                      <span class="rep-chip mint">maintained (provisional)</span>
-                      <span class="rep-chip violet">monorepo</span>
-                      <span class="rep-chip">incremental 231ms</span>
-                      <span class="rep-chip">high confidence</span>
-                    </div>
-                  </div>
-                  <div class="rep-score">
-                    <div class="rep-ring" role="img" aria-label="Overall quality 91 out of 100, maintained">
-                      <svg viewBox="0 0 120 120" aria-hidden="true">
-                        <circle class="track" cx="60" cy="60" r="52"/>
-                        <circle class="value" cx="60" cy="60" r="52"/>
-                      </svg>
-                      <div class="rep-ring-center"><strong>91</strong><small>/ 100</small></div>
-                    </div>
-                    <div class="rep-band"><span class="band-pill"><i></i> MAINTAINED</span><small>weakest: maintainability</small></div>
-                  </div>
-                </div>
-
-                <div class="rep-stats">
-                  <div class="rep-stat"><b>33</b><span>Source files</span></div>
-                  <div class="rep-stat"><b>20</b><span>Test files</span></div>
-                  <div class="rep-stat"><b>0.61</b><span>Test ratio</span></div>
-                  <div class="rep-stat"><b>212</b><span>Max complexity</span></div>
-                  <div class="rep-stat"><b>10</b><span>TODOs</span></div>
-                  <div class="rep-stat"><b>0</b><span>Parse errors</span></div>
-                </div>
-
-                <div class="rep-body">
-                  <div class="rep-panel">
-                    <div class="rep-panel-head"><h4>Dimensions</h4><span>6 scored · weighted</span></div>
-                    <div class="rep-dims">
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Architecture</span><b class="good">A+</b></div><div class="rep-dim-bar"><i style="--w:100%"></i></div></div>
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Maintainability</span><b class="warn">C-</b></div><div class="rep-dim-bar"><i style="--w:72%"></i></div></div>
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Tests</span><b class="good">A+</b></div><div class="rep-dim-bar"><i style="--w:98%"></i></div></div>
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Documentation</span><b class="good">A+</b></div><div class="rep-dim-bar"><i style="--w:100%"></i></div></div>
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Dependencies</span><b class="good">A</b></div><div class="rep-dim-bar"><i style="--w:94%"></i></div></div>
-                      <div class="rep-dim"><div class="rep-dim-top"><span>Security</span><b class="good">A</b></div><div class="rep-dim-bar"><i style="--w:96%"></i></div></div>
-                    </div>
-                  </div>
-                  <div class="rep-panel">
-                    <div class="rep-panel-head"><h4>What to fix first</h4><span>5 of 36</span></div>
-                    <div class="rep-find">
-                      <div class="rep-find-item"><span class="rank">01</span><div class="txt"><strong>Very high cyclomatic complexity</strong><small>MNT007 · analyze.py:442</small></div><span class="sev high">HIGH</span></div>
-                      <div class="rep-find-item"><span class="rank">02</span><div class="txt"><strong>Large source file</strong><small>MNT001 · analyze.py</small></div><span class="sev med">MED</span></div>
-                      <div class="rep-find-item"><span class="rank">03</span><div class="txt"><strong>High-risk hotspot has no mapped test</strong><small>TST003 · calibrate.py</small></div><span class="sev med">MED</span></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="rep-footnote">
-                  <span><i></i> Static test evidence — not runtime coverage</span>
-                  <span>117 files · 10 analyzed · 105 cached · 2 skipped</span>
-                </div>
-              </div>
-
-              <div class="rep-pane" id="repPaneFindings" role="tabpanel" aria-labelledby="repTabFindings" hidden>
-                <div class="rep-findings-head"><h3>What to fix first</h3><span>TOP 5 OF 36 · RANKED BY IMPACT / EFFORT / CONFIDENCE</span></div>
-                <div class="rep-findings-list">
-                  <div class="rep-finding">
-                    <span class="idx">01</span>
-                    <div><h4>Very high cyclomatic complexity</h4><p>Branching complexity makes this function hard to test exhaustively. Split the decision tree into named, independently testable paths.</p><div class="evidence"><span>MNT007</span><span>src/sentinel2/analyze.py:442</span><span>complexity 41</span><span>86 lines</span></div></div>
-                    <span class="sev high">HIGH</span>
-                  </div>
-                  <div class="rep-finding">
-                    <span class="idx">02</span>
-                    <div><h4>Large source file</h4><p>Large files hide ownership and raise review cost. Split along role boundaries; keep public behavior stable.</p><div class="evidence"><span>MNT001</span><span>src/sentinel2/analyze.py</span><span>686 lines</span><span>26.3 KB</span></div></div>
-                    <span class="sev med">MED</span>
-                  </div>
-                  <div class="rep-finding">
-                    <span class="idx">03</span>
-                    <div><h4>High-risk hotspot has no statically mapped test</h4><p>No test imports or names this high-risk module. Static mapping is evidence, not coverage — add a focused test at the public boundary first.</p><div class="evidence"><span>TST003</span><span>tools/calibrate.py</span><span>complexity 68</span><span>no importing test found</span></div></div>
-                    <span class="sev med">MED</span>
-                  </div>
-                  <div class="rep-finding">
-                    <span class="idx">04</span>
-                    <div><h4>Dangerous dynamic execution pattern</h4><p>An <code>eval</code> call sits in a test helper. Verify the input boundary is trusted; the check is a basic pattern signal, not an audit.</p><div class="evidence"><span>SEC002</span><span>tests/test_s2_analyze.py:120</span><span>line 120: eval</span></div></div>
-                    <span class="sev low">LOW</span>
-                  </div>
-                  <div class="rep-finding">
-                    <span class="idx">05</span>
-                    <div><h4>Unpinned direct dependencies</h4><p>Direct dependencies without upper bounds drift between installs. Pin the versions the test suite actually ran against.</p><div class="evidence"><span>DEP003</span><span>pyproject.toml</span><span>4 unpinned dependencies</span></div></div>
-                    <span class="sev low">LOW</span>
-                  </div>
-                </div>
-                <div class="rep-footnote"><span><i></i> Every finding includes evidence and a recommendation</span><span>JSON includes all 36</span></div>
-              </div>
-
-              <div class="rep-pane" id="repPaneJson" role="tabpanel" aria-labelledby="repTabJson" hidden>
-                <div class="rep-json">
-                  <pre><span class="b">{</span>
-  <span class="k">"schema_version"</span>: <span class="n">2</span>,
-  <span class="k">"project"</span>: <span class="b">{</span>
-    <span class="k">"name"</span>: <span class="s">"sentinel-agent"</span>,
-    <span class="k">"root"</span>: <span class="s">"."</span>,
-    <span class="k">"git"</span>: <span class="b">{</span> <span class="k">"commit"</span>: <span class="s">"ca708b0"</span>, <span class="k">"branch"</span>: <span class="s">"main"</span>, <span class="k">"dirty"</span>: <span class="n">true</span> <span class="b">}</span>
-  <span class="b">}</span>,
-  <span class="k">"summary"</span>: <span class="b">{</span>
-    <span class="k">"band"</span>: <span class="s">"maintained"</span>,
-    <span class="k">"overall_score"</span>: <span class="n">91</span>,
-    <span class="k">"provisional"</span>: <span class="n">true</span>,
-    <span class="k">"confidence"</span>: <span class="s">"high"</span>,
-    <span class="k">"grade_ceiling"</span>: <span class="s">"A"</span>
-  <span class="b">}</span>,
-  <span class="k">"dimensions"</span>: <span class="b">[</span>
-    <span class="b">{</span> <span class="k">"id"</span>: <span class="s">"architecture"</span>, <span class="k">"score"</span>: <span class="n">100</span>, <span class="k">"grade"</span>: <span class="s">"A+"</span> <span class="b">}</span>,
-    <span class="b">{</span> <span class="k">"id"</span>: <span class="s">"maintainability"</span>, <span class="k">"score"</span>: <span class="n">72</span>, <span class="k">"grade"</span>: <span class="s">"C-"</span> <span class="b">}</span>
-  <span class="b">]</span>,
-  <span class="k">"findings"</span>: <span class="b">[</span>
-    <span class="b">{</span>
-      <span class="k">"id"</span>: <span class="s">"MNT007:src/sentinel2/analyze.py"</span>,
-      <span class="k">"rule_id"</span>: <span class="s">"MNT007"</span>,
-      <span class="k">"severity"</span>: <span class="s">"high"</span>,
-      <span class="k">"file"</span>: <span class="s">"src/sentinel2/analyze.py"</span>,
-      <span class="k">"line"</span>: <span class="n">442</span>,
-      <span class="k">"evidence"</span>: <span class="b">[</span><span class="s">"_manifest_meta at line 442"</span>, <span class="s">"86 lines"</span>, <span class="s">"complexity 41"</span><span class="b">]</span>,
-      <span class="k">"recommendation"</span>: <span class="s">"Split the function by responsibility..."</span>
-    <span class="b">}</span>
-  <span class="b">]</span>,
-  <span class="k">"scan"</span>: <span class="b">{</span> <span class="k">"coverage"</span>: <span class="b">{</span> <span class="k">"source"</span>: <span class="s">"100%"</span>, <span class="k">"tests"</span>: <span class="s">"100%"</span>, <span class="k">"docs"</span>: <span class="s">"metadata"</span> <span class="b">}</span> <span class="b">}</span>
-<span class="b">}</span></pre>
-                  <div class="rep-json-side">
-                    <div class="rep-json-card"><h4>Stable contract</h4><p>Every renderer reads the same report object. Build dashboards, gates, or bots on JSON without scraping HTML.</p><b>schema_version: 2</b></div>
-                    <div class="rep-json-card"><h4>CI gate</h4><p>Exit 3 when the quality band falls below your threshold. Deterministic, local, and pipeline-safe.</p><b>--fail-under maintained</b></div>
-                    <div class="rep-json-card"><h4>Privacy</h4><p>Project-relative paths. Secret-like matches redacted in every output format.</p><b>no telemetry</b></div>
-                  </div>
-                </div>
-                <div class="rep-footnote"><span><i></i> JSON includes every finding, not just the top five</span><span>schema locked for automation</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="report-notes">
-            <div class="report-note"><span class="note-index">01</span><div><b>Self-contained HTML</b>One file. Inline CSS. No assets or server.</div></div>
-            <div class="report-note"><span class="note-index">02</span><div><b>Stable JSON</b>Every finding. Machine-readable for CI.</div></div>
-            <div class="report-note"><span class="note-index">03</span><div><b>Live watch file</b>Meta refresh updates while you edit.</div></div>
-          </div>
-        </div>
-      </div>
-    </section>
 
 <!-- ================= RUN IN BROWSER ================= -->
 <style>
@@ -2289,9 +1919,8 @@
     <span class="section-tag"><b>Live</b> In your browser</span>
     <h3 class="run-title">Run Sentinel on your own code, right here</h3>
     <p class="run-sub">
-      No install, no server, no upload. Python is downloaded once as WebAssembly and scans
-      your files inside this tab. It is the same <code>scan_project</code> the CLI runs, not a
-      reimplementation.
+      No install, no server, no upload. Python loads once as WebAssembly and runs the same
+      <code>scan_project</code> the CLI does, inside this tab.
     </p>
   </div>
 
@@ -2300,8 +1929,7 @@
     <button class="run-btn primary" id="runAnalyze" type="button">Analyze repository</button>
   </div>
   <p class="run-note" style="margin-top:10px">
-    Public repositories are read straight from GitHub's API in your browser: one call to list the
-    files, then the file contents. No clone, no server, no upload.
+    Reads a public repository straight from GitHub &mdash; no clone, no upload.
   </p>
 
   <div class="run-or">or drop your own code</div>
@@ -2330,16 +1958,9 @@
   </div>
 
   <p class="run-caveat">
-    What the in-browser run cannot do: there is no <code>git</code> in the sandbox, so commit
-    metadata, churn and the hotspot-churn rules are skipped. Private repositories, and addresses
-    that have used up GitHub's 60/hour API allowance, need the local server or the CLI. Every
-    other part of the analysis &mdash; dimensions, findings, evidence, recommendations &mdash;
-    is the real thing. To keep it honest, the coverage section of the report will show churn as
-    unassessed.
-  </p>
-  <p class="run-note" style="margin-top:10px">
-    Static host without <code>pkg/bundle.json</code>, or blocked CDN? The same runner is live on
-    <a href="https://ntooxx.github.io/Sentinel/" style="color:var(--mint)">ntooxx.github.io/Sentinel</a>.
+    No <code>git</code> in the sandbox, so churn and the churn-based rules are skipped &mdash; the
+    report marks it unassessed. Everything else &mdash; dimensions, findings, evidence,
+    recommendations &mdash; is the real analysis. Private repositories need the CLI.
   </p>
   <p class="run-note" style="margin-top:14px">
     Sentinel reports on itself, live:
@@ -2838,16 +2459,136 @@
 </script>
 <!-- ================= /RUN IN BROWSER ================= -->
 
+    <!-- ================= PRODUCT ================= -->
+    <section class="section product-section" id="product" data-section>
+      <div class="container">
+        <header class="section-head" data-reveal>
+          <div>
+            <span class="section-tag"><b>01</b> The signal</span>
+            <h2>Everything that matters.<br><span class="faint">Nothing that doesn't.</span></h2>
+          </div>
+          <div class="head-aside">
+            <p>One source-first scan builds a structured model of the repository, then compresses it into a page you can actually act on.</p>
+            <div class="micro-note"><i></i> Top five findings by default · all findings in JSON</div>
+          </div>
+        </header>
+
+        <div class="bento" data-stagger>
+          <article class="bento-card bento-health quality-card" data-reveal>
+            <div class="card-top">
+              <span class="card-kicker">Health score</span>
+              <span class="card-index">01 / 04</span>
+            </div>
+            <h3 class="card-title">Six dimensions.<br><em>One honest band.</em></h3>
+            <p class="card-copy">Architecture, maintainability, tests, docs, dependencies and basic security — weighted, evidence-backed, with confidence stated.</p>
+            <div class="quality-hero">
+              <div class="quality-number"><strong data-count="91" data-duration="1500">0</strong><small>/100</small></div>
+              <div class="quality-side">
+                <span class="band-pill"><i></i> MAINTAINED</span>
+                <p>provisional quality band</p>
+              </div>
+            </div>
+            <div class="dim-grid">
+              <div class="dim-cell green"><div class="dim-cell-top"><span>Architecture</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:100%; --sd:.2s"></i></div></div>
+              <div class="dim-cell gold"><div class="dim-cell-top"><span>Maintainability</span><b>C-</b></div><div class="dim-cell-bar"><i style="--w:72%; --sd:.26s"></i></div></div>
+              <div class="dim-cell green"><div class="dim-cell-top"><span>Tests</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:98%; --sd:.32s"></i></div></div>
+              <div class="dim-cell green"><div class="dim-cell-top"><span>Documentation</span><b>A+</b></div><div class="dim-cell-bar"><i style="--w:100%; --sd:.38s"></i></div></div>
+              <div class="dim-cell green"><div class="dim-cell-top"><span>Dependencies</span><b>A</b></div><div class="dim-cell-bar"><i style="--w:94%; --sd:.44s"></i></div></div>
+              <div class="dim-cell green"><div class="dim-cell-top"><span>Security</span><b>A</b></div><div class="dim-cell-bar"><i style="--w:96%; --sd:.5s"></i></div></div>
+            </div>
+            <div class="card-note">Not a manufactured letter grade. A coarse band the evidence can defend — <b>per-dimension grades stay visible.</b></div>
+          </article>
+
+          <article class="bento-card bento-findings" data-reveal>
+            <div class="card-top">
+              <span class="card-kicker">Top findings</span>
+              <span class="card-index">02 / 04</span>
+            </div>
+            <h3 class="card-title">Five risks.<br><em>Ranked by impact.</em></h3>
+            <p class="card-copy">Every finding names the file, the line, the pattern, and a recommendation. No 151-signal wall of noise.</p>
+            <div class="finding-list">
+              <div class="finding-row">
+                <span class="finding-rank">01</span>
+                <div class="finding-main"><strong>Very high cyclomatic complexity</strong><small><span>MNT007</span> · analyze.py:442</small></div>
+                <span class="sev high">HIGH</span>
+              </div>
+              <div class="finding-row">
+                <span class="finding-rank">02</span>
+                <div class="finding-main"><strong>Large source file</strong><small><span>MNT001</span> · analyze.py:1</small></div>
+                <span class="sev med">MED</span>
+              </div>
+              <div class="finding-row">
+                <span class="finding-rank">03</span>
+                <div class="finding-main"><strong>High-risk hotspot has no statically mapped test</strong><small><span>TST003</span> · calibrate.py</small></div>
+                <span class="sev med">MED</span>
+              </div>
+              <div class="finding-row">
+                <span class="finding-rank">04</span>
+                <div class="finding-main"><strong>Dangerous dynamic execution pattern</strong><small><span>SEC002</span> · test_s2_analyze.py:120</small></div>
+                <span class="sev low">LOW</span>
+              </div>
+            </div>
+            <div class="finding-foot"><span><b>5 of 36</b> shown in the terminal</span><span>JSON keeps all</span></div>
+          </article>
+
+          <article class="bento-card bento-evidence" data-reveal>
+            <div class="card-top">
+              <span class="card-kicker">Evidence</span>
+              <span class="card-index">03 / 04</span>
+            </div>
+            <h3 class="card-title">Down to the line.</h3>
+            <p class="card-copy">Findings carry their source evidence, so you can verify the claim before you change a thing.</p>
+            <div class="code-block">
+              <span class="row hot"><span class="ln">442</span><span class="tk-kw">def</span> <span class="tk-fn">_manifest_meta</span>(analysis: <span class="tk-fn">FileAnalysis</span>, text: <span class="tk-fn">str</span>, kind: <span class="tk-fn">str</span>) -&gt; <span class="tk-kw">None</span>:</span>
+              <span class="row"><span class="ln">443</span>    meta: <span class="tk-fn">dict</span>[<span class="tk-fn">str</span>, <span class="tk-fn">Any</span>] = {<span class="tk-str">"manifest_kind"</span>: kind, <span class="tk-str">"manifest_path"</span>: analysis.path}</span>
+              <span class="row"><span class="ln">444</span>    dependencies: <span class="tk-fn">list</span>[<span class="tk-fn">str</span>] = []</span>
+              <span class="row"><span class="ln">445</span>    has_scripts = <span class="tk-num">False</span></span>
+              <span class="row"><span class="ln">446</span>    name = <span class="tk-str">""</span></span>
+            </div>
+            <div class="code-flag"><span>MNT007</span><b>complexity 41 · 86 lines · _manifest_meta at line 442</b></div>
+          </article>
+
+          <article class="bento-card bento-incremental" data-reveal>
+            <div class="card-top">
+              <span class="card-kicker">Incremental index</span>
+              <span class="card-index">04 / 04</span>
+            </div>
+            <h3 class="card-title">Only what changed.</h3>
+            <p class="card-copy">A local SQLite index keeps file facts between scans. Warm runs re-read only the paths that changed.</p>
+            <div class="inc-layout">
+              <div class="inc-bars">
+                <div class="inc-row cold"><span>Cold scan</span><div class="inc-track"><i style="--w:100%"></i></div><b>1.90s</b></div>
+                <div class="inc-row warm"><span>Warm scan</span><div class="inc-track"><i style="--w:18%"></i></div><b>0.34s</b></div>
+                <div class="inc-row"><span>Report</span><div class="inc-track"><i style="--w:6%"></i></div><b>0.11s</b></div>
+                <div class="inc-statline">
+                  <span>Index · 1,228 files <b>4 MB</b></span>
+                  <span>25k files <b>45 MB</b></span>
+                </div>
+              </div>
+              <div class="file-matrix-wrap" aria-hidden="true">
+                <div class="file-matrix" id="fileMatrix"></div>
+                <div class="matrix-label"><span>source + test cells</span><em>1 changed path</em></div>
+              </div>
+            </div>
+            <div class="card-note">No 431 MB checkpoint. No re-reading the world. <b>Just an incremental index.</b></div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+
+
     <!-- ================= PERFORMANCE ================= -->
     <section class="section perf-section" id="performance" data-section>
       <div class="container">
         <header class="section-head" data-reveal>
           <div>
-            <span class="section-tag"><b>03</b> The evidence</span>
+            <span class="section-tag"><b>02</b> The evidence</span>
             <h2>Fast is a feature.<br><span class="faint">Proof is the point.</span></h2>
           </div>
           <div class="head-aside">
-            <p>Measured locally on Windows 11 and Python 3.11 with a warm OS cache. These are local measurements, not promises — and the harness is open.</p>
+            <p>Measured locally: Windows 11, Python 3.11, warm cache. Real numbers, and the harness is open.</p>
             <div class="micro-note"><i></i> FastAPI source + tests / synthetic scale tests</div>
           </div>
         </header>
@@ -2902,16 +2643,10 @@
         </div>
 
         <div class="perf-note" data-reveal>
-          <p>Benchmarks: local SSD, Python 3.11, warm OS cache, source + tests only. Report render is independent of repository size once the index exists. <a href="https://github.com/Ntooxx/Sentinel/blob/main/tools/benchmark.py" target="_blank" rel="noopener">Run the harness ↗</a></p>
+          <p>Local SSD, Python 3.11, warm cache, source + tests only. Report render is constant once the index exists. <a href="https://github.com/Ntooxx/Sentinel/blob/main/tools/benchmark.py" target="_blank" rel="noopener">Run the harness ↗</a></p>
           <span>index: 4 MB / 45 MB</span>
         </div>
 
-        <div class="diff-strip" data-reveal>
-          <div class="diff-intro"><span>The 2.0 difference</span><h3>A smaller, faster, quieter core.</h3><p>Measured during the rebuild against the previous line.</p></div>
-          <div class="diff-item"><div class="diff-change"><del>431 MB</del><b>→</b><strong>4 MB</strong></div><small>runtime state</small></div>
-          <div class="diff-item"><div class="diff-change"><del>151</del><b>→</b><strong>5</strong></div><small>signals shown</small></div>
-          <div class="diff-item"><div class="diff-change"><del>3.77s</del><b>→</b><strong>0.34s</strong></div><small>warm self-scan</small></div>
-        </div>
       </div>
     </section>
 
@@ -2920,11 +2655,11 @@
       <div class="container">
         <header class="section-head" data-reveal>
           <div>
-            <span class="section-tag"><b>04</b> The loop</span>
+            <span class="section-tag"><b>03</b> The loop</span>
             <h2>Three commands.<br><span class="faint">That's the product.</span></h2>
           </div>
           <div class="head-aside">
-            <p>No dashboard server. No MCP. No chat. Sentinel 2.0 is deliberately three commands and one report object — small enough to trust completely.</p>
+            <p>No dashboard, no MCP, no chat. Three commands, one report object — small enough to trust.</p>
             <div class="micro-note"><i></i> scan · report · watch</div>
           </div>
         </header>
@@ -2935,7 +2670,7 @@
               <span class="flow-index">01</span>
               <span class="flow-copy">
                 <span class="flow-name">scan <code>build the index</code></span>
-                <span class="flow-desc">Discover source and tests, classify every file, score six dimensions, and print the report. First run cold; later runs reuse unchanged facts.</span>
+                <span class="flow-desc">Discover source and tests, score six dimensions, print the report. Later runs reuse unchanged facts.</span>
               </span>
               <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M4 12 12 4M5 4h7v7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </button>
@@ -2943,7 +2678,7 @@
               <span class="flow-index">02</span>
               <span class="flow-copy">
                 <span class="flow-name">report <code>render from index</code></span>
-                <span class="flow-desc">Render text, Markdown, HTML, or JSON from the latest snapshot. Deterministic, fast, and guaranteed not to rescan or modify the index.</span>
+                <span class="flow-desc">Render text, Markdown, HTML, or JSON from the latest snapshot. No rescan, no index writes.</span>
               </span>
               <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M4 12 12 4M5 4h7v7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </button>
@@ -2951,7 +2686,7 @@
               <span class="flow-index">03</span>
               <span class="flow-copy">
                 <span class="flow-name">watch <code>keep it live</code></span>
-                <span class="flow-desc">Poll for edits, re-analyse only changed paths, and write the self-contained report atomically. A browser follows it with meta refresh — no server.</span>
+                <span class="flow-desc">Poll for edits, re-analyse changed paths only, write the report atomically. No server.</span>
               </span>
               <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M4 12 12 4M5 4h7v7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </button>
@@ -2989,7 +2724,7 @@
     <!-- ================= LOCAL FIRST ================= -->
     <section class="paper-section" id="open-source" data-section>
       <div class="container paper-inner">
-        <span class="paper-kicker"><b>05</b> Open source · local first</span>
+        <span class="paper-kicker"><b>04</b> Open source · local first</span>
         <div class="paper-grid">
           <div class="paper-copy" data-reveal>
             <h2>Local is not a feature.<br><em>It's the architecture.</em></h2>
@@ -3018,24 +2753,6 @@
             <div class="stamp-center"><strong>0</strong><span>network calls</span><em>zero runtime deps</em></div>
           </div>
         </div>
-        <div class="paper-principles">
-          <div class="paper-principle" data-reveal>
-            <div class="pp-top"><span class="pp-num">01</span><svg class="pp-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 10V7.8a6 6 0 0 1 12 0V10M5 10h14v9H5v-9Z" stroke="currentColor" stroke-width="1.2"/><path d="M12 14v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
-            <h3>No account</h3><p>Point at a local folder. No sign-in, setup wizard, or key to paste.</p>
-          </div>
-          <div class="paper-principle" data-reveal>
-            <div class="pp-top"><span class="pp-num">02</span><svg class="pp-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.8 8.5h14.4M4.8 15.5h14.4M12 4.5c-2 2.4-2 12.6 0 15M12 4.5c2 2.4 2 12.6 0 15" stroke="currentColor" stroke-width="1.1"/></svg></div>
-            <h3>No upload</h3><p>Fully offline. The scan runs where the code lives, with no remote service.</p>
-          </div>
-          <div class="paper-principle" data-reveal>
-            <div class="pp-top"><span class="pp-num">03</span><svg class="pp-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <h3>Zero dependencies</h3><p>Python standard library only. Nothing to vendor, meter, or bill.</p>
-          </div>
-          <div class="paper-principle" data-reveal>
-            <div class="pp-top"><span class="pp-num">04</span><svg class="pp-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 20 6.9v5.4c0 4.9-3.3 8.1-8 9.7-4.7-1.6-8-4.8-8-9.7V6.9L12 3.5Z" stroke="currentColor" stroke-width="1.2"/><path d="m8.5 12 2.3 2.3 4.7-4.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <h3>No telemetry</h3><p>Nothing phones home. Reports keep project-relative paths and redact secrets.</p>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -3044,53 +2761,15 @@
       <div class="container">
         <div class="limits-grid">
           <div class="limits-intro" data-reveal>
-            <span class="section-tag"><b>06</b> The fine print</span>
+            <span class="section-tag"><b>05</b> The fine print</span>
             <h2>What Sentinel <em>won't</em> pretend.</h2>
             <p>Trust comes from stating the edges. These are not hidden flaws — they are the boundaries of the claim, written where you can read them.</p>
             <span class="limits-stamp"><i></i> calibrated against 15 real repositories</span>
           </div>
-          <div class="limits-list" data-stagger>
-            <div class="limit open" data-reveal>
-              <button class="limit-head" type="button" aria-expanded="true" aria-controls="limitPanel1" id="limitBtn1">
-                <span class="limit-num">01</span><span class="limit-title">The quality band is provisional.</span><span class="limit-tag">Calibration</span><span class="limit-plus" aria-hidden="true"></span>
-              </button>
-              <section class="limit-panel" id="limitPanel1" aria-labelledby="limitBtn1"><div class="limit-panel-inner"><div class="limit-copy">
-                <p>The overall result is a coarse band — <b>maintained, adequate, weak, or unmaintained</b> — not a letter grade. Five of six dimensions saturate near A+ on maintained code, so a fine overall grade would manufacture resolution the evidence does not contain.</p>
-                <p>The band keeps a <span class="limit-code">(provisional)</span> marker until calibration passes its acceptance criteria. Per-dimension grades are shown as evidence.</p>
-              </div></div></section>
-            </div>
-            <div class="limit" data-reveal>
-              <button class="limit-head" type="button" aria-expanded="false" aria-controls="limitPanel2" id="limitBtn2">
-                <span class="limit-num">02</span><span class="limit-title">Test mapping is static evidence.</span><span class="limit-tag">Coverage</span><span class="limit-plus" aria-hidden="true"></span>
-              </button>
-              <section class="limit-panel" id="limitPanel2" aria-labelledby="limitBtn2" aria-hidden="true"><div class="limit-panel-inner"><div class="limit-copy">
-                <p>A test is mapped when it <b>imports or names a module</b>. That is a useful static signal, not runtime coverage. Sentinel does not execute your tests or ingest coverage reports in 2.0.</p>
-              </div></div></section>
-            </div>
-            <div class="limit" data-reveal>
-              <button class="limit-head" type="button" aria-expanded="false" aria-controls="limitPanel3" id="limitBtn3">
-                <span class="limit-num">03</span><span class="limit-title">Security is a basic pattern check.</span><span class="limit-tag">Security</span><span class="limit-plus" aria-hidden="true"></span>
-              </button>
-              <section class="limit-panel" id="limitPanel3" aria-labelledby="limitBtn3" aria-hidden="true"><div class="limit-panel-inner"><div class="limit-copy">
-                <p>Sentinel checks basic secret-like strings and dangerous patterns, and redacts secret-like matches in every format. It is <b>not a security audit</b> and does not replace a dedicated scanner or review.</p>
-              </div></div></section>
-            </div>
-            <div class="limit" data-reveal>
-              <button class="limit-head" type="button" aria-expanded="false" aria-controls="limitPanel4" id="limitBtn4">
-                <span class="limit-num">04</span><span class="limit-title">Some trees are out of scope.</span><span class="limit-tag">Scope</span><span class="limit-plus" aria-hidden="true"></span>
-              </button>
-              <section class="limit-panel" id="limitPanel4" aria-labelledby="limitBtn4" aria-hidden="true"><div class="limit-panel-inner"><div class="limit-copy">
-                <p>Documentation translations, examples, generated files, and vendor trees are excluded from source quality. Documentation scoring covers the README and selected canonical docs, not every markdown file.</p>
-              </div></div></section>
-            </div>
-            <div class="limit" data-reveal>
-              <button class="limit-head" type="button" aria-expanded="false" aria-controls="limitPanel5" id="limitBtn5">
-                <span class="limit-num">05</span><span class="limit-title">It reports. It does not fix.</span><span class="limit-tag">Boundary</span><span class="limit-plus" aria-hidden="true"></span>
-              </button>
-              <section class="limit-panel" id="limitPanel5" aria-labelledby="limitBtn5" aria-hidden="true"><div class="limit-panel-inner"><div class="limit-copy">
-                <p>You get the top five findings, evidence, and a recommendation. There is <b>no autofix, no PR generation, and no test runner</b> in the active product. The decision — and the edit — stay yours.</p>
-              </div></div></section>
-            </div>
+          <div class="limits-facts" data-stagger>
+            <div class="limit-fact" data-reveal><b>The band is provisional.</b> A coarse band &mdash; maintained, adequate, weak, unmaintained &mdash; not a letter grade. Per-dimension grades stay visible as the evidence.</div>
+            <div class="limit-fact" data-reveal><b>Signals, not proofs.</b> Test mapping is static evidence, not runtime coverage, and the security pass checks basic patterns rather than auditing.</div>
+            <div class="limit-fact" data-reveal><b>It reports; it does not fix.</b> No autofix, no pull requests, no test runner. Docs translations, examples, generated and vendor trees are out of scope.</div>
             <div class="limits-foot">The findings list is the primary output. Everything else supports it. <a href="https://github.com/Ntooxx/Sentinel/blob/main/docs/CALIBRATION.md" target="_blank" rel="noopener">Read the calibration notes ↗</a></div>
           </div>
         </div>
@@ -3170,7 +2849,6 @@
         <div class="footer-col">
           <h3>Product</h3>
           <a href="#product">Signal</a>
-          <a href="#report">Report</a>
           <a href="#performance">Performance</a>
           <a href="#workflow">Workflow</a>
           <a href="#limits">Known limits</a>
