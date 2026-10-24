@@ -28,6 +28,38 @@ python demo/server.py --open        # http://127.0.0.1:8765
 That is the whole setup. There is nothing to install: the server bootstraps its
 own import path.
 
+## Or run it with no install at all
+
+Two ways to get a report without installing anything:
+
+**In your browser** - <https://ntooxx.github.io/Sentinel/>. Drop a folder or a
+`.zip` on the page. Python is downloaded once as WebAssembly (Pyodide, ~12 MB) and
+the real `scan_project` runs inside the tab. Nothing is uploaded; the files never
+leave the page.
+
+**As a single local file** - the same page exists as a self-contained
+`index.html` with the package inlined, so it works from `file://` with no server.
+Build it with:
+
+```bash
+python tools/build_web_page.py --source <your landing page> --out web/index.html
+python tools/build_web_bundle.py --out pkg/bundle.json \
+    --inline-html web/index.html --inline-out index.html
+```
+
+### What the in-browser runner cannot do
+
+| Limitation | Why | Consequence |
+|---|---|---|
+| No `git` | the WebAssembly sandbox has no processes | commit metadata, churn and the churn-based rules are skipped; the report's coverage section shows churn as unassessed |
+| No URL cloning | cloning needs `git` and network egress | to scan a URL, use `demo/server.py` or the CLI |
+| No real threads | `RuntimeError: can't start new thread` | the scanner's work is run sequentially through a shim; results are identical |
+| Size caps | browser memory | 30 MB total, 8000 files, 4 MB per file |
+| Cold start | downloading the runtime | the first scan takes a few seconds; later scans in the same tab are fast |
+
+Everything else - dimensions, findings, evidence, recommendations, the quality
+band - is the real analysis, produced by the same code the CLI runs.
+
 ## How to use it
 
 1. Type or paste a repository into the box.
@@ -170,4 +202,9 @@ as a demo, not a hardened multi-tenant service.
 | [`demo/server.py`](../demo/server.py) | the whole server |
 | [`demo/Dockerfile`](../demo/Dockerfile) | container image for hosting |
 | [`render.yaml`](../render.yaml), [`fly.toml`](../fly.toml), [`Procfile`](../Procfile) | deploy configs |
-| [`tests/test_demo_server.py`](../tests/test_demo_server.py) | tests for input handling and public-mode limits |
+| [`web/index.html`](../web/index.html) | the landing page with the in-browser runner |
+| [`web/_runner.block.html`](../web/_runner.block.html) | the runner block, injected into the landing page |
+| [`tools/build_web_page.py`](../tools/build_web_page.py) | injects the runner block into a landing page |
+| [`tools/build_web_bundle.py`](../tools/build_web_bundle.py) | bundles the package for the browser, optionally inlined |
+| [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) | builds and deploys the static site |
+| [`tests/test_demo_server.py`](../tests/test_demo_server.py), [`tests/test_web_build.py`](../tests/test_web_build.py) | tests for input handling, public-mode limits and the web build |

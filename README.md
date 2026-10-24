@@ -5,7 +5,7 @@
 **One command. One page. Live repository quality with evidence.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
-[![Live report](https://img.shields.io/badge/live_report-onthe_web-blue?style=for-the-badge&logo=githubpages&logoColor=white)](https://ntooxx.github.io/Sentinel/)
+[![Try it live](https://img.shields.io/badge/try_it_live-in_your_browser-blue?style=for-the-badge&logo=githubpages&logoColor=white)](https://ntooxx.github.io/Sentinel/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](#install)
 [![Zero dependencies](https://img.shields.io/badge/runtime_dependencies-0-critical?style=for-the-badge)](pyproject.toml)
 
@@ -35,33 +35,42 @@ This is a real report on this repository, rendered from Sentinel's own self-cont
 
 ![Sentinel quality report](docs/demo/sentinel-report.png)
 
-**Live version:** <https://ntooxx.github.io/Sentinel/> — rebuilt by CI on every push, so the published page is the report for the current commit. The machine-readable output is there too: `report.json` and `report.md`.
+**Live report:** <https://ntooxx.github.io/Sentinel/report/> — rebuilt by CI on every push, so the published page is the report for the current commit. The machine-readable output is there too: `report.json` and `report.md`.
 
 Regenerate it with `project-sentinel report . --open`, or write it to a file with
 `project-sentinel scan . --format html --out report.html`. The committed artifact is
 [`docs/demo/sentinel-report.html`](docs/demo/sentinel-report.html); open it in a browser. It is produced by
 [`tools/capture_screenshots.ps1`](tools/capture_screenshots.ps1).
 
-### Try it on any repository
+### Try it, three ways, none of them a mockup
 
-Don't want to install anything to see the output? There is a zero-dependency web demo:
+**1. In your browser, right now** — <https://ntooxx.github.io/Sentinel/>
+
+Drop a folder or a `.zip` on the page and it scans inside your tab. Python runs as
+WebAssembly (Pyodide) and executes the real `scan_project`; the source is never
+uploaded and no server is involved. Your code does not leave the page.
+
+**2. Local web demo — can also clone a repository URL**
 
 ```bash
 python demo/server.py --open
 ```
 
-Paste a repository URL (`https://github.com/psf/requests`, or the `psf/requests`
-shorthand) or a local folder path, and the demo clones it, runs the real scan, and
-shows the report. It is a thin harness over the same `scan_project` and
-`render_html` the CLI uses - no mock data and no pre-computed results - and it
-never executes the code it clones.
+Paste `https://github.com/psf/requests` (or the `psf/requests` shorthand) or a
+local folder path: it clones shallow, runs the real scan, and shows the report in
+about **3 seconds** for a typical repository (`psf/requests`: clone ~2.9 s, scan
+~0.5 s). A local folder path skips the clone entirely. It runs **local-only by
+default** and ships with deploy configs ([`render.yaml`](render.yaml),
+[`fly.toml`](fly.toml), [`demo/Dockerfile`](demo/Dockerfile)) for hosting it as a
+web service with `--public` limits.
 
-Pasting a URL and getting the report takes about **3 seconds** for a typical
-repository (`psf/requests`: clone ~2.9 s, scan ~0.5 s); a local folder path skips
-the clone entirely. The demo runs **local-only by default** and ships with
-deploy configs ([`render.yaml`](render.yaml), [`fly.toml`](fly.toml),
-[`demo/Dockerfile`](demo/Dockerfile)) for hosting it as a web service with
-`--public` limits. Full guide: [`docs/DEMO.md`](docs/DEMO.md).
+**3. The CLI**, which is the product: `project-sentinel scan .`
+
+What the browser version cannot do: the sandbox has no `git`, so commit metadata,
+churn and the churn-based rules are skipped, and it cannot clone a URL. Every
+other part of the analysis is the real thing, and the coverage section of the
+report says so rather than pretending otherwise. Full guide:
+[`docs/DEMO.md`](docs/DEMO.md).
 
 ## Why this version exists
 

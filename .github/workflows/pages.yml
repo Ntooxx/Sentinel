@@ -35,9 +35,14 @@ jobs:
         run: python -m pip install .
       - name: Build the report
         run: |
-          project-sentinel scan . --format html --out _site/index.html --quiet
-          project-sentinel scan . --format json --out _site/report.json --quiet
-          project-sentinel scan . --format md   --out _site/report.md   --quiet
+          mkdir -p _site/report
+          project-sentinel scan . --format html --out _site/report/index.html --quiet
+          project-sentinel scan . --format json --out _site/report/report.json --quiet
+          project-sentinel scan . --format md   --out _site/report/report.md   --quiet
+      - name: Build the site
+        run: |
+          cp web/index.html _site/index.html
+          python tools/build_web_bundle.py --out _site/pkg/bundle.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
