@@ -1781,7 +1781,7 @@
                 </div>
               </div>
               <div class="hud-finding">
-                <span class="f-tag">MNT-007</span>
+                <span class="f-tag">MNT007</span>
                 <div class="f-copy">
                   <strong>Very high cyclomatic complexity</strong>
                   <small>src/sentinel2/analyze.py:442</small>
@@ -1913,22 +1913,22 @@
             <div class="finding-list">
               <div class="finding-row">
                 <span class="finding-rank">01</span>
-                <div class="finding-main"><strong>Very high cyclomatic complexity</strong><small><span>MNT-007</span> · analyze.py:442</small></div>
+                <div class="finding-main"><strong>Very high cyclomatic complexity</strong><small><span>MNT007</span> · analyze.py:442</small></div>
                 <span class="sev high">HIGH</span>
               </div>
               <div class="finding-row">
                 <span class="finding-rank">02</span>
-                <div class="finding-main"><strong>Module has no static test mapping</strong><small><span>TST-012</span> · calibrate.py</small></div>
+                <div class="finding-main"><strong>Large source file</strong><small><span>MNT001</span> · analyze.py:1</small></div>
                 <span class="sev med">MED</span>
               </div>
               <div class="finding-row">
                 <span class="finding-rank">03</span>
-                <div class="finding-main"><strong>Dynamic execution pattern detected</strong><small><span>SEC-003</span> · tests/s2_helpers.py</small></div>
+                <div class="finding-main"><strong>High-risk hotspot has no statically mapped test</strong><small><span>TST003</span> · calibrate.py</small></div>
                 <span class="sev med">MED</span>
               </div>
               <div class="finding-row">
                 <span class="finding-rank">04</span>
-                <div class="finding-main"><strong>File exceeds size threshold</strong><small><span>MNT-014</span> · analyze.py:1</small></div>
+                <div class="finding-main"><strong>Dangerous dynamic execution pattern</strong><small><span>SEC002</span> · test_s2_analyze.py:120</small></div>
                 <span class="sev low">LOW</span>
               </div>
             </div>
@@ -1943,13 +1943,13 @@
             <h3 class="card-title">Down to the line.</h3>
             <p class="card-copy">Findings carry their source evidence, so you can verify the claim before you change a thing.</p>
             <div class="code-block">
-              <span class="row"><span class="ln">439</span><span class="tk-kw">def</span> <span class="tk-fn">_rank_findings</span>(findings):</span>
-              <span class="row"><span class="ln">440</span>    <span class="tk-cm"># dedupe, then weight by impact</span></span>
-              <span class="row hot"><span class="ln">441</span>    <span class="tk-kw">if</span> <span class="tk-fn">len</span>(factors) &gt; <span class="tk-num">1</span>:</span>
-              <span class="row"><span class="ln">442</span>        score = <span class="tk-fn">weight</span>(factors, severity=<span class="tk-str">"high"</span>)</span>
-              <span class="row"><span class="ln">443</span>    <span class="tk-kw">return</span> <span class="tk-fn">sorted</span>(findings, key=score)</span>
+              <span class="row hot"><span class="ln">442</span><span class="tk-kw">def</span> <span class="tk-fn">_manifest_meta</span>(analysis: <span class="tk-fn">FileAnalysis</span>, text: <span class="tk-fn">str</span>, kind: <span class="tk-fn">str</span>) -&gt; <span class="tk-kw">None</span>:</span>
+              <span class="row"><span class="ln">443</span>    meta: <span class="tk-fn">dict</span>[<span class="tk-fn">str</span>, <span class="tk-fn">Any</span>] = {<span class="tk-str">"manifest_kind"</span>: kind, <span class="tk-str">"manifest_path"</span>: analysis.path}</span>
+              <span class="row"><span class="ln">444</span>    dependencies: <span class="tk-fn">list</span>[<span class="tk-fn">str</span>] = []</span>
+              <span class="row"><span class="ln">445</span>    has_scripts = <span class="tk-num">False</span></span>
+              <span class="row"><span class="ln">446</span>    name = <span class="tk-str">""</span></span>
             </div>
-            <div class="code-flag"><span>MNT-007</span><b>Complexity 41 · 86 lines · branch density above threshold</b></div>
+            <div class="code-flag"><span>MNT007</span><b>complexity 41 · 86 lines · _manifest_meta at line 442</b></div>
           </article>
 
           <article class="bento-card bento-incremental" data-reveal>
@@ -2011,14 +2011,14 @@
             <div class="json-terminal">
               <div class="json-term-head"><span>project-sentinel scan . --format json</span><span class="tag-live">valid</span></div>
               <pre class="json-code"><span class="brace">{</span>
-  <span class="key">"version"</span>: <span class="num">2</span>,
-  <span class="key">"quality"</span>: <span class="brace">{</span> <span class="key">"band"</span>: <span class="str">"maintained"</span>,
-    <span class="key">"score"</span>: <span class="num">91</span>, <span class="key">"provisional"</span>: <span class="num">true</span> <span class="brace">}</span>,
+  <span class="key">"schema_version"</span>: <span class="num">2</span>,
+  <span class="key">"summary"</span>: <span class="brace">{</span> <span class="key">"band"</span>: <span class="str">"maintained"</span>,
+    <span class="key">"overall_score"</span>: <span class="num">91</span>, <span class="key">"provisional"</span>: <span class="num">true</span> <span class="brace">}</span>,
   <span class="key">"findings"</span>: <span class="brace">[</span>
-    <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"MNT-007"</span>,
+    <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"MNT007:src/sentinel2/analyze.py"</span>,
       <span class="key">"line"</span>: <span class="num">442</span>, <span class="key">"severity"</span>: <span class="str">"high"</span> <span class="brace">}]</span>,
-  <span class="key">"dimensions"</span>: <span class="brace">{</span> <span class="str">"architecture"</span>: <span class="num">100</span>,
-                  <span class="str">"maintainability"</span>: <span class="num">72</span> <span class="brace">}</span>
+  <span class="key">"dimensions"</span>: <span class="brace">[</span> <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"architecture"</span>, <span class="key">"score"</span>: <span class="num">100</span>, <span class="key">"grade"</span>: <span class="str">"A+"</span> <span class="brace">}</span>,
+                  <span class="brace">{</span> <span class="key">"id"</span>: <span class="str">"maintainability"</span>, <span class="key">"score"</span>: <span class="num">72</span>, <span class="key">"grade"</span>: <span class="str">"C-"</span> <span class="brace">}</span> <span class="brace">]</span>
 <span class="brace">}</span></pre>
               <div class="json-gate"><span><i></i> --fail-under maintained</span><span>exit <b>0</b></span></div>
             </div>
@@ -2063,7 +2063,7 @@
                   <div class="rep-id">
                     <span class="rep-kicker">Sentinel quality report</span>
                     <h3>sentinel-agent</h3>
-                    <div class="rep-meta"><span>898d429 on main</span><span class="dirty">dirty</span><span>36 findings</span></div>
+                    <div class="rep-meta"><span>ca708b0 on main</span><span class="dirty">dirty</span><span>36 findings</span></div>
                     <div class="rep-chips">
                       <span class="rep-chip mint">maintained (provisional)</span>
                       <span class="rep-chip violet">monorepo</span>
@@ -2107,15 +2107,15 @@
                   <div class="rep-panel">
                     <div class="rep-panel-head"><h4>What to fix first</h4><span>5 of 36</span></div>
                     <div class="rep-find">
-                      <div class="rep-find-item"><span class="rank">01</span><div class="txt"><strong>Very high cyclomatic complexity</strong><small>MNT-007 · analyze.py:442</small></div><span class="sev high">HIGH</span></div>
-                      <div class="rep-find-item"><span class="rank">02</span><div class="txt"><strong>Module has no static test mapping</strong><small>TST-012 · calibrate.py</small></div><span class="sev med">MED</span></div>
-                      <div class="rep-find-item"><span class="rank">03</span><div class="txt"><strong>Dynamic execution pattern</strong><small>SEC-003 · s2_helpers.py</small></div><span class="sev med">MED</span></div>
+                      <div class="rep-find-item"><span class="rank">01</span><div class="txt"><strong>Very high cyclomatic complexity</strong><small>MNT007 · analyze.py:442</small></div><span class="sev high">HIGH</span></div>
+                      <div class="rep-find-item"><span class="rank">02</span><div class="txt"><strong>Large source file</strong><small>MNT001 · analyze.py</small></div><span class="sev med">MED</span></div>
+                      <div class="rep-find-item"><span class="rank">03</span><div class="txt"><strong>High-risk hotspot has no mapped test</strong><small>TST003 · calibrate.py</small></div><span class="sev med">MED</span></div>
                     </div>
                   </div>
                 </div>
                 <div class="rep-footnote">
                   <span><i></i> Static test evidence — not runtime coverage</span>
-                  <span>Read 963 · sampled 110 · skipped 0 · excluded docs translations</span>
+                  <span>117 files · 10 analyzed · 105 cached · 2 skipped</span>
                 </div>
               </div>
 
@@ -2124,27 +2124,27 @@
                 <div class="rep-findings-list">
                   <div class="rep-finding">
                     <span class="idx">01</span>
-                    <div><h4>Very high cyclomatic complexity</h4><p>Branching complexity makes this function hard to test exhaustively. Split the decision tree into named, independently testable paths.</p><div class="evidence"><span>MNT-007</span><span>src/sentinel2/analyze.py:442</span><span>complexity 41</span><span>86 lines</span></div></div>
+                    <div><h4>Very high cyclomatic complexity</h4><p>Branching complexity makes this function hard to test exhaustively. Split the decision tree into named, independently testable paths.</p><div class="evidence"><span>MNT007</span><span>src/sentinel2/analyze.py:442</span><span>complexity 41</span><span>86 lines</span></div></div>
                     <span class="sev high">HIGH</span>
                   </div>
                   <div class="rep-finding">
                     <span class="idx">02</span>
-                    <div><h4>Module has no static test mapping</h4><p>No test imports or names this module. Static mapping is evidence, not coverage — add a focused test at the public boundary first.</p><div class="evidence"><span>TST-012</span><span>tools/calibrate.py</span><span>zero mapped tests</span></div></div>
+                    <div><h4>Large source file</h4><p>Large files hide ownership and raise review cost. Split along role boundaries; keep public behavior stable.</p><div class="evidence"><span>MNT001</span><span>src/sentinel2/analyze.py</span><span>686 lines</span><span>26.3 KB</span></div></div>
                     <span class="sev med">MED</span>
                   </div>
                   <div class="rep-finding">
                     <span class="idx">03</span>
-                    <div><h4>Dynamic execution pattern detected</h4><p>A dynamic call pattern was found in test helpers. Verify the input boundary is trusted; the check is a basic pattern signal, not an audit.</p><div class="evidence"><span>SEC-003</span><span>tests/s2_helpers.py</span><span>basic check</span></div></div>
+                    <div><h4>High-risk hotspot has no statically mapped test</h4><p>No test imports or names this high-risk module. Static mapping is evidence, not coverage — add a focused test at the public boundary first.</p><div class="evidence"><span>TST003</span><span>tools/calibrate.py</span><span>complexity 68</span><span>no importing test found</span></div></div>
                     <span class="sev med">MED</span>
                   </div>
                   <div class="rep-finding">
                     <span class="idx">04</span>
-                    <div><h4>File exceeds size threshold</h4><p>Large files hide ownership and raise review cost. Split along role boundaries; keep public behavior stable.</p><div class="evidence"><span>MNT-014</span><span>src/sentinel2/analyze.py</span><span>2,142 analyzed lines</span></div></div>
+                    <div><h4>Dangerous dynamic execution pattern</h4><p>An <code>eval</code> call sits in a test helper. Verify the input boundary is trusted; the check is a basic pattern signal, not an audit.</p><div class="evidence"><span>SEC002</span><span>tests/test_s2_analyze.py:120</span><span>line 120: eval</span></div></div>
                     <span class="sev low">LOW</span>
                   </div>
                   <div class="rep-finding">
                     <span class="idx">05</span>
-                    <div><h4>TODO density above threshold</h4><p>Ten TODO markers cluster in analysis code. Triage stale markers; convert decisions into tracked issues or remove them.</p><div class="evidence"><span>MNT-021</span><span>10 TODOs</span><span>analysis surface</span></div></div>
+                    <div><h4>Unpinned direct dependencies</h4><p>Direct dependencies without upper bounds drift between installs. Pin the versions the test suite actually ran against.</p><div class="evidence"><span>DEP003</span><span>pyproject.toml</span><span>4 unpinned dependencies</span></div></div>
                     <span class="sev low">LOW</span>
                   </div>
                 </div>
@@ -2154,42 +2154,38 @@
               <div class="rep-pane" id="repPaneJson" role="tabpanel" aria-labelledby="repTabJson" hidden>
                 <div class="rep-json">
                   <pre><span class="b">{</span>
-  <span class="k">"schema"</span>: <span class="s">"sentinel.report.v2"</span>,
-  <span class="k">"version"</span>: <span class="n">2</span>,
+  <span class="k">"schema_version"</span>: <span class="n">2</span>,
   <span class="k">"project"</span>: <span class="b">{</span>
     <span class="k">"name"</span>: <span class="s">"sentinel-agent"</span>,
-    <span class="k">"commit"</span>: <span class="s">"898d429"</span>,
-    <span class="k">"branch"</span>: <span class="s">"main"</span>,
-    <span class="k">"dirty"</span>: <span class="n">true</span>
+    <span class="k">"root"</span>: <span class="s">"."</span>,
+    <span class="k">"git"</span>: <span class="b">{</span> <span class="k">"commit"</span>: <span class="s">"ca708b0"</span>, <span class="k">"branch"</span>: <span class="s">"main"</span>, <span class="k">"dirty"</span>: <span class="n">true</span> <span class="b">}</span>
   <span class="b">}</span>,
-  <span class="k">"quality"</span>: <span class="b">{</span>
+  <span class="k">"summary"</span>: <span class="b">{</span>
     <span class="k">"band"</span>: <span class="s">"maintained"</span>,
-    <span class="k">"score"</span>: <span class="n">91</span>,
+    <span class="k">"overall_score"</span>: <span class="n">91</span>,
     <span class="k">"provisional"</span>: <span class="n">true</span>,
-    <span class="k">"confidence"</span>: <span class="s">"high"</span>
+    <span class="k">"confidence"</span>: <span class="s">"high"</span>,
+    <span class="k">"grade_ceiling"</span>: <span class="s">"A"</span>
   <span class="b">}</span>,
-  <span class="k">"dimensions"</span>: <span class="b">{</span>
-    <span class="k">"architecture"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">100</span>, <span class="k">"grade"</span>: <span class="s">"A+"</span> <span class="b">}</span>,
-    <span class="k">"maintainability"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">72</span>, <span class="k">"grade"</span>: <span class="s">"C-"</span> <span class="b">}</span>,
-    <span class="k">"tests"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">98</span>, <span class="k">"grade"</span>: <span class="s">"A+"</span> <span class="b">}</span>,
-    <span class="k">"documentation"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">100</span>, <span class="k">"grade"</span>: <span class="s">"A+"</span> <span class="b">}</span>,
-    <span class="k">"dependencies"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">94</span>, <span class="k">"grade"</span>: <span class="s">"A"</span> <span class="b">}</span>,
-    <span class="k">"security"</span>: <span class="b">{</span> <span class="k">"score"</span>: <span class="n">96</span>, <span class="k">"grade"</span>: <span class="s">"A"</span> <span class="b">}</span>
-  <span class="b">}</span>,
+  <span class="k">"dimensions"</span>: <span class="b">[</span>
+    <span class="b">{</span> <span class="k">"id"</span>: <span class="s">"architecture"</span>, <span class="k">"score"</span>: <span class="n">100</span>, <span class="k">"grade"</span>: <span class="s">"A+"</span> <span class="b">}</span>,
+    <span class="b">{</span> <span class="k">"id"</span>: <span class="s">"maintainability"</span>, <span class="k">"score"</span>: <span class="n">72</span>, <span class="k">"grade"</span>: <span class="s">"C-"</span> <span class="b">}</span>
+  <span class="b">]</span>,
   <span class="k">"findings"</span>: <span class="b">[</span>
     <span class="b">{</span>
-      <span class="k">"id"</span>: <span class="s">"MNT-007"</span>,
+      <span class="k">"id"</span>: <span class="s">"MNT007:src/sentinel2/analyze.py"</span>,
+      <span class="k">"rule_id"</span>: <span class="s">"MNT007"</span>,
       <span class="k">"severity"</span>: <span class="s">"high"</span>,
       <span class="k">"file"</span>: <span class="s">"src/sentinel2/analyze.py"</span>,
       <span class="k">"line"</span>: <span class="n">442</span>,
-      <span class="k">"evidence"</span>: <span class="b">{</span> <span class="k">"complexity"</span>: <span class="n">41</span>, <span class="k">"lines"</span>: <span class="n">86</span> <span class="b">}</span>,
-      <span class="k">"recommendation"</span>: <span class="s">"Split the decision tree..."</span>
+      <span class="k">"evidence"</span>: <span class="b">[</span><span class="s">"_manifest_meta at line 442"</span>, <span class="s">"86 lines"</span>, <span class="s">"complexity 41"</span><span class="b">]</span>,
+      <span class="k">"recommendation"</span>: <span class="s">"Split the function by responsibility..."</span>
     <span class="b">}</span>
   <span class="b">]</span>,
-  <span class="k">"coverage"</span>: <span class="b">{</span> <span class="k">"read"</span>: <span class="n">963</span>, <span class="k">"sampled"</span>: <span class="n">110</span>, <span class="k">"skipped"</span>: <span class="n">0</span> <span class="b">}</span>
+  <span class="k">"scan"</span>: <span class="b">{</span> <span class="k">"coverage"</span>: <span class="b">{</span> <span class="k">"source"</span>: <span class="s">"100%"</span>, <span class="k">"tests"</span>: <span class="s">"100%"</span>, <span class="k">"docs"</span>: <span class="s">"metadata"</span> <span class="b">}</span> <span class="b">}</span>
 <span class="b">}</span></pre>
                   <div class="rep-json-side">
-                    <div class="rep-json-card"><h4>Stable contract</h4><p>Every renderer reads the same report object. Build dashboards, gates, or bots on JSON without scraping HTML.</p><b>sentinel.report.v2</b></div>
+                    <div class="rep-json-card"><h4>Stable contract</h4><p>Every renderer reads the same report object. Build dashboards, gates, or bots on JSON without scraping HTML.</p><b>schema_version: 2</b></div>
                     <div class="rep-json-card"><h4>CI gate</h4><p>Exit 3 when the quality band falls below your threshold. Deterministic, local, and pipeline-safe.</p><b>--fail-under maintained</b></div>
                     <div class="rep-json-card"><h4>Privacy</h4><p>Project-relative paths. Secret-like matches redacted in every output format.</p><b>no telemetry</b></div>
                   </div>
@@ -2340,6 +2336,10 @@
     other part of the analysis &mdash; dimensions, findings, evidence, recommendations &mdash;
     is the real thing. To keep it honest, the coverage section of the report will show churn as
     unassessed.
+  </p>
+  <p class="run-note" style="margin-top:10px">
+    Static host without <code>pkg/bundle.json</code>, or blocked CDN? The same runner is live on
+    <a href="https://ntooxx.github.io/Sentinel/" style="color:var(--mint)">ntooxx.github.io/Sentinel</a>.
   </p>
   <p class="run-note" style="margin-top:14px">
     Sentinel reports on itself, live:
