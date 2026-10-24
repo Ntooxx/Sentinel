@@ -27,6 +27,8 @@ directory_structure.txt
 *.log
 *.err
 *.txt
+# Fixture directories are data, not scratch output: keep their .txt files.
+!benchmarks/fixtures/**/*.txt
 sentinel-demo/
 fastapi_scan*
 flask_scan*

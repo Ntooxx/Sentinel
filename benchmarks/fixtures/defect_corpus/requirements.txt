@@ -1,0 +1,6 @@
+# D15 - direct dependencies with no version constraint at all.
+flask
+click
+jinja2
+requests==2.31.0
+urllib3
