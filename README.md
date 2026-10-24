@@ -46,9 +46,10 @@ Regenerate it with `project-sentinel report . --open`, or write it to a file wit
 
 **1. In your browser, right now** — <https://ntooxx.github.io/Sentinel/>
 
-Drop a folder or a `.zip` on the page and it scans inside your tab. Python runs as
-WebAssembly (Pyodide) and executes the real `scan_project`; the source is never
-uploaded and no server is involved. Your code does not leave the page.
+Paste `owner/repo` and it reads the repository through GitHub's API, or drop a
+folder or a `.zip` on the page. Either way the scan runs inside your tab: Python
+is downloaded once as WebAssembly (Pyodide) and executes the real `scan_project`.
+No server, no clone, no upload.
 
 **2. Local web demo — can also clone a repository URL**
 
@@ -67,9 +68,10 @@ web service with `--public` limits.
 **3. The CLI**, which is the product: `project-sentinel scan .`
 
 What the browser version cannot do: the sandbox has no `git`, so commit metadata,
-churn and the churn-based rules are skipped, and it cannot clone a URL. Every
-other part of the analysis is the real thing, and the coverage section of the
-report says so rather than pretending otherwise. Full guide:
+churn and the churn-based rules are skipped. Private repositories, and addresses
+that have spent GitHub's 60/hour API allowance, need the local server or the CLI.
+Every other part of the analysis is the real thing, and the coverage section of
+the report says so rather than pretending otherwise. Full guide:
 [`docs/DEMO.md`](docs/DEMO.md).
 
 ## Why this version exists
@@ -244,16 +246,18 @@ The tests exercise the real CLI and the `sentinel2` package. The retired 1.x cod
 
 ## Documentation
 
-- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - scan/report/watch, formats, CI usage
-- [`docs/DEMO.md`](docs/DEMO.md) - the web demo: usage, speed, and deploying it
-- [`docs/API.md`](docs/API.md) - Python helpers and JSON report contract
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - index, incremental scan, quality model
-- [`docs/CALIBRATION.md`](docs/CALIBRATION.md) - how the rubric is calibrated against real repositories, and how well it agrees with review
-- [`docs/PRIVACY_AND_SAFETY.md`](docs/PRIVACY_AND_SAFETY.md) - local-only design and basic security checks
-- [`docs/report.schema.json`](docs/report.schema.json) - JSON Schema for report v2
-- [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) - why the tool is shaped this way, including what was built and removed
-- [`sentinel_2.md`](sentinel_2.md) - the implementation blueprint and acceptance criteria
-- [`CHANGELOG.md`](CHANGELOG.md) - 2.0.0 breaking change
+| Document | Covers |
+|---|---|
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | scan/report/watch, formats, CI usage |
+| [`docs/DEMO.md`](docs/DEMO.md) | the web demo: usage, speed, and deploying it |
+| [`docs/API.md`](docs/API.md) | Python helpers and JSON report contract |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | index, incremental scan, quality model |
+| [`docs/CALIBRATION.md`](docs/CALIBRATION.md) | how the rubric is calibrated against real repositories, and how well it agrees with review |
+| [`docs/PRIVACY_AND_SAFETY.md`](docs/PRIVACY_AND_SAFETY.md) | local-only design and basic security checks |
+| [`docs/report.schema.json`](docs/report.schema.json) | JSON Schema for report v2 |
+| [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) | why the tool is shaped this way, including what was built and removed |
+| [`sentinel_2.md`](sentinel_2.md) | the implementation blueprint and acceptance criteria |
+| [`CHANGELOG.md`](CHANGELOG.md) | 2.0.0 breaking change |
 
 ## License
 

@@ -32,12 +32,12 @@ own import path.
 
 Two ways to get a report without installing anything:
 
-**In your browser** - <https://ntooxx.github.io/Sentinel/>. Drop a folder or a
-`.zip` on the page. Python is downloaded once as WebAssembly (Pyodide, ~12 MB) and
-the real `scan_project` runs inside the tab. Nothing is uploaded; the files never
-leave the page.
+**In your browser**: <https://ntooxx.github.io/Sentinel/>. Paste `owner/repo`, or
+drop a folder or a `.zip` on the page. Python is downloaded once as WebAssembly
+(Pyodide, ~12 MB) and the real `scan_project` runs inside the tab. Nothing is
+uploaded; the files never leave the page.
 
-**As a single local file** - the same page exists as a self-contained
+**As a single local file**: the same page exists as a self-contained
 `index.html` with the package inlined, so it works from `file://` with no server.
 Build it with:
 
@@ -47,18 +47,35 @@ python tools/build_web_bundle.py --out pkg/bundle.json \
     --inline-html web/index.html --inline-out index.html
 ```
 
+### How the browser reads a repository
+
+GitHub does not let browsers download repository archives: `codeload` sends no CORS
+headers, so `.../tarball` fails from a page. Two endpoints do allow it, and the
+runner uses those instead.
+
+| Step | Endpoint | Cost |
+|---|---|---|
+| resolve the repository and its default branch | `api.github.com/repos/{owner}/{repo}` | 1 API call |
+| list every file | `api.github.com/repos/{owner}/{repo}/git/trees/{ref}?recursive=1` | 1 API call |
+| download contents | `raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}` | no rate limit |
+
+A repository therefore costs 2 API calls, against an unauthenticated allowance of
+60/hour per address. Contents are fetched 10 at a time, filtered to text-like paths,
+and capped at 1500 files, 25 MB total and 4 MB per file.
+
 ### What the in-browser runner cannot do
 
 | Limitation | Why | Consequence |
 |---|---|---|
 | No `git` | the WebAssembly sandbox has no processes | commit metadata, churn and the churn-based rules are skipped; the report's coverage section shows churn as unassessed |
-| No URL cloning | cloning needs `git` and network egress | to scan a URL, use `demo/server.py` or the CLI |
+| Private repositories | the GitHub API refuses them unauthenticated | use `demo/server.py` or the CLI |
+| 60 API calls/hour | unauthenticated limit, shared per address | past roughly 30 repositories an hour, use a `.zip` or the local server |
 | No real threads | `RuntimeError: can't start new thread` | the scanner's work is run sequentially through a shim; results are identical |
-| Size caps | browser memory | 30 MB total, 8000 files, 4 MB per file |
+| Size caps | browser memory | 25 MB total, 1500 files, 4 MB per file |
 | Cold start | downloading the runtime | the first scan takes a few seconds; later scans in the same tab are fast |
 
-Everything else - dimensions, findings, evidence, recommendations, the quality
-band - is the real analysis, produced by the same code the CLI runs.
+Everything else (dimensions, findings, evidence, recommendations, the quality
+band) is the real analysis, produced by the same code the CLI runs.
 
 ## How to use it
 
@@ -118,7 +135,7 @@ does not:
 * your code never leaves the machine running the server;
 * there are no tokens, keys, quotas, or billing;
 * the software is Apache-2.0, so hosting it yourself costs only the host;
-* a local folder path needs no network at all - it works offline.
+* a local folder path needs no network at all; it works offline.
 
 That is the trade in one line: **you trade a hosted convenience for a scan that
 is instant, private, and unmetered.**

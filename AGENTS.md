@@ -10,10 +10,10 @@ project-sentinel watch [PATH]
 
 Use it before broad project exploration:
 
-- `project-sentinel report . --format text` - read the latest one-page quality snapshot without rescanning.
-- `project-sentinel scan . --format text` - refresh the incremental index and print the report.
-- `project-sentinel scan . --format json` - machine-readable findings for automation.
-- `project-sentinel watch .` - keep `.sentinel/quality.html` current while editing.
+- `project-sentinel report . --format text`: read the latest one-page quality snapshot without rescanning.
+- `project-sentinel scan . --format text`: refresh the incremental index and print the report.
+- `project-sentinel scan . --format json`: machine-readable findings for automation.
+- `project-sentinel watch .`: keep `.sentinel/quality.html` current while editing.
 
 The active package is `src/sentinel2`. Tests for it are `tests/test_s2_*.py`.
 

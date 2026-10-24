@@ -112,3 +112,16 @@ def test_committed_landing_page_has_the_runner_wired_up():
     assert "SENTINEL_BUNDLE_MARKER" in page
     assert "window.SentinelLive" in page
     assert 'href="#run"' in page
+
+
+def test_runner_block_reads_repos_through_the_github_api():
+    block = (ROOT / "web" / "_runner.block.html").read_text(encoding="utf-8")
+    # Archives are not CORS-enabled; trees + raw are.
+    assert "api.github.com" in block
+    assert "raw.githubusercontent.com" in block
+    assert "git/trees/" in block
+    assert "?recursive=1" in block
+    assert "runRepo: runRepo" in block
+    # Key/cert files must be downloaded: they are what the secret checks look for.
+    for extension in ('".pem"', '".key"', '".crt"', '".env"'):
+        assert extension in block

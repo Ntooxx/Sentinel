@@ -49,13 +49,13 @@ Pragmas: WAL, `synchronous=NORMAL`, foreign keys on, 5-second busy timeout, in-m
 
 Tables:
 
-- `meta` - rule/analysis version metadata
-- `files` - one row per indexed path, including lightweight skipped rows
-- `symbols` - functions/classes with line spans, length and complexity
-- `imports` - static import evidence used for cycles and test mapping
-- `findings` - deduplicated current findings with first/last seen scan
-- `scans` - one row per scan, including the full report JSON
-- `scan_files` - per-scan file status, for change detection and history
+- `meta`: rule/analysis version metadata
+- `files`: one row per indexed path, including lightweight skipped rows
+- `symbols`: functions/classes with line spans, length and complexity
+- `imports`: static import evidence used for cycles and test mapping
+- `findings`: deduplicated current findings with first/last seen scan
+- `scans`: one row per scan, including the full report JSON
+- `scan_files`: per-scan file status, for change detection and history
 
 Retention keeps the latest 20 scans and cascades `scan_files`. Current facts reflect the latest scan. Findings that disappear are removed from the current table; their history remains in older `scans.report_json` rows until retention removes them.
 

@@ -11,7 +11,7 @@ python demo/server.py --open        # http://127.0.0.1:8765
 Then paste `psf/requests`, `https://github.com/psf/requests`, or a local folder
 path. Nothing to install; the server bootstraps its own import path.
 
-**Full guide: [`docs/DEMO.md`](../docs/DEMO.md)** - how to use it, how fast it is,
+**Full guide: [`docs/DEMO.md`](../docs/DEMO.md)**: how to use it, how fast it is,
 why local-and-free matters, how to deploy it as a web service, public-mode
 limits, and troubleshooting.
 
