@@ -5,7 +5,7 @@
 **One command. One page. Live repository quality with evidence.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Ntooxx/Sentinel/test.yml?style=for-the-badge&logo=github&label=CI)](https://github.com/Ntooxx/Sentinel/actions/workflows/test.yml)
-[![Try it live](https://img.shields.io/badge/try_it_live-in_your_browser-blue?style=for-the-badge&logo=githubpages&logoColor=white)](https://ntooxx.github.io/Sentinel/)
+[![Website](https://img.shields.io/badge/website-sentinel--nt.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://sentinel-nt.netlify.app/)
 [![Open in Codespaces](https://img.shields.io/badge/Codespaces-real_CLI-181717?style=for-the-badge&logo=github)](https://codespaces.new/Ntooxx/Sentinel)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](#install)
 [![Zero dependencies](https://img.shields.io/badge/runtime_dependencies-0-critical?style=for-the-badge)](pyproject.toml)
@@ -45,7 +45,7 @@ Regenerate it with `project-sentinel report . --open`, or write it to a file wit
 
 ### Try it, four ways, none of them a mockup
 
-**1. In your browser, right now** — <https://ntooxx.github.io/Sentinel/>
+**1. In your browser, right now** — <https://sentinel-nt.netlify.app/> (GitHub Pages mirror: <https://ntooxx.github.io/Sentinel/>)
 
 Paste `owner/repo` and it reads the repository through GitHub's API, or drop a
 folder or a `.zip` on the page. Either way the scan runs inside your tab: Python
